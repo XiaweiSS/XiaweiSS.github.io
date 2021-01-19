@@ -1,63 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>使用 git hook 实现服务器代码自动部署</title>
-    <url>/art/2017/20171114-set-git-hooks-to-update-server-code/</url>
-    <content><![CDATA[<blockquote>
-<p>前几天把 Hexo 博客部署到了阿里云服务器，但发现每次推送文章都需要去服务器同步代码。最终寻找到 git hook 来解决了这个问题</p>
-</blockquote>
-<a id="more"></a>
-
-<h2 id="1-说明"><a href="#1-说明" class="headerlink" title="1. 说明"></a>1. 说明</h2><p>在服务器，要建一个相当于 github 存放功能的裸仓库来存储代码。<br>之所以叫裸仓库，是因为这个仓库只是为了存代码用的，没有工作目录，不可以在它里面查看改写代码。</p>
-<p>在网站文件夹下，会有一个工作目录来存放代码，这个目录的代码可以像clone github代码库一样，clone 服务器里的裸仓库。</p>
-<p>当服务器里裸仓库收到提交进来的代码后，会触发 git hook 的 post-receive 事件，配置好的程序就可以自动去工作目录的仓库执行 git pull，服务器代码就自动更新了</p>
-<h2 id="2-配置步骤："><a href="#2-配置步骤：" class="headerlink" title="2. 配置步骤："></a>2. 配置步骤：</h2><p>远程连接服务器，登录 root 账号</p>
-<h3 id="2-1-设置用户"><a href="#2-1-设置用户" class="headerlink" title="2.1 设置用户"></a>2.1 设置用户</h3><p>新增用户xiawei，这里可以写你的名字</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">useradd xiawei</span><br></pre></td></tr></table></figure>
-<p>修改用户密码</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">passwd xiawei</span><br></pre></td></tr></table></figure>
-<p>输入新密码即可</p>
-<p>给添加 sudo 权限 通过修改 /etc/sudoers</p>
-<p>必须使用命令</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">visudo</span><br></pre></td></tr></table></figure>
-<p>按 i 键进入, 找到 root ALL=(ALL) ALL 然后下面添加 xiawei ALL = (ALL) ALL</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">root ALL&#x3D;(ALL) ALL</span><br><span class="line">xiawei ALL &#x3D; (ALL) ALL</span><br></pre></td></tr></table></figure>
-<h3 id="2-2-安装-git"><a href="#2-2-安装-git" class="headerlink" title="2.2 安装 git"></a>2.2 安装 git</h3><p>查看是否安装 git</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git --version</span><br></pre></td></tr></table></figure>
-<p>如果没有看到版本号，则继续安装 git</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum install git</span><br></pre></td></tr></table></figure>
-<p>设置 git 用户名邮箱</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git config --global user.name &quot;yourname&quot;</span><br><span class="line">git config --global user.email &quot;your_email@example.com&quot;</span><br></pre></td></tr></table></figure>
-<h3 id="2-3-建立git裸仓库"><a href="#2-3-建立git裸仓库" class="headerlink" title="2.3 建立git裸仓库"></a>2.3 建立git裸仓库</h3><p>假设网站的在 /www/blog/ 目录下，创建裸仓库</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www</span><br><span class="line">sudo git init --bare blog.git</span><br></pre></td></tr></table></figure>
-<p>更改所属用户和用户组，获得权限</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo chown -R xiawei:xiawei blog.git</span><br><span class="line">sudo chown -R xiawei:xiawei blog</span><br></pre></td></tr></table></figure>
-<h3 id="2-4-建立工作目录-git-仓库"><a href="#2-4-建立工作目录-git-仓库" class="headerlink" title="2.4 建立工作目录 git 仓库"></a>2.4 建立工作目录 git 仓库</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git clone &#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
-<p>如果此时 blog 文件夹不是空的，会不能 clone<br>按先定义仓库，再设置远端仓库地址即可</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git init</span><br><span class="line">git remote add origin &#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
-<p>注意这时要删除掉 index.html 等和本地待提交代码重复的文件</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">rm index.html</span><br></pre></td></tr></table></figure>
-<h3 id="2-5-设置-git-hooks"><a href="#2-5-设置-git-hooks" class="headerlink" title="2.5 设置 git hooks"></a>2.5 设置 git hooks</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;xiaweiss.git&#x2F;hooks&#x2F;</span><br><span class="line">vim post-receive</span><br></pre></td></tr></table></figure>
-<p>按 i 键，将下面这几行代码粘贴进去</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#!&#x2F;bin&#x2F;sh</span><br><span class="line">unset GIT_DIR</span><br><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git fetch --all</span><br><span class="line">git reset --hard origin&#x2F;master</span><br></pre></td></tr></table></figure>
-<p>（原来只使用的 git pull origin master 方式，代码冲突时，还需要手动登陆服务器解决 ）</p>
-<p>赋予 post-receive 文件可执行权限</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">chmod +x post-receive</span><br></pre></td></tr></table></figure>
-<h3 id="2-6-本地-配置"><a href="#2-6-本地-配置" class="headerlink" title="2.6 本地 配置"></a>2.6 本地 配置</h3><p>最后修改 Hexo 配置文件里 deploy项，每次发布代码会提交到这两个仓库</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">deploy:</span><br><span class="line">- type: git</span><br><span class="line">  repo: git@github.com:xiaweiss&#x2F;xiaweiss.github.io.git</span><br><span class="line">- type: git</span><br><span class="line">  repo: xiawei@xiaweiss.com:&#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
-<p>如果是本地的其他项目，可以直接</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git clone xiawei@xiaweiss.com:&#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
-<p>修改代码后，提交即可</p>
-]]></content>
-      <categories>
-        <category>技术</category>
-      </categories>
-      <tags>
-        <tag>git</tag>
-        <tag>环境配置</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Mac 基本开发环境配置</title>
     <url>/art/2017/20171111-set-environment-of-mac/</url>
     <content><![CDATA[<blockquote>
@@ -209,8 +152,65 @@
         <category>技术</category>
       </categories>
       <tags>
-        <tag>环境配置</tag>
         <tag>mac</tag>
+        <tag>环境配置</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>使用 git hook 实现服务器代码自动部署</title>
+    <url>/art/2017/20171114-set-git-hooks-to-update-server-code/</url>
+    <content><![CDATA[<blockquote>
+<p>前几天把 Hexo 博客部署到了阿里云服务器，但发现每次推送文章都需要去服务器同步代码。最终寻找到 git hook 来解决了这个问题</p>
+</blockquote>
+<a id="more"></a>
+
+<h2 id="1-说明"><a href="#1-说明" class="headerlink" title="1. 说明"></a>1. 说明</h2><p>在服务器，要建一个相当于 github 存放功能的裸仓库来存储代码。<br>之所以叫裸仓库，是因为这个仓库只是为了存代码用的，没有工作目录，不可以在它里面查看改写代码。</p>
+<p>在网站文件夹下，会有一个工作目录来存放代码，这个目录的代码可以像clone github代码库一样，clone 服务器里的裸仓库。</p>
+<p>当服务器里裸仓库收到提交进来的代码后，会触发 git hook 的 post-receive 事件，配置好的程序就可以自动去工作目录的仓库执行 git pull，服务器代码就自动更新了</p>
+<h2 id="2-配置步骤："><a href="#2-配置步骤：" class="headerlink" title="2. 配置步骤："></a>2. 配置步骤：</h2><p>远程连接服务器，登录 root 账号</p>
+<h3 id="2-1-设置用户"><a href="#2-1-设置用户" class="headerlink" title="2.1 设置用户"></a>2.1 设置用户</h3><p>新增用户xiawei，这里可以写你的名字</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">useradd xiawei</span><br></pre></td></tr></table></figure>
+<p>修改用户密码</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">passwd xiawei</span><br></pre></td></tr></table></figure>
+<p>输入新密码即可</p>
+<p>给添加 sudo 权限 通过修改 /etc/sudoers</p>
+<p>必须使用命令</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">visudo</span><br></pre></td></tr></table></figure>
+<p>按 i 键进入, 找到 root ALL=(ALL) ALL 然后下面添加 xiawei ALL = (ALL) ALL</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">root ALL&#x3D;(ALL) ALL</span><br><span class="line">xiawei ALL &#x3D; (ALL) ALL</span><br></pre></td></tr></table></figure>
+<h3 id="2-2-安装-git"><a href="#2-2-安装-git" class="headerlink" title="2.2 安装 git"></a>2.2 安装 git</h3><p>查看是否安装 git</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git --version</span><br></pre></td></tr></table></figure>
+<p>如果没有看到版本号，则继续安装 git</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum install git</span><br></pre></td></tr></table></figure>
+<p>设置 git 用户名邮箱</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git config --global user.name &quot;yourname&quot;</span><br><span class="line">git config --global user.email &quot;your_email@example.com&quot;</span><br></pre></td></tr></table></figure>
+<h3 id="2-3-建立git裸仓库"><a href="#2-3-建立git裸仓库" class="headerlink" title="2.3 建立git裸仓库"></a>2.3 建立git裸仓库</h3><p>假设网站的在 /www/blog/ 目录下，创建裸仓库</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www</span><br><span class="line">sudo git init --bare blog.git</span><br></pre></td></tr></table></figure>
+<p>更改所属用户和用户组，获得权限</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo chown -R xiawei:xiawei blog.git</span><br><span class="line">sudo chown -R xiawei:xiawei blog</span><br></pre></td></tr></table></figure>
+<h3 id="2-4-建立工作目录-git-仓库"><a href="#2-4-建立工作目录-git-仓库" class="headerlink" title="2.4 建立工作目录 git 仓库"></a>2.4 建立工作目录 git 仓库</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git clone &#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
+<p>如果此时 blog 文件夹不是空的，会不能 clone<br>按先定义仓库，再设置远端仓库地址即可</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git init</span><br><span class="line">git remote add origin &#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
+<p>注意这时要删除掉 index.html 等和本地待提交代码重复的文件</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">rm index.html</span><br></pre></td></tr></table></figure>
+<h3 id="2-5-设置-git-hooks"><a href="#2-5-设置-git-hooks" class="headerlink" title="2.5 设置 git hooks"></a>2.5 设置 git hooks</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;xiaweiss.git&#x2F;hooks&#x2F;</span><br><span class="line">vim post-receive</span><br></pre></td></tr></table></figure>
+<p>按 i 键，将下面这几行代码粘贴进去</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#!&#x2F;bin&#x2F;sh</span><br><span class="line">unset GIT_DIR</span><br><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git fetch --all</span><br><span class="line">git reset --hard origin&#x2F;master</span><br></pre></td></tr></table></figure>
+<p>（原来只使用的 git pull origin master 方式，代码冲突时，还需要手动登陆服务器解决 ）</p>
+<p>赋予 post-receive 文件可执行权限</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">chmod +x post-receive</span><br></pre></td></tr></table></figure>
+<h3 id="2-6-本地-配置"><a href="#2-6-本地-配置" class="headerlink" title="2.6 本地 配置"></a>2.6 本地 配置</h3><p>最后修改 Hexo 配置文件里 deploy项，每次发布代码会提交到这两个仓库</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">deploy:</span><br><span class="line">- type: git</span><br><span class="line">  repo: git@github.com:xiaweiss&#x2F;xiaweiss.github.io.git</span><br><span class="line">- type: git</span><br><span class="line">  repo: xiawei@xiaweiss.com:&#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
+<p>如果是本地的其他项目，可以直接</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git clone xiawei@xiaweiss.com:&#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
+<p>修改代码后，提交即可</p>
+]]></content>
+      <categories>
+        <category>技术</category>
+      </categories>
+      <tags>
+        <tag>环境配置</tag>
+        <tag>git</tag>
       </tags>
   </entry>
   <entry>
@@ -294,6 +294,144 @@
         <tag>apache</tag>
         <tag>centOS</tag>
         <tag>php</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>萧秋水《进阶》：关于成长的思考</title>
+    <url>/art/2017/20171210-book-%E8%90%A7%E7%A7%8B%E6%B0%B4-%E8%BF%9B%E9%98%B6/</url>
+    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20171210.png"></p>
+<blockquote>
+<p>前不久看到 <code>秋叶大叔</code> 公众号推送，入手了这本标题有点鸡汤，但并不鸡汤的书<br>作为读完书的成果，来写我的第一篇书评，如有纰漏，请轻拍指正，谢啦~</p>
+</blockquote>
+<a id="more"></a>
+
+<p><a href="https://www.douban.com/people/qsxiao/">萧秋水</a>是一位立足于知识管理，从事咨询的自由职业者。<a href="https://book.douban.com/subject/27135370/">《进阶》</a>这本书的精华用一句话来说，就是封面上写道的</p>
+<blockquote>
+<p>不断升级的秘诀： 掌控时间，调节情绪，完善知识体系，完成蜕变。</p>
+</blockquote>
+<p>整本书从围绕秘诀，从解决问题的能力、对待个人生活的态度、学习方法、人际关系、接受适应能力这五个方面入手。通过分享自己感悟的方式，来谈自己的想法，从而启发读者的思考。书里的每篇文章，并没有循规蹈矩地论点123，就像一个朋友在谈她的生活、看法，然后自己在倾听中得到自己结论和启发。</p>
+<p>作为一本讲道理的书，行文的随性给了读者一种慢下来的感觉。本书随性到没有序和拔，建设性意见散落在文章各处。各个章节虽然各有侧重，但却是相辅相成，不可分离。整本书看似散落，其实有着逻辑主线，层层递进时，又不失各篇文章的独立性。</p>
+<p>成长首先是要不焦虑，拿出勇气，明确目标。这些都需要独立思考，和以自身实力为根基的自信。而做到这些，需要关注自己，考虑他人意见，但不盲从。</p>
+<p>接下来，成长是为了得到更好的生活。那么就不应该为了未来的生活而放弃现在。珍惜好当下，未来会变得更加美好。而这一切生活，都是自己的，所以过好自己想要的生活，就不要被他人左右。积累的能力是独立的强大后盾。而且好的心情也会带来好运。</p>
+<p>那么就开始学习吧。学习知识的方法，书中提出3个核心：</p>
+<ul>
+<li>适合自己的，才是最好的</li>
+<li>认清学习的主体</li>
+<li>合理用人，别把人往死里用</li>
+</ul>
+<p>当然学到知识，还有另一种途径，那就是自己思考和总结，平时多思考解决问题的办法，重要的事情要有预案。</p>
+<p>至于怎么才算真正学到了呢，那就是必须用输出成果来验证。不功利，多付出，多考虑带给他人的价值。</p>
+<p>对于知识的输出和应用，萧秋水给出了精辟的类比：</p>
+<blockquote>
+<p>输出，就是看到了一个菜谱，自己抄了一遍，或者分享给他人。<br>应用，就是照着菜谱做了一道菜。<br>知识不是一道菜，不是别人端上来，吃了就饱了。</p>
+</blockquote>
+<p>学习篇的最后，书中介绍了筛选信息的方法：较强目的性、了解局部、清醒觉知（即专注目标）</p>
+<br>
+
+<p>最后两章介绍了时间管理。本质上来说，时间的流逝是客观存在、不可控制的，所以能够管理的其实是时间的投入，也就是精力。时间管理用一个词来总结就是“专注”，用一句话总结就是：减少不必要的投入，避免把时间浪费在无意义的人和事。</p>
+<p>重要的是，清醒意识到 “时间精力有限”</p>
+<p>对外：给人际关系做减法</p>
+<ul>
+<li>由情绪化走向理性化</li>
+<li>并不需要时时顾及他人感受</li>
+<li>对于某些关系，需要做切割</li>
+<li>没事别乱指导别人的人生（不要瞎操心）</li>
+<li>站在成长的角度，不见得非要合群</li>
+</ul>
+<p>对内：学会放眼现在和未来</p>
+<ul>
+<li>我们没有那么多时间陷溺在过去</li>
+<li>对于无能为力的事，“大不了”就好</li>
+<li>真正的成长始于学会放手</li>
+<li>不要为了未来，总是牺牲现在</li>
+</ul>
+<p>其中这几句写的很好，值得细细品味：</p>
+<ul>
+<li>关于人脉管理：</li>
+</ul>
+<blockquote>
+<p>人脉管理的核心，是自己的能力，如果连这个能力都不保证，就算看上去拥有很多人脉，也可能是虚假的。<br>人脉不是不重要，但要选择。优秀的人会懂得尊重你的时间和习惯，相处中不会有太多麻烦。</p>
+</blockquote>
+<ul>
+<li>关于情绪管理：</li>
+</ul>
+<blockquote>
+<p>引发情绪失控的，普遍都是“自己觉得是大事，别人看来是小事”<br>人经历的事多了，渐渐就会懂得，很多事都是小事，不值得动用情绪。很多事无能为力，也不值得动用情绪。<br>情绪管理就是：站得高了，见得多了，也就容易忽略琐屑小事，抓大，放小。</p>
+</blockquote>
+<ul>
+<li>关于沟通：</li>
+</ul>
+<blockquote>
+<p>沟通，往往是基于需要，往往是在感觉到不满、愤怒的时候。此时往往会有情绪，所以注意，口吻不要含有挖苦、讽刺、指责，而要采取理性、克制的态度。要冷静，要清楚和明确地描述自己为什么不开心，然后一起寻找解决方案。</p>
+</blockquote>
+<blockquote>
+<p>真诚不见得是好事。很多人是以真诚为名，行伤害之实。</p>
+</blockquote>
+<blockquote>
+<p>如果不愿意赞美，至少可以不说。<br>说了，别人也有不听、不照做的权利。</p>
+</blockquote>
+<blockquote>
+<p>弄不清楚该不该说话、怎么说话的时候，不说也许更好。</p>
+</blockquote>
+<ul>
+<li>关于相处：</li>
+</ul>
+<blockquote>
+<p>成年后尤其是工作后，和家庭保持一定的距离。<br>爱父母家人，但不要被操纵。不啃老，用自己的能力赚钱，坚定自我的信念，明白想要的生活。可以咨询父母的意见，但不接受不符合自己目标和三观的指点。对婆家也是如此。</p>
+</blockquote>
+<blockquote>
+<p>和爱人之间也是。如果爱人不喜欢逛街，不要勉强，一如爱人喜欢看球，不用勉强相陪。各自有各自的喜好，分开去做。也有共同的喜好，一起去做，共同交流。</p>
+</blockquote>
+<p>看过赛车动画《头文字D》的人都知道，把车开快，最重要的是学会踩刹车。</p>
+<p>书中最后一章也做了类似的解读，作为书评结语甚好：</p>
+<blockquote>
+<p>超越自己，并非指全力以赴地拼搏，不管不顾地燃烧自己，而是奋斗有度、享受及时。克服自己对“成功”的渴望，不为遥远的未来的安逸而牺牲当下，好好爱惜自己，尽情体验更丰富盛大的生活，深入生命的肌理。</p>
+</blockquote>
+<hr>
+<p>最后摘录书中我喜欢的一些句子：</p>
+<blockquote>
+<p>活在世间，我们最应守护的人，应当是自我。拥有了这个能力，才可以兼济他人。失去自我固然可以成全他人，但失去自我的人，其实并不能称为“独立的”人，只是一个附庸罢了。</p>
+</blockquote>
+<blockquote>
+<p>一个强大的人。并不会因为守护自我而失去别人的保护。在愿意保护他（她）的人心中，他（她）是值得的，一味示弱反而存在危险。</p>
+</blockquote>
+<blockquote>
+<p>不管是诗与远方，还是眼前的生活，如果愿意把我好每一个瞬间，如果多谢创意、多些主动制造的快乐，一切就会变得不一样。</p>
+</blockquote>
+<blockquote>
+<p>现代社会的生存法则，需要强壮、强大，需要对坏人恶事的深入了解，有时，需要适度的强硬。</p>
+</blockquote>
+<blockquote>
+<p>很多人之所以内心不够强大，是因为太急于求成。真正强大的内心，首先要懂得区分青红皂白、是非曲直，有自己的独立思考、独立人格，不附庸于任何的人事物，宁愿膝盖被打折，也不会主动跪下去。他们不会盲从别人的意见，也不接受指导人生的各种提议。</p>
+</blockquote>
+<blockquote>
+<p>去爱人们，去付出，不要只是索取，也不要拥有了爱而不懂感恩。</p>
+</blockquote>
+<blockquote>
+<p>减少不必要的形式上的学习，专注于吸收和转化，会体现在行动上。</p>
+</blockquote>
+<blockquote>
+<p>强大的人，不需要（测试），因为并不需要所有人的认可作为证明，有些人就算不是天天联络也不会失去，有些人，沟通多了、了解多了反而产生裂痕。</p>
+</blockquote>
+<blockquote>
+<p>唯有独立（经济独立、生活独立、精神独立）的人才懂得制造快乐、拥有自内而外的幸福。<br>唯有自己快乐的人，才会带给他人快乐，才会懂得照顾自己，也兼济他人。</p>
+</blockquote>
+<blockquote>
+<p>世界可以慌忙，我们却要不断探索出自己的节奏。不要被人潮裹挟着前进，不要忽略了自己内心的声音，不要淹没了快乐，不要让自己的幸福，由外界定义。</p>
+</blockquote>
+<blockquote>
+<p>最好的解决方法，应该是自己给出。不靠外界靠自己，也许会有损失，但相比要做成的事，成本不是最重要的，目标才是。</p>
+</blockquote>
+<blockquote>
+<p>接受所有的丧失，甚至是主动的离弃，因为，要放手，应该在合适的时刻，不是到了非离不可。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>读书</category>
+      </categories>
+      <tags>
+        <tag>萧秋水</tag>
+        <tag>成长</tag>
       </tags>
   </entry>
   <entry>
@@ -785,81 +923,6 @@
       </tags>
   </entry>
   <entry>
-    <title>php 学习笔记</title>
-    <url>/art/2018/20180124-php-primer-note/</url>
-    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20180124.jpg"></p>
-<blockquote>
-<p>一直想做点自己的小东西，所以开始学习后端知识了<br>目前是一些基础的语法速学记录，还在更新中，以后有时间会整理归纳</p>
-</blockquote>
-<a id="more"></a>
-
-<p>php 代码块 <?php   ?><br>php 连接符 .<br>多行时，每行结尾必须加 ;<br>单行注释 //<br>多行注释 <code>/*   */</code><br>变量 $开头 变量名必须以字母或下划线开始，如<code>”$_name”,”$name” ,”$name2”</code>等，但是”$9name”是不对的。<br>下划线命名法  <code>$my_apple</code>、驼峰命名法 <code>$myApple</code><br>获取当前PHP消耗的内存 memory_get_usage()<br>在PHP中，支持8种原始类型，其中包括四种标量类型、两种复合类型和两种特殊类型<br>echo 打印<br>var_dump 输出类型和值<br>var_export 打印数组</p>
-<p>布尔类型 不区分大小写 echo true;得到值1，echo false; 不输出值<br>== 比较运算符优先于 = 赋值运算符</p>
-<p>整型 123<br>负数 -123<br>八进制数 0123<br>十六进制数 0x1a</p>
-<p>浮点型 1.234<br>科学计数法，小写e或大写E  1.2e3 //1200  7.0e-10  //0.007</p>
-<p>字符串<br>字符串型可以用三种方法定义：单引号形式、双引号形式和Heredoc结构形式。<br>字符串中包含引号的时候，1 单引号中嵌入双引号 2 双引号中嵌入单引号 3 里面的引号前使用转义符 \</p>
-<p>当双引号中包含变量时，变量会与双引号中的内容连接在一起；<br>当单引号中包含变量时，变量会被当做字符串输出。</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="variable">$love</span> = <span class="string">&quot;I love you!&quot;</span>;</span><br><span class="line"><span class="variable">$string1</span> = <span class="string">&quot;hi,<span class="subst">$love</span>&quot;</span>;<span class="comment">// hi,I love you!</span></span><br><span class="line"><span class="variable">$string2</span> = <span class="string">&#x27;hi,$love&#x27;</span>;<span class="comment">// hi,$love</span></span><br></pre></td></tr></table></figure>
-<p>当我的字符串很长怎么办？</p>
-<p>我们可以使用Heredoc结构形式的方法来解决该问题，首先使用定界符表示字符串（&lt;&lt;&lt;），接着在“&lt;&lt;&lt;“之后提供一个标识符GOD，然后是字符串，最后以提供的这个标识符结束字符串</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="variable">$string1</span> = &lt;&lt;&lt;GOD</span><br><span class="line">A</span><br><span class="line">B</span><br><span class="line">C</span><br><span class="line">GOD;</span><br><span class="line"></span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$string1</span>;<span class="comment">//A B C</span></span><br></pre></td></tr></table></figure>
-<p>在赋值符号后，输入定界符“&lt;&lt;&lt;”,接着是标识符，你可以用你的女神作为标识符“GOD”，如第1行，也可以使用你喜欢的狗狗，“DOG”作为标识符，但是，结尾处的标识符也必须是一样的。此外，在结尾的一行，如第4行，一定要另起一行，并且此行除了“GOD”，并以“；”号结束之外，不能有任何其他字符，前后都不能有，包括空格，否则会出现错误的哦。</p>
-<p>特殊类型1—资源 1.txt<br>特殊类型2—空类型 null 大写NULL也可以</p>
-<p>echo NULL，输出无结果</p>
-<p>$var3 = “节日快乐！”;<br>unset($var3);//NULL</p>
-<p>常量 不允许重复定义、修改值<br>定义 define(‘name’,value)  注意第三个参数写 true，可以大小写不敏感<br>还有一种定义方式，const PI = 3.14; 大小写敏感</p>
-<p>取值 可以直接取值，也可以使用 constant(‘name’)</p>
-<p><a href="https://stackoverflow.com/questions/2447791/define-vs-const">dinfine 和 const 的区别</a><br>注意<br>define() 必须在 class 外使用，在全局生效，运行时执行<br>const 在条件表达式内部不能使用，在当前命名空间生效，编译时执行，定义的速度更快<br>一般不用条件表达式时，尽量用 const</p>
-<p>系统常量<br><strong>FILE</strong> 文件名和路径<br><strong>LINE</strong> 当前代码在第几行<br>PHP_VERSION 当前解析器的版本号<br>PHP_OS 执行当前PHP版本的操作系统名称</p>
-<p>defined(‘常量名’) 检测常量是否定义，返回 true 或 false</p>
-<p>PHP运算符一般分为算术运算符、赋值运算符、比较运算符、三元运算符、逻辑运算符、字符串连接运算符、错误控制运算符。</p>
-<p>赋值运算符 一般赋值 =   引用赋值 &amp;，例如 $c = &amp;$a;<br>“&amp;”：引用赋值，意味着两个变量都指向同一个数据。它将使两个变量共享一块内存，如果这个内存存储的数据变了，那么两个变量的值都会发生变化。</p>
-<p>逻辑运算符<br>与 &amp;&amp;、或 ||、非！、异或 xor (注意 and or xor 运算优先级很低，需要小括号括住)</p>
-<p>字符串连接运算符 <code>.</code> 、 <code>.=</code></p>
-<p>错误控制运算符 @，可以放在变量和函数执行语句之前<br>开启了 track_errors 后，可以使用变量 $php_errormsg 输出错误信息</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line">ini_set(<span class="string">&#x27;track_errors&#x27;</span>, <span class="number">1</span>);</span><br><span class="line"><span class="variable">$conn</span> = @mysql_connect(<span class="string">&#x27;localhost&#x27;</span>,<span class="string">&#x27;username&#x27;</span>,<span class="string">&#x27;password&#x27;</span>);</span><br><span class="line"><span class="keyword">echo</span> <span class="string">&quot;出错了，错误原因是：&quot;</span>.<span class="variable">$php_errormsg</span>;</span><br></pre></td></tr></table></figure>
-<p>算术运算符 <code>+ 、- 、* 、/ 、% 、+= 、-= 、*= 、/= 、%=</code><br>向下取整 floor(4.25); //4<br>向上取整 ceil(4.25); //5</p>
-<p>条件结构  if、switch<br>循环结构  while、do while、for、foreach</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="keyword">foreach</span> (数组 <span class="keyword">as</span> 值)&#123;</span><br><span class="line"><span class="comment">//执行的任务</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">foreach</span> (数组 <span class="keyword">as</span> 下标 =&gt; 值)&#123;</span><br><span class="line"> <span class="comment">//执行的任务</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>数组<br>//设置某个变量为一个空数组</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="variable">$arr</span> = <span class="keyword">array</span>();</span><br><span class="line"><span class="variable">$fruit</span> = <span class="keyword">array</span>(<span class="string">&quot;苹果&quot;</span>,<span class="string">&quot;香蕉&quot;</span>,<span class="string">&quot;菠萝&quot;</span>);</span><br><span class="line">var_export(<span class="variable">$fruit</span>);<span class="comment">//打印数组</span></span><br></pre></td></tr></table></figure>
-<p>索引数组赋值有三种方式:</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="variable">$arr</span>[<span class="number">0</span>]=<span class="string">&#x27;苹果&#x27;</span>;</span><br><span class="line"><span class="keyword">array</span>(<span class="string">&#x27;0&#x27;</span>=&gt;<span class="string">&#x27;苹果&#x27;</span>);</span><br><span class="line"><span class="keyword">array</span>(<span class="string">&#x27;苹果&#x27;</span>);<span class="comment">//自动产生索引 0</span></span><br><span class="line"></span><br><span class="line"><span class="variable">$arr</span>[] = <span class="string">&#x27;梨&#x27;</span>;<span class="comment">//末尾插入新值</span></span><br></pre></td></tr></table></figure>
-<p>访问某个数组中索引的值<br>$arr[0] 或 $arr[‘0’];</p>
-<p>获取数组长度 count($array);</p>
-<p>php类</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="comment">//定义一个类，类名必须是字母或下划线开头</span></span><br><span class="line"><span class="comment">//$this 指向实例化后的类，来访问该类里的其他变量</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> <span class="variable">$name</span> = <span class="string">&#x27;汽车&#x27;</span>;</span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">getName</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//实例化一个car对象</span></span><br><span class="line"><span class="variable">$car</span> = <span class="keyword">new</span> Car();<span class="comment">//这里括号不传参数时，可以省略</span></span><br><span class="line"><span class="variable">$car</span>-&gt;name = <span class="string">&#x27;奥迪A6&#x27;</span>; <span class="comment">//设置对象的属性值</span></span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$car</span>-&gt;getName();  <span class="comment">//调用对象的方法 输出对象的名字</span></span><br></pre></td></tr></table></figure>
-<p>类的的属性和 fuction 前面有关键字public（公有），protected（受保护）或 private（私有），var 视为公有<br>类的 function 可以不写关键字，视为公有。属性必须写，否则报错。<br>受保护的不可以被外部调用，私有的只能被自己内部调用</p>
-<p>使用关键字static修饰的，称之为静态方法，静态方法不需要实例化对象，可以通过类名直接调用，操作符为双冒号::</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">static</span> <span class="function"><span class="keyword">function</span> <span class="title">getName</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&#x27;汽车&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">​&#125;</span><br><span class="line"><span class="keyword">echo</span> Car::getName(); <span class="comment">//结果为“汽车</span></span><br></pre></td></tr></table></figure>
-<p>注意静态方法，可以像普通方法一样调用，但静态属性不可以<br>静态方法内不可以使用 $this</p>
-<p>静态属性 可以使用 static::$属性名，或者 self::$属性名 访问<br>静态方法 使用 static::方法名() 执行<br>访问父类时，使用 parent，例如 parent::方法名();</p>
-<p>注意下面代码，写不写 static 输出结果是一样的。但属性这么玩会报错。</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">b</span> </span>&#123;</span><br><span class="line">  <span class="built_in">static</span> <span class="function"><span class="keyword">function</span> <span class="title">show</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">123</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="variable">$obj</span> = <span class="keyword">new</span> b();</span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$obj</span>-&gt;show();<span class="comment">//123</span></span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$obj</span>::show();<span class="comment">//123</span></span><br></pre></td></tr></table></figure>
-<p>类的构造函数，实例化 new 类时，这个函数会被执行</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"></span>)</span>;</span><br></pre></td></tr></table></figure>
-<p>在子类中如果定义了__construct则不会调用父类的__construct，如果需要同时调用父类的构造函数，需要使用<code>parent::__construct()</code>显式的调用。</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;父类的构造函数被调用\n&quot;</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Truck</span> <span class="keyword">extends</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;子类的构造函数被调用\n&quot;</span>;</span><br><span class="line">    <span class="built_in">parent</span>::__construct();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="variable">$car</span> = <span class="keyword">new</span> Truck();</span><br></pre></td></tr></table></figure>
-<p>类的析构函数，类被销毁时会调用 <code>__destruct</code></p>
-<p>类继承<br>子类可以继承<br>父类的属性和方法<br>但当子类有同名的属性和方法时，父类的会不执行，可以静态方法的方式来访问。</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="variable">$speed</span> = <span class="number">0</span>; <span class="comment">//汽车的起始速度是0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">speedUp</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;speed += <span class="number">10</span>;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;speed;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//定义继承于Car的Truck类</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Truck</span> <span class="keyword">extends</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">speedUp</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="built_in">parent</span>::speedUp();</span><br><span class="line">        <span class="keyword">$this</span>-&gt;speed += <span class="number">50</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="variable">$car</span> = <span class="keyword">new</span> Truck();</span><br><span class="line"><span class="variable">$car</span>-&gt;speedUp();</span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$car</span>-&gt;speed;</span><br></pre></td></tr></table></figure>
-<p>Cookie<br>设置 cookie</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line">setcookie(<span class="string">&#x27;test2&#x27;</span>, <span class="string">&#x27;哈&#x27;</span>, time() + <span class="number">10</span>, <span class="string">&#x27;/&#x27;</span>);<span class="comment">//存入的值为 %E5%93%88</span></span><br><span class="line">setrawcookie(<span class="string">&#x27;test3&#x27;</span>, <span class="string">&#x27;哈&#x27;</span>);<span class="comment">//存入的值为 哈</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-
-<blockquote>
-<p>图片来源：<a href="https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=59688723">https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=59688723</a><br>参考资料：<br><a href="https://www.imooc.com/learn/54">慕课 PHP 入门篇</a><br><a href="https://www.imooc.com/learn/26">慕课 PHP 进阶篇</a></p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>技术</category>
-      </categories>
-      <tags>
-        <tag>php</tag>
-        <tag>note</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Mac 文件管理利器 TotalFinder 安装教程</title>
     <url>/art/2018/20180724-install-totalfinder/</url>
     <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20180724.png" alt="20180724"></p>
@@ -1023,144 +1086,6 @@
       </categories>
       <tags>
         <tag>lint</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>萧秋水《进阶》：关于成长的思考</title>
-    <url>/art/2017/20171210-book-%E8%90%A7%E7%A7%8B%E6%B0%B4-%E8%BF%9B%E9%98%B6/</url>
-    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20171210.png"></p>
-<blockquote>
-<p>前不久看到 <code>秋叶大叔</code> 公众号推送，入手了这本标题有点鸡汤，但并不鸡汤的书<br>作为读完书的成果，来写我的第一篇书评，如有纰漏，请轻拍指正，谢啦~</p>
-</blockquote>
-<a id="more"></a>
-
-<p><a href="https://www.douban.com/people/qsxiao/">萧秋水</a>是一位立足于知识管理，从事咨询的自由职业者。<a href="https://book.douban.com/subject/27135370/">《进阶》</a>这本书的精华用一句话来说，就是封面上写道的</p>
-<blockquote>
-<p>不断升级的秘诀： 掌控时间，调节情绪，完善知识体系，完成蜕变。</p>
-</blockquote>
-<p>整本书从围绕秘诀，从解决问题的能力、对待个人生活的态度、学习方法、人际关系、接受适应能力这五个方面入手。通过分享自己感悟的方式，来谈自己的想法，从而启发读者的思考。书里的每篇文章，并没有循规蹈矩地论点123，就像一个朋友在谈她的生活、看法，然后自己在倾听中得到自己结论和启发。</p>
-<p>作为一本讲道理的书，行文的随性给了读者一种慢下来的感觉。本书随性到没有序和拔，建设性意见散落在文章各处。各个章节虽然各有侧重，但却是相辅相成，不可分离。整本书看似散落，其实有着逻辑主线，层层递进时，又不失各篇文章的独立性。</p>
-<p>成长首先是要不焦虑，拿出勇气，明确目标。这些都需要独立思考，和以自身实力为根基的自信。而做到这些，需要关注自己，考虑他人意见，但不盲从。</p>
-<p>接下来，成长是为了得到更好的生活。那么就不应该为了未来的生活而放弃现在。珍惜好当下，未来会变得更加美好。而这一切生活，都是自己的，所以过好自己想要的生活，就不要被他人左右。积累的能力是独立的强大后盾。而且好的心情也会带来好运。</p>
-<p>那么就开始学习吧。学习知识的方法，书中提出3个核心：</p>
-<ul>
-<li>适合自己的，才是最好的</li>
-<li>认清学习的主体</li>
-<li>合理用人，别把人往死里用</li>
-</ul>
-<p>当然学到知识，还有另一种途径，那就是自己思考和总结，平时多思考解决问题的办法，重要的事情要有预案。</p>
-<p>至于怎么才算真正学到了呢，那就是必须用输出成果来验证。不功利，多付出，多考虑带给他人的价值。</p>
-<p>对于知识的输出和应用，萧秋水给出了精辟的类比：</p>
-<blockquote>
-<p>输出，就是看到了一个菜谱，自己抄了一遍，或者分享给他人。<br>应用，就是照着菜谱做了一道菜。<br>知识不是一道菜，不是别人端上来，吃了就饱了。</p>
-</blockquote>
-<p>学习篇的最后，书中介绍了筛选信息的方法：较强目的性、了解局部、清醒觉知（即专注目标）</p>
-<br>
-
-<p>最后两章介绍了时间管理。本质上来说，时间的流逝是客观存在、不可控制的，所以能够管理的其实是时间的投入，也就是精力。时间管理用一个词来总结就是“专注”，用一句话总结就是：减少不必要的投入，避免把时间浪费在无意义的人和事。</p>
-<p>重要的是，清醒意识到 “时间精力有限”</p>
-<p>对外：给人际关系做减法</p>
-<ul>
-<li>由情绪化走向理性化</li>
-<li>并不需要时时顾及他人感受</li>
-<li>对于某些关系，需要做切割</li>
-<li>没事别乱指导别人的人生（不要瞎操心）</li>
-<li>站在成长的角度，不见得非要合群</li>
-</ul>
-<p>对内：学会放眼现在和未来</p>
-<ul>
-<li>我们没有那么多时间陷溺在过去</li>
-<li>对于无能为力的事，“大不了”就好</li>
-<li>真正的成长始于学会放手</li>
-<li>不要为了未来，总是牺牲现在</li>
-</ul>
-<p>其中这几句写的很好，值得细细品味：</p>
-<ul>
-<li>关于人脉管理：</li>
-</ul>
-<blockquote>
-<p>人脉管理的核心，是自己的能力，如果连这个能力都不保证，就算看上去拥有很多人脉，也可能是虚假的。<br>人脉不是不重要，但要选择。优秀的人会懂得尊重你的时间和习惯，相处中不会有太多麻烦。</p>
-</blockquote>
-<ul>
-<li>关于情绪管理：</li>
-</ul>
-<blockquote>
-<p>引发情绪失控的，普遍都是“自己觉得是大事，别人看来是小事”<br>人经历的事多了，渐渐就会懂得，很多事都是小事，不值得动用情绪。很多事无能为力，也不值得动用情绪。<br>情绪管理就是：站得高了，见得多了，也就容易忽略琐屑小事，抓大，放小。</p>
-</blockquote>
-<ul>
-<li>关于沟通：</li>
-</ul>
-<blockquote>
-<p>沟通，往往是基于需要，往往是在感觉到不满、愤怒的时候。此时往往会有情绪，所以注意，口吻不要含有挖苦、讽刺、指责，而要采取理性、克制的态度。要冷静，要清楚和明确地描述自己为什么不开心，然后一起寻找解决方案。</p>
-</blockquote>
-<blockquote>
-<p>真诚不见得是好事。很多人是以真诚为名，行伤害之实。</p>
-</blockquote>
-<blockquote>
-<p>如果不愿意赞美，至少可以不说。<br>说了，别人也有不听、不照做的权利。</p>
-</blockquote>
-<blockquote>
-<p>弄不清楚该不该说话、怎么说话的时候，不说也许更好。</p>
-</blockquote>
-<ul>
-<li>关于相处：</li>
-</ul>
-<blockquote>
-<p>成年后尤其是工作后，和家庭保持一定的距离。<br>爱父母家人，但不要被操纵。不啃老，用自己的能力赚钱，坚定自我的信念，明白想要的生活。可以咨询父母的意见，但不接受不符合自己目标和三观的指点。对婆家也是如此。</p>
-</blockquote>
-<blockquote>
-<p>和爱人之间也是。如果爱人不喜欢逛街，不要勉强，一如爱人喜欢看球，不用勉强相陪。各自有各自的喜好，分开去做。也有共同的喜好，一起去做，共同交流。</p>
-</blockquote>
-<p>看过赛车动画《头文字D》的人都知道，把车开快，最重要的是学会踩刹车。</p>
-<p>书中最后一章也做了类似的解读，作为书评结语甚好：</p>
-<blockquote>
-<p>超越自己，并非指全力以赴地拼搏，不管不顾地燃烧自己，而是奋斗有度、享受及时。克服自己对“成功”的渴望，不为遥远的未来的安逸而牺牲当下，好好爱惜自己，尽情体验更丰富盛大的生活，深入生命的肌理。</p>
-</blockquote>
-<hr>
-<p>最后摘录书中我喜欢的一些句子：</p>
-<blockquote>
-<p>活在世间，我们最应守护的人，应当是自我。拥有了这个能力，才可以兼济他人。失去自我固然可以成全他人，但失去自我的人，其实并不能称为“独立的”人，只是一个附庸罢了。</p>
-</blockquote>
-<blockquote>
-<p>一个强大的人。并不会因为守护自我而失去别人的保护。在愿意保护他（她）的人心中，他（她）是值得的，一味示弱反而存在危险。</p>
-</blockquote>
-<blockquote>
-<p>不管是诗与远方，还是眼前的生活，如果愿意把我好每一个瞬间，如果多谢创意、多些主动制造的快乐，一切就会变得不一样。</p>
-</blockquote>
-<blockquote>
-<p>现代社会的生存法则，需要强壮、强大，需要对坏人恶事的深入了解，有时，需要适度的强硬。</p>
-</blockquote>
-<blockquote>
-<p>很多人之所以内心不够强大，是因为太急于求成。真正强大的内心，首先要懂得区分青红皂白、是非曲直，有自己的独立思考、独立人格，不附庸于任何的人事物，宁愿膝盖被打折，也不会主动跪下去。他们不会盲从别人的意见，也不接受指导人生的各种提议。</p>
-</blockquote>
-<blockquote>
-<p>去爱人们，去付出，不要只是索取，也不要拥有了爱而不懂感恩。</p>
-</blockquote>
-<blockquote>
-<p>减少不必要的形式上的学习，专注于吸收和转化，会体现在行动上。</p>
-</blockquote>
-<blockquote>
-<p>强大的人，不需要（测试），因为并不需要所有人的认可作为证明，有些人就算不是天天联络也不会失去，有些人，沟通多了、了解多了反而产生裂痕。</p>
-</blockquote>
-<blockquote>
-<p>唯有独立（经济独立、生活独立、精神独立）的人才懂得制造快乐、拥有自内而外的幸福。<br>唯有自己快乐的人，才会带给他人快乐，才会懂得照顾自己，也兼济他人。</p>
-</blockquote>
-<blockquote>
-<p>世界可以慌忙，我们却要不断探索出自己的节奏。不要被人潮裹挟着前进，不要忽略了自己内心的声音，不要淹没了快乐，不要让自己的幸福，由外界定义。</p>
-</blockquote>
-<blockquote>
-<p>最好的解决方法，应该是自己给出。不靠外界靠自己，也许会有损失，但相比要做成的事，成本不是最重要的，目标才是。</p>
-</blockquote>
-<blockquote>
-<p>接受所有的丧失，甚至是主动的离弃，因为，要放手，应该在合适的时刻，不是到了非离不可。</p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>读书</category>
-      </categories>
-      <tags>
-        <tag>萧秋水</tag>
-        <tag>成长</tag>
       </tags>
   </entry>
   <entry>
@@ -1370,6 +1295,271 @@
       <categories>
         <category>读书</category>
       </categories>
+  </entry>
+  <entry>
+    <title>php 学习笔记</title>
+    <url>/art/2018/20180124-php-primer-note/</url>
+    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20180124.jpg"></p>
+<blockquote>
+<p>一直想做点自己的小东西，所以开始学习后端知识了<br>目前是一些基础的语法速学记录，还在更新中，以后有时间会整理归纳</p>
+</blockquote>
+<a id="more"></a>
+
+<p>php 代码块 <?php   ?><br>php 连接符 .<br>多行时，每行结尾必须加 ;<br>单行注释 //<br>多行注释 <code>/*   */</code><br>变量 $开头 变量名必须以字母或下划线开始，如<code>”$_name”,”$name” ,”$name2”</code>等，但是”$9name”是不对的。<br>下划线命名法  <code>$my_apple</code>、驼峰命名法 <code>$myApple</code><br>获取当前PHP消耗的内存 memory_get_usage()<br>在PHP中，支持8种原始类型，其中包括四种标量类型、两种复合类型和两种特殊类型<br>echo 打印<br>var_dump 输出类型和值<br>var_export 打印数组</p>
+<p>布尔类型 不区分大小写 echo true;得到值1，echo false; 不输出值<br>== 比较运算符优先于 = 赋值运算符</p>
+<p>整型 123<br>负数 -123<br>八进制数 0123<br>十六进制数 0x1a</p>
+<p>浮点型 1.234<br>科学计数法，小写e或大写E  1.2e3 //1200  7.0e-10  //0.007</p>
+<p>字符串<br>字符串型可以用三种方法定义：单引号形式、双引号形式和Heredoc结构形式。<br>字符串中包含引号的时候，1 单引号中嵌入双引号 2 双引号中嵌入单引号 3 里面的引号前使用转义符 \</p>
+<p>当双引号中包含变量时，变量会与双引号中的内容连接在一起；<br>当单引号中包含变量时，变量会被当做字符串输出。</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="variable">$love</span> = <span class="string">&quot;I love you!&quot;</span>;</span><br><span class="line"><span class="variable">$string1</span> = <span class="string">&quot;hi,<span class="subst">$love</span>&quot;</span>;<span class="comment">// hi,I love you!</span></span><br><span class="line"><span class="variable">$string2</span> = <span class="string">&#x27;hi,$love&#x27;</span>;<span class="comment">// hi,$love</span></span><br></pre></td></tr></table></figure>
+<p>当我的字符串很长怎么办？</p>
+<p>我们可以使用Heredoc结构形式的方法来解决该问题，首先使用定界符表示字符串（&lt;&lt;&lt;），接着在“&lt;&lt;&lt;“之后提供一个标识符GOD，然后是字符串，最后以提供的这个标识符结束字符串</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="variable">$string1</span> = &lt;&lt;&lt;GOD</span><br><span class="line">A</span><br><span class="line">B</span><br><span class="line">C</span><br><span class="line">GOD;</span><br><span class="line"></span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$string1</span>;<span class="comment">//A B C</span></span><br></pre></td></tr></table></figure>
+<p>在赋值符号后，输入定界符“&lt;&lt;&lt;”,接着是标识符，你可以用你的女神作为标识符“GOD”，如第1行，也可以使用你喜欢的狗狗，“DOG”作为标识符，但是，结尾处的标识符也必须是一样的。此外，在结尾的一行，如第4行，一定要另起一行，并且此行除了“GOD”，并以“；”号结束之外，不能有任何其他字符，前后都不能有，包括空格，否则会出现错误的哦。</p>
+<p>特殊类型1—资源 1.txt<br>特殊类型2—空类型 null 大写NULL也可以</p>
+<p>echo NULL，输出无结果</p>
+<p>$var3 = “节日快乐！”;<br>unset($var3);//NULL</p>
+<p>常量 不允许重复定义、修改值<br>定义 define(‘name’,value)  注意第三个参数写 true，可以大小写不敏感<br>还有一种定义方式，const PI = 3.14; 大小写敏感</p>
+<p>取值 可以直接取值，也可以使用 constant(‘name’)</p>
+<p><a href="https://stackoverflow.com/questions/2447791/define-vs-const">dinfine 和 const 的区别</a><br>注意<br>define() 必须在 class 外使用，在全局生效，运行时执行<br>const 在条件表达式内部不能使用，在当前命名空间生效，编译时执行，定义的速度更快<br>一般不用条件表达式时，尽量用 const</p>
+<p>系统常量<br><strong>FILE</strong> 文件名和路径<br><strong>LINE</strong> 当前代码在第几行<br>PHP_VERSION 当前解析器的版本号<br>PHP_OS 执行当前PHP版本的操作系统名称</p>
+<p>defined(‘常量名’) 检测常量是否定义，返回 true 或 false</p>
+<p>PHP运算符一般分为算术运算符、赋值运算符、比较运算符、三元运算符、逻辑运算符、字符串连接运算符、错误控制运算符。</p>
+<p>赋值运算符 一般赋值 =   引用赋值 &amp;，例如 $c = &amp;$a;<br>“&amp;”：引用赋值，意味着两个变量都指向同一个数据。它将使两个变量共享一块内存，如果这个内存存储的数据变了，那么两个变量的值都会发生变化。</p>
+<p>逻辑运算符<br>与 &amp;&amp;、或 ||、非！、异或 xor (注意 and or xor 运算优先级很低，需要小括号括住)</p>
+<p>字符串连接运算符 <code>.</code> 、 <code>.=</code></p>
+<p>错误控制运算符 @，可以放在变量和函数执行语句之前<br>开启了 track_errors 后，可以使用变量 $php_errormsg 输出错误信息</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line">ini_set(<span class="string">&#x27;track_errors&#x27;</span>, <span class="number">1</span>);</span><br><span class="line"><span class="variable">$conn</span> = @mysql_connect(<span class="string">&#x27;localhost&#x27;</span>,<span class="string">&#x27;username&#x27;</span>,<span class="string">&#x27;password&#x27;</span>);</span><br><span class="line"><span class="keyword">echo</span> <span class="string">&quot;出错了，错误原因是：&quot;</span>.<span class="variable">$php_errormsg</span>;</span><br></pre></td></tr></table></figure>
+<p>算术运算符 <code>+ 、- 、* 、/ 、% 、+= 、-= 、*= 、/= 、%=</code><br>向下取整 floor(4.25); //4<br>向上取整 ceil(4.25); //5</p>
+<p>条件结构  if、switch<br>循环结构  while、do while、for、foreach</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="keyword">foreach</span> (数组 <span class="keyword">as</span> 值)&#123;</span><br><span class="line"><span class="comment">//执行的任务</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">foreach</span> (数组 <span class="keyword">as</span> 下标 =&gt; 值)&#123;</span><br><span class="line"> <span class="comment">//执行的任务</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>数组<br>//设置某个变量为一个空数组</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="variable">$arr</span> = <span class="keyword">array</span>();</span><br><span class="line"><span class="variable">$fruit</span> = <span class="keyword">array</span>(<span class="string">&quot;苹果&quot;</span>,<span class="string">&quot;香蕉&quot;</span>,<span class="string">&quot;菠萝&quot;</span>);</span><br><span class="line">var_export(<span class="variable">$fruit</span>);<span class="comment">//打印数组</span></span><br></pre></td></tr></table></figure>
+<p>索引数组赋值有三种方式:</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="variable">$arr</span>[<span class="number">0</span>]=<span class="string">&#x27;苹果&#x27;</span>;</span><br><span class="line"><span class="keyword">array</span>(<span class="string">&#x27;0&#x27;</span>=&gt;<span class="string">&#x27;苹果&#x27;</span>);</span><br><span class="line"><span class="keyword">array</span>(<span class="string">&#x27;苹果&#x27;</span>);<span class="comment">//自动产生索引 0</span></span><br><span class="line"></span><br><span class="line"><span class="variable">$arr</span>[] = <span class="string">&#x27;梨&#x27;</span>;<span class="comment">//末尾插入新值</span></span><br></pre></td></tr></table></figure>
+<p>访问某个数组中索引的值<br>$arr[0] 或 $arr[‘0’];</p>
+<p>获取数组长度 count($array);</p>
+<p>php类</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="comment">//定义一个类，类名必须是字母或下划线开头</span></span><br><span class="line"><span class="comment">//$this 指向实例化后的类，来访问该类里的其他变量</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> <span class="variable">$name</span> = <span class="string">&#x27;汽车&#x27;</span>;</span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">getName</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//实例化一个car对象</span></span><br><span class="line"><span class="variable">$car</span> = <span class="keyword">new</span> Car();<span class="comment">//这里括号不传参数时，可以省略</span></span><br><span class="line"><span class="variable">$car</span>-&gt;name = <span class="string">&#x27;奥迪A6&#x27;</span>; <span class="comment">//设置对象的属性值</span></span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$car</span>-&gt;getName();  <span class="comment">//调用对象的方法 输出对象的名字</span></span><br></pre></td></tr></table></figure>
+<p>类的的属性和 fuction 前面有关键字public（公有），protected（受保护）或 private（私有），var 视为公有<br>类的 function 可以不写关键字，视为公有。属性必须写，否则报错。<br>受保护的不可以被外部调用，私有的只能被自己内部调用</p>
+<p>使用关键字static修饰的，称之为静态方法，静态方法不需要实例化对象，可以通过类名直接调用，操作符为双冒号::</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">static</span> <span class="function"><span class="keyword">function</span> <span class="title">getName</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&#x27;汽车&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">​&#125;</span><br><span class="line"><span class="keyword">echo</span> Car::getName(); <span class="comment">//结果为“汽车</span></span><br></pre></td></tr></table></figure>
+<p>注意静态方法，可以像普通方法一样调用，但静态属性不可以<br>静态方法内不可以使用 $this</p>
+<p>静态属性 可以使用 static::$属性名，或者 self::$属性名 访问<br>静态方法 使用 static::方法名() 执行<br>访问父类时，使用 parent，例如 parent::方法名();</p>
+<p>注意下面代码，写不写 static 输出结果是一样的。但属性这么玩会报错。</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">b</span> </span>&#123;</span><br><span class="line">  <span class="built_in">static</span> <span class="function"><span class="keyword">function</span> <span class="title">show</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">123</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="variable">$obj</span> = <span class="keyword">new</span> b();</span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$obj</span>-&gt;show();<span class="comment">//123</span></span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$obj</span>::show();<span class="comment">//123</span></span><br></pre></td></tr></table></figure>
+<p>类的构造函数，实例化 new 类时，这个函数会被执行</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"></span>)</span>;</span><br></pre></td></tr></table></figure>
+<p>在子类中如果定义了__construct则不会调用父类的__construct，如果需要同时调用父类的构造函数，需要使用<code>parent::__construct()</code>显式的调用。</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;父类的构造函数被调用\n&quot;</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Truck</span> <span class="keyword">extends</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;子类的构造函数被调用\n&quot;</span>;</span><br><span class="line">    <span class="built_in">parent</span>::__construct();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="variable">$car</span> = <span class="keyword">new</span> Truck();</span><br></pre></td></tr></table></figure>
+<p>类的析构函数，类被销毁时会调用 <code>__destruct</code></p>
+<p>类继承<br>子类可以继承<br>父类的属性和方法<br>但当子类有同名的属性和方法时，父类的会不执行，可以静态方法的方式来访问。</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="variable">$speed</span> = <span class="number">0</span>; <span class="comment">//汽车的起始速度是0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">speedUp</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;speed += <span class="number">10</span>;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;speed;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//定义继承于Car的Truck类</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Truck</span> <span class="keyword">extends</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">speedUp</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="built_in">parent</span>::speedUp();</span><br><span class="line">        <span class="keyword">$this</span>-&gt;speed += <span class="number">50</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="variable">$car</span> = <span class="keyword">new</span> Truck();</span><br><span class="line"><span class="variable">$car</span>-&gt;speedUp();</span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$car</span>-&gt;speed;</span><br></pre></td></tr></table></figure>
+<p>Cookie<br>设置 cookie</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line">setcookie(<span class="string">&#x27;test2&#x27;</span>, <span class="string">&#x27;哈&#x27;</span>, time() + <span class="number">10</span>, <span class="string">&#x27;/&#x27;</span>);<span class="comment">//存入的值为 %E5%93%88</span></span><br><span class="line">setrawcookie(<span class="string">&#x27;test3&#x27;</span>, <span class="string">&#x27;哈&#x27;</span>);<span class="comment">//存入的值为 哈</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+<blockquote>
+<p>图片来源：<a href="https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=59688723">https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=59688723</a><br>参考资料：<br><a href="https://www.imooc.com/learn/54">慕课 PHP 入门篇</a><br><a href="https://www.imooc.com/learn/26">慕课 PHP 进阶篇</a></p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>技术</category>
+      </categories>
+      <tags>
+        <tag>php</tag>
+        <tag>note</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Hexo 博客搭建、进阶配置指南</title>
+    <url>/art/2017/20171008-build-a-blog-with-hexo-on-github/</url>
+    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20171008.jpg"></p>
+<blockquote>
+<p>作为一个 web 程序员，当然也想有自己的自留地<br>于是就研究起了搭建博客，来记录自己的成长<br>了解之后，发现 github + hexo 是个门槛很低的，效果很好的方式<br>hexo 基于 markdown，意味着不需要关心文章排版，也不需要学习编程<br>github 提供了免费空间、域名以及代码管理的工具，解决了服务器问题</p>
+</blockquote>
+<a id="more"></a>
+
+<blockquote>
+<p>2018-12-03 更新 章节 6.13 设置 RSS 订阅源</p>
+</blockquote>
+<h2 id="1-准备工作"><a href="#1-准备工作" class="headerlink" title="1. 准备工作"></a>1. 准备工作</h2><h3 id="1-1-安装-chrome-浏览器，百度下载即可"><a href="#1-1-安装-chrome-浏览器，百度下载即可" class="headerlink" title="1.1 安装 chrome 浏览器，百度下载即可"></a>1.1 安装 chrome 浏览器，百度下载即可</h3><p><img data-src="https://xiawei.cc/images/20171008-download-chrome.png"></p>
+<h3 id="1-2-注册一个-Github-账号"><a href="#1-2-注册一个-Github-账号" class="headerlink" title="1.2 注册一个 Github 账号"></a>1.2 注册一个 <a href="https://github.com/join?source=header-home">Github</a> 账号</h3><p>如果看不懂英语，可以点这个小按钮来全文翻译（失败的话可以多试几次，或使用其他翻译软件）</p>
+<p><img data-src="https://xiawei.cc/images/20171008-chrome-translate.png"></p>
+<h3 id="1-3-创建一个Repo"><a href="#1-3-创建一个Repo" class="headerlink" title="1.3 创建一个Repo"></a>1.3 创建一个Repo</h3><p>登录 Github（初次注册后会自动登录），点击右上角”+”，再点第一行 “新存储库”(New repository)</p>
+<p>第一次要求验证邮箱，邮箱里会收到 Github 发来的邮件，点那个最长的链接就ok</p>
+<p>存储库名称格式为 yourname.github.io。比如，我个人的 Github 账户用户名是 xiaweiss，所以，我的这个 Repo 的名称就是 xiaweiss.github.io</p>
+<h3 id="1-4-本地安装好-git-和-npm"><a href="#1-4-本地安装好-git-和-npm" class="headerlink" title="1.4 本地安装好 git 和 npm"></a>1.4 本地安装好 git 和 npm</h3><p>下载自己系统对应的安装包，安装<br>windows 下载第一行的 msi 类型即可，位数按系统的位数即可，一般选64-bit</p>
+<p><a href="https://git-scm.com/downloads">git下载地址</a> | <a href="https://nodejs.org/en/download">node下载地址</a></p>
+<p>安装过程中，不用选择，一直点 next下一步即可<br>安装好之后，运行其他系统运行 terminal 命令行工具<br>windows 系统，在桌面或任意文件夹内，右击，运行 git bush here</p>
+<p><img data-src="https://xiawei.cc/images/20171008-git-bush-here.png"></p>
+<p>(下文的命令行中的命令，每行代表一个命令，行末必须按回车键Enter)</p>
+<p>在命令行中输入</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git --version 回车键Enter</span><br><span class="line">npm --version 回车键Enter</span><br></pre></td></tr></table></figure>
+<p>如果看到版本号，则成功。否则重新安装</p>
+<h3 id="1-5-安装好-Atom"><a href="#1-5-安装好-Atom" class="headerlink" title="1.5 安装好 Atom"></a>1.5 安装好 Atom</h3><p>进入 <a href="https://atom.io/">atom编辑器 官网</a>，下载安装它</p>
+<p>启动 Atom 之后, 点击 Packages 安装插件</p>
+<p>请搜索并安装以下 markdown 插件</p>
+<p>markdown-writer<br>tool-bar<br>tool-bar-markdown-writer<br>markdown-scroll-sync<br>markdown-pdf</p>
+<p>或者也可以使用其他你喜欢的 markdown 文件编辑工具</p>
+<h2 id="2-本地搭建站点"><a href="#2-本地搭建站点" class="headerlink" title="2. 本地搭建站点"></a>2. 本地搭建站点</h2><h3 id="2-1-安装-hexo"><a href="#2-1-安装-hexo" class="headerlink" title="2.1 安装 hexo"></a>2.1 安装 hexo</h3><p>在命令行中继续输入</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">npm config set registry https:&#x2F;&#x2F;registry.npm.taobao.org</span><br><span class="line">npm install hexo -g</span><br><span class="line">npm install hexo-cli -g</span><br></pre></td></tr></table></figure>
+<h3 id="2-2-初始化你的本地站点"><a href="#2-2-初始化你的本地站点" class="headerlink" title="2.2 初始化你的本地站点"></a>2.2 初始化你的本地站点</h3><p>去 Github 把你的 Repo 的 git 地址拷贝出来。<br>我的是 <a href="https://github.com/xiaweiss/xiaweiss.github.io.git">https://github.com/xiaweiss/xiaweiss.github.io.git</a><br>你的是 <a href="https://github.com/yourname/yourname.github.io.git">https://github.com/yourname/yourname.github.io.git</a> （其中，yourname 应该换乘你的 Github 用户名）</p>
+<p>然后在 Terminal 面板里输入</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd ~&#x2F;Public  (windows中 cd &#x2F;d)</span><br><span class="line">hexo init yourname.github.io</span><br><span class="line">cd yourname.github.io</span><br><span class="line">npm install hexo-deployer-git --save</span><br><span class="line">hexo generate</span><br><span class="line">hexo server</span><br></pre></td></tr></table></figure>
+<p>这些完成之后，你就可以打开浏览器，在地址栏里输入： <code>localhost:4000</code>，在本地先看看网站是什么样子了。</p>
+<h2 id="3-本地站点发布到-Github-上"><a href="#3-本地站点发布到-Github-上" class="headerlink" title="3. 本地站点发布到 Github 上"></a>3. 本地站点发布到 Github 上</h2><h3 id="3-1-修改-hexo-配置文件"><a href="#3-1-修改-hexo-配置文件" class="headerlink" title="3.1 修改 hexo 配置文件"></a>3.1 修改 hexo 配置文件</h3><p>关闭命令行，重新打开一个命令行</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">atom . （注意符号点前面有空格）</span><br></pre></td></tr></table></figure>
+<p>在 Atom 的左侧面板中，选择 _config.yml 文件，找到 deploy 那一部分（末尾的79行）</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">deploy:</span><br><span class="line">  type:</span><br><span class="line">  (空行)</span><br></pre></td></tr></table></figure>
+<p>改成：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: https:&#x2F;&#x2F;github.com&#x2F;yourname&#x2F;yourname.github.io.git</span><br></pre></td></tr></table></figure>
+<p>Ctrl+S 保存</p>
+<h3 id="3-2-github-生成一个ssh-key配置"><a href="#3-2-github-生成一个ssh-key配置" class="headerlink" title="3.2 github 生成一个ssh-key配置"></a>3.2 github 生成一个ssh-key配置</h3><p><a href="https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/">https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/</a><br>打开命令行</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git config --global user.name &quot;yourname&quot;</span><br><span class="line">git config --global user.email &quot;your_email@example.com&quot;</span><br><span class="line">ssh-keygen -t rsa -b 4096 -C &quot;your_email@example.com&quot; (替换为你的GitHub电子邮件地址)</span><br></pre></td></tr></table></figure>
+<p>接着会出现几次提示，如下图箭头处，直接按回车Enter键即可<br><img data-src="https://xiawei.cc/images/20171008-create-ssh-key.png"></p>
+<h3 id="3-3-将ssh-key添加到-Github"><a href="#3-3-将ssh-key添加到-Github" class="headerlink" title="3.3 将ssh-key添加到 Github"></a>3.3 将ssh-key添加到 Github</h3><p>打开Github，点击右上角的头像，再点设置</p>
+<p><img data-src="https://xiawei.cc/images/20171008-github-setting.png"></p>
+<p>命令行中继续输入</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cat ~&#x2F;.ssh&#x2F;id_rsa.pub</span><br></pre></td></tr></table></figure>
+<p>然后可以看到一堆编码，见下图，把红框里的部分复制了。<br><img data-src="https://xiawei.cc/images/20171008-copy-ssh-key.png"></p>
+<p>在用户设置侧栏中，单击 SSH and GPG Keys(SSH和GPG密钥)，然后单击右上角绿色的 New SSH key(新的SSH密钥)</p>
+<p>然后可以看到这个界面，Title标题随意填。key密钥里，把刚刚复制好的编码粘贴进去，然后点下面 Add SSH key<br><img data-src="https://xiawei.cc/images/20171008-github-paste-ssh-keys.png"></p>
+<p>出现这个界面，表示成功了<br><img data-src="https://xiawei.cc/images/20171008-github-add-ssh-key-ok.png"></p>
+<p>最后一步，命令行中输入，就可以发布到 Github 了</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
+<p>打开 <a href="https://yourname.github.io/">https://yourname.github.io</a> 就可以看到博客了</p>
+<h2 id="4-日常使用"><a href="#4-日常使用" class="headerlink" title="4. 日常使用"></a>4. 日常使用</h2><p>打开命令行</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">atom .</span><br></pre></td></tr></table></figure>
+<p>即可启动编辑器，并且打开项目目录</p>
+<p><img data-src="https://xiawei.cc/images/20171008-atom-md-view.png"></p>
+<p>使用 md 后缀的 markdown 格式，来写文章。语法请参考 <a href="http://www.jianshu.com/p/q81RER">《献给写作者的 Markdown 新手指南》</a></p>
+<p>使用 atom 编辑器来 编辑md文件,打开md文件时 ctrl+shift+m 即可看到预览区域</p>
+<p>_draft 文件夹用来存没写完的草稿<br>_posts 文件夹用来存要发布出去的文章<br>_images 文件夹用来存文章中的图片</p>
+<p>以上文件夹下，直接放文章，不要放子文件夹<br>文件名命名格式推荐 20171008-file-name.md<br>文件名不要使用中文，中文不利于检索文件名</p>
+<p>文章顶部 按模板的语法</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: 标题</span><br><span class="line">date: 2017-10-08</span><br><span class="line">tags: 标签</span><br><span class="line">category: 分类</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
+<p>其中 date 是发布日期注意不要使用模板的 <code>&#123; date &#125;</code>写法，这种写法一旦标题改变或者数据文件 db.json 或 /public 丢失，发布日期会改变</p>
+<p>多个标签或分类时，这样写</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">tags:</span><br><span class="line">- 标签1</span><br><span class="line">- 标签2</span><br></pre></td></tr></table></figure>
+<p>图片 可以用 <code>![](/images/20171008-image-name.png)</code>语法来引入</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;!--more--&gt; 表示预览区的分界线，主页面只会显示它之前的内容。</span><br></pre></td></tr></table></figure>
+
+<p>写完文章后，本地网站查看效果</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">hexo g</span><br><span class="line">hexo s</span><br></pre></td></tr></table></figure>
+<p>发布到 Github</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">hexo g</span><br><span class="line">hexo s</span><br></pre></td></tr></table></figure>
+<h2 id="5-备份本地代码-和-数据"><a href="#5-备份本地代码-和-数据" class="headerlink" title="5. 备份本地代码 和 数据"></a>5. 备份本地代码 和 数据</h2><h3 id="5-1-坚果云备份"><a href="#5-1-坚果云备份" class="headerlink" title="5.1 坚果云备份"></a>5.1 坚果云备份</h3><p>由于Github是开源的，备份到Github，别人容易下载拿走，考虑到私密性，推荐使用 <a href="https://www.jianguoyun.com/">坚果云</a> 来自动备份</p>
+<p>找到 yourname.github.io 文件夹右击，选择<code>坚果云</code>，选择<code>同步到个人空间</code>，即可</p>
+<p><img data-src="https://xiawei.cc/images/20171008-netstore.png"></p>
+<h3 id="5-2-Github-备份"><a href="#5-2-Github-备份" class="headerlink" title="5.2 Github 备份"></a>5.2 Github 备份</h3><p>如果为了不引入其他工具，也可以使用 Github 来备份：</p>
+<p>打开命令行</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">git init</span><br><span class="line">git checkout -b source</span><br><span class="line">git add . (注意点前面有空格)</span><br><span class="line">git commit -m &quot;init&quot;</span><br><span class="line">git remote add origin  https:&#x2F;&#x2F;github.com&#x2F;yourname&#x2F;yourname.github.io.git</span><br><span class="line">git push -u origin source</span><br></pre></td></tr></table></figure>
+<p>每次备份操作，打开命令行：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">git add .</span><br><span class="line">git commit -m &quot;本次备份的提示语&quot;</span><br><span class="line">git push</span><br></pre></td></tr></table></figure>
+<p>误删本地文件夹，从备份的代码恢复整个 yourname.github.io 文件夹：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d</span><br><span class="line">git clone https:&#x2F;&#x2F;github.com&#x2F;yourname&#x2F;yourname.github.io.git</span><br><span class="line">git checkout source</span><br><span class="line">npm install</span><br></pre></td></tr></table></figure>
+<p>如果是在新的电脑恢复 整个 yourname.github.io 文件夹，<br>需要先重复步骤1 ~ 步骤2，并且其中以下步骤直接跳过，然后再执行上面命令<br>1.2 注册一个 Github 账号<br>1.3 创建一个Repo<br>2.2 初始化你的本地站点</p>
+<h2 id="6-进阶优化配置"><a href="#6-进阶优化配置" class="headerlink" title="6. 进阶优化配置"></a>6. 进阶优化配置</h2><p>以下部分非新手向，只写要点，按需食用</p>
+<h3 id="6-1-版本控制"><a href="#6-1-版本控制" class="headerlink" title="6.1 版本控制"></a>6.1 版本控制</h3><p>使用 git 来控制版本<br>为方便切换分支，<br>master分支添加 .gitignore 文件<br>master分支、source分支内容统一为</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">.DS_Store</span><br><span class="line">*.log</span><br><span class="line">node_modules&#x2F;</span><br><span class="line">public&#x2F;</span><br><span class="line">.deploy*&#x2F;</span><br><span class="line">.idea&#x2F;</span><br></pre></td></tr></table></figure>
+<h3 id="6-2-主题更换"><a href="#6-2-主题更换" class="headerlink" title="6.2 主题更换"></a>6.2 主题更换</h3><p>使用 <a href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> 主题为例，<a href="http://theme-next.iissnan.com/">详细中文文档</a></p>
+<p>注意当一个repo包含其他repo时，使用命令  <code>git submodule add</code> 来安装并且分开管理，而不是 <code>git clone</code>，</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git submodule add https:&#x2F;&#x2F;github.com&#x2F;iissnan&#x2F;hexo-theme-next themes&#x2F;next</span><br></pre></td></tr></table></figure>
+<p>至于主题配置文件，可以保存一份副本到 themes 文件夹里提交到自己的仓库</p>
+<p>注意切换主题后，如果显示不正常，运行 <code>hexo clean</code> 来清理数据<br>特别注意<code>hexo clean</code>同时会清除掉历史文章的发布日期，慎用！</p>
+<p>clone 含有子repo 的项目后，子 repo 目录内没有内容，还需要执行下面两个命令来 clone 子repo</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git submodule init</span><br><span class="line">git submodule update</span><br></pre></td></tr></table></figure>
+<h3 id="6-3-文章末尾添加评论区"><a href="#6-3-文章末尾添加评论区" class="headerlink" title="6.3 文章末尾添加评论区"></a>6.3 文章末尾添加评论区</h3><p>目前由于国内审核机制，国内服务说不定哪天就关闭了。所以推荐国外的服务，比较稳定。使用国外的服务，需要代理上网访问国外，没有的用户则不显示评论区。</p>
+<p><a href="http://www.jianshu.com/p/d68de067ea74">添加Disqus评论</a></p>
+<h3 id="6-4-目录序号"><a href="#6-4-目录序号" class="headerlink" title="6.4 目录序号"></a>6.4 目录序号</h3><p>主题会自动给文章的标题和子标题生成目录，并且加上序号<br>如果要自己写序号，不需要主题自带序号，修改主题配置文件 _config.yml 里的 toc 后面的 member 配置为</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">156行 number: false</span><br></pre></td></tr></table></figure>
+<h3 id="6-5-图片引用"><a href="#6-5-图片引用" class="headerlink" title="6.5 图片引用"></a>6.5 图片引用</h3><p>推荐不使用图床，直接把统一图片存在本地文件夹</p>
+<p>目前不支持 atom markdown预览 和 本地网站里同时正常预览图片</p>
+<p>建议编辑时使用 <code>![](../images/xxx.png)</code></p>
+<p>发布时用atom ctrl+f 统一把 <code>../</code> 替换为 <code>/</code> 即可</p>
+<h3 id="6-6-统计"><a href="#6-6-统计" class="headerlink" title="6.6 统计"></a>6.6 统计</h3><p>阅读量统计可以使用 LeanCloud 计数，注意主题配置文件里有两处 LeanCloud，要配置<code>leancloud_visitors</code></p>
+<p>或者直接使用 不蒜子统计 即可，可同时实现阅读量统计、PV、UV功能。</p>
+<p>个人建议，LeanCloud统计阅读量，不蒜子统计PV、UV</p>
+<p><a href="https://notes.wanghao.work/2015-10-21-%E4%B8%BANexT%E4%B8%BB%E9%A2%98%E6%B7%BB%E5%8A%A0%E6%96%87%E7%AB%A0%E9%98%85%E8%AF%BB%E9%87%8F%E7%BB%9F%E8%AE%A1%E5%8A%9F%E8%83%BD.html">LeanCloud 配置</a><br><a href="http://theme-next.iissnan.com/third-party-services.html#analytics-busuanzi">不蒜子配置</a></p>
+<h3 id="6-7-修改样式"><a href="#6-7-修改样式" class="headerlink" title="6.7 修改样式"></a>6.7 修改样式</h3><p>next 主题使用 <a href="http://stylus-lang.com/">stylus</a> 预编译样式语言</p>
+<p>可以在 <code>themes\next\source\css\_custom\custom.styl</code> 文件里写自己的 stylus 样式</p>
+<p>例如：首行缩进，添加如下代码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">p</span><br><span class="line">  text-indent 2em</span><br></pre></td></tr></table></figure>
+<h3 id="6-8-显示更新日期"><a href="#6-8-显示更新日期" class="headerlink" title="6.8 显示更新日期"></a>6.8 显示更新日期</h3><p>修改主题配置文件 _config.yml，找到 updated_at,修改为</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">updated_at: true</span><br></pre></td></tr></table></figure>
+<p>然后就会显示更新的日期了</p>
+<p>如果需要手动设置，可以在文章的标签里加入 <code>updated</code>，如下</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: 使用 Hexo 为自己在 Github 上建一个静态 Blog博客 站点</span><br><span class="line">date: 2017-10-08</span><br><span class="line">updated: 2017-11-11</span><br><span class="line">file-title: &#123;&#123; title &#125;&#125;</span><br><span class="line">tags: Hexo</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
+<h3 id="6-9-底部添加备案信息、或者其他文字"><a href="#6-9-底部添加备案信息、或者其他文字" class="headerlink" title="6.9 底部添加备案信息、或者其他文字"></a>6.9 底部添加备案信息、或者其他文字</h3><p>在主题配置文件里找到 custom_text 这行，修改一下即可</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#custom_text: Hosted by &lt;a target&#x3D;&quot;_blank&quot; href&#x3D;&quot;https:&#x2F;&#x2F;pages.github.com&quot;&gt;GitHub Pages&lt;&#x2F;a&gt;</span><br><span class="line">custom_text: Xiaweiss.com 京ICP备17057895号</span><br></pre></td></tr></table></figure>
+<p>或者在主题配置文件里找到 copyright: 这行,修改为</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># If not defined, will be used &#96;author&#96; from Hexo main config.</span><br><span class="line">copyright: &lt;a href&#x3D;&quot;http:&#x2F;&#x2F;xiaweiss.com&quot;&gt;Xiaweiss.com&lt;&#x2F;a&gt; 京ICP备17057895号</span><br></pre></td></tr></table></figure>
+<h3 id="6-10-设置搜索服务"><a href="#6-10-设置搜索服务" class="headerlink" title="6.10 设置搜索服务"></a>6.10 设置搜索服务</h3><p>使用免费的 local search<br>npm 安装包</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">npm install hexo-generator-searchdb --save</span><br></pre></td></tr></table></figure>
+<p>next 主题配置文件里，修改配置文件<br>top_n_per_article 指正文的搜索结果，显示几条。 -1 代表全部显示</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">local_search:</span><br><span class="line">  enable: true</span><br><span class="line">  # if auto, trigger search by changing input</span><br><span class="line">  # if manual, trigger search by pressing enter key or search button</span><br><span class="line">  trigger: auto</span><br><span class="line">  # show top n results per article, show all results by setting to -1</span><br><span class="line">  top_n_per_article: 3</span><br></pre></td></tr></table></figure>
+<h3 id="6-11-添加分类、标签页"><a href="#6-11-添加分类、标签页" class="headerlink" title="6.11 添加分类、标签页"></a>6.11 添加分类、标签页</h3><p>可以按官方文档设置<br><a href="https://github.com/iissnan/hexo-theme-next/wiki/%E5%88%9B%E5%BB%BA%E5%88%86%E7%B1%BB%E9%A1%B5%E9%9D%A2">创建分类页面</a><br><a href="https://github.com/iissnan/hexo-theme-next/wiki/%E5%88%9B%E5%BB%BA%E6%A0%87%E7%AD%BE%E4%BA%91%E9%A1%B5%E9%9D%A2">创建标签云页面</a></p>
+<p>但以上设置会导致多出2个文件夹，而且以后不会在里面放其他文件，所以我个人推荐这样设置<br>在 source 目录下:<br>新建 文件 categories.md：里面写</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: 分类</span><br><span class="line">type: &quot;categories&quot;</span><br><span class="line">comments: false</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
+<p>新建 文件 tags.md：里面写</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: 标签</span><br><span class="line">type: &quot;tags&quot;</span><br><span class="line">comments: false</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
+<p>然后修改主题配置文件，menu设置里的 categories、tags</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">menu:</span><br><span class="line">  home: &#x2F; || home</span><br><span class="line">  categories: &#x2F;categories.html || th</span><br><span class="line">  tags: &#x2F;tags.html || tags</span><br></pre></td></tr></table></figure>
+<h3 id="6-12-设置滚动"><a href="#6-12-设置滚动" class="headerlink" title="6.12 设置滚动"></a>6.12 设置滚动</h3><p>主题配置文件里</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">scroll_to_more: true</span><br></pre></td></tr></table></figure>
+<p>表示从主页进去文章后，直接自动滚动到文章中 more 标签的位置，可以看到网址里多了#more<br>如果需要去掉，设置为false即可</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">save_scroll: false</span><br></pre></td></tr></table></figure>
+<p>表示在本地存储阅读的进度（滚动到的位置），刷新或再次打开页面时，可以接着读。<br>建议打开这个功能，设置为true即可</p>
+<h3 id="6-13-设置-RSS-订阅源"><a href="#6-13-设置-RSS-订阅源" class="headerlink" title="6.13 设置 RSS 订阅源"></a>6.13 设置 RSS 订阅源</h3><p>安装依赖</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">npm install hexo-generator-feed</span><br></pre></td></tr></table></figure>
+<p>项目配置文件里添加配置</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># RSS</span><br><span class="line">feed:</span><br><span class="line">  type: atom</span><br><span class="line">  path: atom.xml</span><br><span class="line">  limit: false</span><br><span class="line">  hub:</span><br><span class="line">  order_by: -updated</span><br></pre></td></tr></table></figure>
+<p>主题配置文件里找到 rss 配置，设置为</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">rss: &#x2F;atom.xml</span><br></pre></td></tr></table></figure>
+<p>rss 阅读器推荐使用 <a href="https://www.inoreader.com/">inoreader</a></p>
+<h2 id="7-界面美化"><a href="#7-界面美化" class="headerlink" title="7. 界面美化"></a>7. 界面美化</h2><h3 id="7-1-右下角-live2d-小人"><a href="#7-1-右下角-live2d-小人" class="headerlink" title="7.1 右下角 live2d 小人"></a>7.1 右下角 live2d 小人</h3><p>中文文档 <a href="https://github.com/EYHN/hexo-helper-live2d/blob/master/README.zh-CN.md">EYHN/hexo-helper-live2d</a></p>
+<p>下面是我目前旧版2.1.5的使用方式，最新版请参考hexo-helper-live2d 中文文档</p>
+<p>旧版配置方式：</p>
+<p>安装</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd yourname.github.io</span><br><span class="line">npm install hexo-helper-live2d@2.1.5</span><br></pre></td></tr></table></figure>
+<p>在 yourname.github.io 的 hexo 配置文件 <code>_config.yml</code> 里添加配置项</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># Live2D</span><br><span class="line">## https:&#x2F;&#x2F;github.com&#x2F;EYHN&#x2F;hexo-helper-live2d</span><br><span class="line">live2d:</span><br><span class="line">  model: koharu # 模型名称 默认值: z16</span><br><span class="line">  width: 150 # 宽度 默认值: 150</span><br><span class="line">  height: 300 # 高度 默认值: 300</span><br><span class="line">  scaling: 1 # 分辨率缩放倍率 默认值: 2</span><br><span class="line">  opacityDefault: 1 # 初始的透明度 默认值: 1</span><br><span class="line">  #opacityHover: 1 # 鼠标悬浮时的透明度 默认值: 1</span><br><span class="line">  mobileShow: true # 是否在移动设备上显示 默认值: true</span><br><span class="line">  mobileScaling: 0.5 # 移动设备缩放倍率 默认值: 0.5</span><br><span class="line">  position: right # 模型左右侧放置位置 默认值: right</span><br><span class="line">  horizontalOffset: 0 # 元素的水平偏移 默认值: 0</span><br><span class="line">  verticalOffset: -20 # 元素的底部偏移 默认值: -20</span><br><span class="line">  className: live2d # 元素的类名 默认值: live2d</span><br><span class="line">  id: live2dcanvas # 元素的id 默认值: live2dcanvas</span><br></pre></td></tr></table></figure>
+<p>我自己使用的是 koharu，如果需要其他的，改为相应的名字即可<br>旧版所有小人请看作者大大博客 <a href="https://huaji8.top/post/live2d-plugin-2.0/">hexo live2d插件 2.0 !</a></p>
+<p>接下来，在 <code>next/layout/_layout.swig</code> 文件里，找到 <code>&lt;/body&gt;</code>,在它前面的行添加代码<br>像这样：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123;&#123; live2d() &#125;&#125;</span><br><span class="line">&lt;&#x2F;body&gt;</span><br></pre></td></tr></table></figure>
+<h3 id="7-2-配置网站顶部背景颜色、二级标题字色"><a href="#7-2-配置网站顶部背景颜色、二级标题字色" class="headerlink" title="7.2 配置网站顶部背景颜色、二级标题字色"></a>7.2 配置网站顶部背景颜色、二级标题字色</h3><p>参照 6.1，添加配置</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">.headband</span><br><span class="line">  background: #0095EE;</span><br><span class="line">.site-meta</span><br><span class="line">  background: #0095EE;</span><br><span class="line">.site-subtitle</span><br><span class="line">  color: white;</span><br></pre></td></tr></table></figure>
+<h3 id="7-3-其他"><a href="#7-3-其他" class="headerlink" title="7.3 其他"></a>7.3 其他</h3><p>界面的优化需要掌握一定的 css 知识，这里不再赘述<br>可以参考 <a href="https://qianling.pw/hexo-optimization/">千灵《Hexo 优化汇总》</a><br>以及我博客源码里 themes 文件夹下文件的的相关注释</p>
+<p>概括来说</p>
+<ol>
+<li>修改预设好的值，在 <code>next/source/css/_variables/custom.styl</code> 添加变量即可</li>
+</ol>
+<p>例如 <code>base.styl</code> 可以看到代码 <code>$blue = #0684bd</code><br>要把所有预设好的蓝色改为白色，<code>custom.styl</code> 里添加 <code>$red = #fff</code> 即可</p>
+<ol start="2">
+<li><p>添加或修改 样式，可以在 <code>next/source/css/_custom/custom.styl</code> 写入 css</p>
+</li>
+<li><p>修改首页，添加 js，修改文字符号等，修改 <code>next/layout/_layout.swig</code> 即可<br>文章页请修改 <code>next/layout/_macro/post.swig</code></p>
+</li>
+</ol>
+<h2 id="8-高级设定"><a href="#8-高级设定" class="headerlink" title="8.高级设定"></a>8.高级设定</h2><h3 id="8-1-next-主题版本更新或回滚"><a href="#8-1-next-主题版本更新或回滚" class="headerlink" title="8.1 next 主题版本更新或回滚"></a>8.1 next 主题版本更新或回滚</h3><p>进入 next 目录</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd themes&#x2F;next</span><br><span class="line">git fetch</span><br><span class="line">git tag</span><br></pre></td></tr></table></figure>
+<p>即可看到当前可用版本列表，使用下面命令即可切换到指定版本，如</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git checkout v5.1.4</span><br></pre></td></tr></table></figure>
+<p>切换过程中会有文件冲突<br>可以切换前执行 git stash，切换后执行 git stash pop，然后修改文件即可</p>
+<p>或者使用软链接的方式，把修改的文件放在 next 文件夹外时，只需要修改文件，重新软链接即可</p>
+<p>感谢阅读，最后附上<a href="https://github.com/xiaweiss/xiaweiss-site">博客源码</a></p>
+<p>参考资料：<br><a href="http://lixiaolai.com/2016/06/22/makecs-build-a-blog-with-hexo-on-github/">李笑来《使用 Hexo 为自己在 Github 上建一个静态 Blog 站点》</a><br><a href="https://qianling.pw/hexo-optimization/">千灵《Hexo 优化汇总》</a><br><a href="https://hexo.io/zh-cn/docs/">Hexo 官方文档</a><br><a href="http://theme-next.iissnan.com/">NexT 主题文档</a></p>
+<blockquote>
+<p>图片来源：<a href="https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=40872946">https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=40872946</a></p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>技术</category>
+      </categories>
+      <tags>
+        <tag>hexo</tag>
+      </tags>
   </entry>
   <entry>
     <title>Vue 入门指南</title>
@@ -2296,196 +2486,6 @@
       </categories>
       <tags>
         <tag>svg</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Hexo 博客搭建、进阶配置指南</title>
-    <url>/art/2017/20171008-build-a-blog-with-hexo-on-github/</url>
-    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20171008.jpg"></p>
-<blockquote>
-<p>作为一个 web 程序员，当然也想有自己的自留地<br>于是就研究起了搭建博客，来记录自己的成长<br>了解之后，发现 github + hexo 是个门槛很低的，效果很好的方式<br>hexo 基于 markdown，意味着不需要关心文章排版，也不需要学习编程<br>github 提供了免费空间、域名以及代码管理的工具，解决了服务器问题</p>
-</blockquote>
-<a id="more"></a>
-
-<blockquote>
-<p>2018-12-03 更新 章节 6.13 设置 RSS 订阅源</p>
-</blockquote>
-<h2 id="1-准备工作"><a href="#1-准备工作" class="headerlink" title="1. 准备工作"></a>1. 准备工作</h2><h3 id="1-1-安装-chrome-浏览器，百度下载即可"><a href="#1-1-安装-chrome-浏览器，百度下载即可" class="headerlink" title="1.1 安装 chrome 浏览器，百度下载即可"></a>1.1 安装 chrome 浏览器，百度下载即可</h3><p><img data-src="https://xiawei.cc/images/20171008-download-chrome.png"></p>
-<h3 id="1-2-注册一个-Github-账号"><a href="#1-2-注册一个-Github-账号" class="headerlink" title="1.2 注册一个 Github 账号"></a>1.2 注册一个 <a href="https://github.com/join?source=header-home">Github</a> 账号</h3><p>如果看不懂英语，可以点这个小按钮来全文翻译（失败的话可以多试几次，或使用其他翻译软件）</p>
-<p><img data-src="https://xiawei.cc/images/20171008-chrome-translate.png"></p>
-<h3 id="1-3-创建一个Repo"><a href="#1-3-创建一个Repo" class="headerlink" title="1.3 创建一个Repo"></a>1.3 创建一个Repo</h3><p>登录 Github（初次注册后会自动登录），点击右上角”+”，再点第一行 “新存储库”(New repository)</p>
-<p>第一次要求验证邮箱，邮箱里会收到 Github 发来的邮件，点那个最长的链接就ok</p>
-<p>存储库名称格式为 yourname.github.io。比如，我个人的 Github 账户用户名是 xiaweiss，所以，我的这个 Repo 的名称就是 xiaweiss.github.io</p>
-<h3 id="1-4-本地安装好-git-和-npm"><a href="#1-4-本地安装好-git-和-npm" class="headerlink" title="1.4 本地安装好 git 和 npm"></a>1.4 本地安装好 git 和 npm</h3><p>下载自己系统对应的安装包，安装<br>windows 下载第一行的 msi 类型即可，位数按系统的位数即可，一般选64-bit</p>
-<p><a href="https://git-scm.com/downloads">git下载地址</a> | <a href="https://nodejs.org/en/download">node下载地址</a></p>
-<p>安装过程中，不用选择，一直点 next下一步即可<br>安装好之后，运行其他系统运行 terminal 命令行工具<br>windows 系统，在桌面或任意文件夹内，右击，运行 git bush here</p>
-<p><img data-src="https://xiawei.cc/images/20171008-git-bush-here.png"></p>
-<p>(下文的命令行中的命令，每行代表一个命令，行末必须按回车键Enter)</p>
-<p>在命令行中输入</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git --version 回车键Enter</span><br><span class="line">npm --version 回车键Enter</span><br></pre></td></tr></table></figure>
-<p>如果看到版本号，则成功。否则重新安装</p>
-<h3 id="1-5-安装好-Atom"><a href="#1-5-安装好-Atom" class="headerlink" title="1.5 安装好 Atom"></a>1.5 安装好 Atom</h3><p>进入 <a href="https://atom.io/">atom编辑器 官网</a>，下载安装它</p>
-<p>启动 Atom 之后, 点击 Packages 安装插件</p>
-<p>请搜索并安装以下 markdown 插件</p>
-<p>markdown-writer<br>tool-bar<br>tool-bar-markdown-writer<br>markdown-scroll-sync<br>markdown-pdf</p>
-<p>或者也可以使用其他你喜欢的 markdown 文件编辑工具</p>
-<h2 id="2-本地搭建站点"><a href="#2-本地搭建站点" class="headerlink" title="2. 本地搭建站点"></a>2. 本地搭建站点</h2><h3 id="2-1-安装-hexo"><a href="#2-1-安装-hexo" class="headerlink" title="2.1 安装 hexo"></a>2.1 安装 hexo</h3><p>在命令行中继续输入</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">npm config set registry https:&#x2F;&#x2F;registry.npm.taobao.org</span><br><span class="line">npm install hexo -g</span><br><span class="line">npm install hexo-cli -g</span><br></pre></td></tr></table></figure>
-<h3 id="2-2-初始化你的本地站点"><a href="#2-2-初始化你的本地站点" class="headerlink" title="2.2 初始化你的本地站点"></a>2.2 初始化你的本地站点</h3><p>去 Github 把你的 Repo 的 git 地址拷贝出来。<br>我的是 <a href="https://github.com/xiaweiss/xiaweiss.github.io.git">https://github.com/xiaweiss/xiaweiss.github.io.git</a><br>你的是 <a href="https://github.com/yourname/yourname.github.io.git">https://github.com/yourname/yourname.github.io.git</a> （其中，yourname 应该换乘你的 Github 用户名）</p>
-<p>然后在 Terminal 面板里输入</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd ~&#x2F;Public  (windows中 cd &#x2F;d)</span><br><span class="line">hexo init yourname.github.io</span><br><span class="line">cd yourname.github.io</span><br><span class="line">npm install hexo-deployer-git --save</span><br><span class="line">hexo generate</span><br><span class="line">hexo server</span><br></pre></td></tr></table></figure>
-<p>这些完成之后，你就可以打开浏览器，在地址栏里输入： <code>localhost:4000</code>，在本地先看看网站是什么样子了。</p>
-<h2 id="3-本地站点发布到-Github-上"><a href="#3-本地站点发布到-Github-上" class="headerlink" title="3. 本地站点发布到 Github 上"></a>3. 本地站点发布到 Github 上</h2><h3 id="3-1-修改-hexo-配置文件"><a href="#3-1-修改-hexo-配置文件" class="headerlink" title="3.1 修改 hexo 配置文件"></a>3.1 修改 hexo 配置文件</h3><p>关闭命令行，重新打开一个命令行</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">atom . （注意符号点前面有空格）</span><br></pre></td></tr></table></figure>
-<p>在 Atom 的左侧面板中，选择 _config.yml 文件，找到 deploy 那一部分（末尾的79行）</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">deploy:</span><br><span class="line">  type:</span><br><span class="line">  (空行)</span><br></pre></td></tr></table></figure>
-<p>改成：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: https:&#x2F;&#x2F;github.com&#x2F;yourname&#x2F;yourname.github.io.git</span><br></pre></td></tr></table></figure>
-<p>Ctrl+S 保存</p>
-<h3 id="3-2-github-生成一个ssh-key配置"><a href="#3-2-github-生成一个ssh-key配置" class="headerlink" title="3.2 github 生成一个ssh-key配置"></a>3.2 github 生成一个ssh-key配置</h3><p><a href="https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/">https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/</a><br>打开命令行</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git config --global user.name &quot;yourname&quot;</span><br><span class="line">git config --global user.email &quot;your_email@example.com&quot;</span><br><span class="line">ssh-keygen -t rsa -b 4096 -C &quot;your_email@example.com&quot; (替换为你的GitHub电子邮件地址)</span><br></pre></td></tr></table></figure>
-<p>接着会出现几次提示，如下图箭头处，直接按回车Enter键即可<br><img data-src="https://xiawei.cc/images/20171008-create-ssh-key.png"></p>
-<h3 id="3-3-将ssh-key添加到-Github"><a href="#3-3-将ssh-key添加到-Github" class="headerlink" title="3.3 将ssh-key添加到 Github"></a>3.3 将ssh-key添加到 Github</h3><p>打开Github，点击右上角的头像，再点设置</p>
-<p><img data-src="https://xiawei.cc/images/20171008-github-setting.png"></p>
-<p>命令行中继续输入</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cat ~&#x2F;.ssh&#x2F;id_rsa.pub</span><br></pre></td></tr></table></figure>
-<p>然后可以看到一堆编码，见下图，把红框里的部分复制了。<br><img data-src="https://xiawei.cc/images/20171008-copy-ssh-key.png"></p>
-<p>在用户设置侧栏中，单击 SSH and GPG Keys(SSH和GPG密钥)，然后单击右上角绿色的 New SSH key(新的SSH密钥)</p>
-<p>然后可以看到这个界面，Title标题随意填。key密钥里，把刚刚复制好的编码粘贴进去，然后点下面 Add SSH key<br><img data-src="https://xiawei.cc/images/20171008-github-paste-ssh-keys.png"></p>
-<p>出现这个界面，表示成功了<br><img data-src="https://xiawei.cc/images/20171008-github-add-ssh-key-ok.png"></p>
-<p>最后一步，命令行中输入，就可以发布到 Github 了</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
-<p>打开 <a href="https://yourname.github.io/">https://yourname.github.io</a> 就可以看到博客了</p>
-<h2 id="4-日常使用"><a href="#4-日常使用" class="headerlink" title="4. 日常使用"></a>4. 日常使用</h2><p>打开命令行</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">atom .</span><br></pre></td></tr></table></figure>
-<p>即可启动编辑器，并且打开项目目录</p>
-<p><img data-src="https://xiawei.cc/images/20171008-atom-md-view.png"></p>
-<p>使用 md 后缀的 markdown 格式，来写文章。语法请参考 <a href="http://www.jianshu.com/p/q81RER">《献给写作者的 Markdown 新手指南》</a></p>
-<p>使用 atom 编辑器来 编辑md文件,打开md文件时 ctrl+shift+m 即可看到预览区域</p>
-<p>_draft 文件夹用来存没写完的草稿<br>_posts 文件夹用来存要发布出去的文章<br>_images 文件夹用来存文章中的图片</p>
-<p>以上文件夹下，直接放文章，不要放子文件夹<br>文件名命名格式推荐 20171008-file-name.md<br>文件名不要使用中文，中文不利于检索文件名</p>
-<p>文章顶部 按模板的语法</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: 标题</span><br><span class="line">date: 2017-10-08</span><br><span class="line">tags: 标签</span><br><span class="line">category: 分类</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
-<p>其中 date 是发布日期注意不要使用模板的 <code>&#123; date &#125;</code>写法，这种写法一旦标题改变或者数据文件 db.json 或 /public 丢失，发布日期会改变</p>
-<p>多个标签或分类时，这样写</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">tags:</span><br><span class="line">- 标签1</span><br><span class="line">- 标签2</span><br></pre></td></tr></table></figure>
-<p>图片 可以用 <code>![](/images/20171008-image-name.png)</code>语法来引入</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;!--more--&gt; 表示预览区的分界线，主页面只会显示它之前的内容。</span><br></pre></td></tr></table></figure>
-
-<p>写完文章后，本地网站查看效果</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">hexo g</span><br><span class="line">hexo s</span><br></pre></td></tr></table></figure>
-<p>发布到 Github</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">hexo g</span><br><span class="line">hexo s</span><br></pre></td></tr></table></figure>
-<h2 id="5-备份本地代码-和-数据"><a href="#5-备份本地代码-和-数据" class="headerlink" title="5. 备份本地代码 和 数据"></a>5. 备份本地代码 和 数据</h2><h3 id="5-1-坚果云备份"><a href="#5-1-坚果云备份" class="headerlink" title="5.1 坚果云备份"></a>5.1 坚果云备份</h3><p>由于Github是开源的，备份到Github，别人容易下载拿走，考虑到私密性，推荐使用 <a href="https://www.jianguoyun.com/">坚果云</a> 来自动备份</p>
-<p>找到 yourname.github.io 文件夹右击，选择<code>坚果云</code>，选择<code>同步到个人空间</code>，即可</p>
-<p><img data-src="https://xiawei.cc/images/20171008-netstore.png"></p>
-<h3 id="5-2-Github-备份"><a href="#5-2-Github-备份" class="headerlink" title="5.2 Github 备份"></a>5.2 Github 备份</h3><p>如果为了不引入其他工具，也可以使用 Github 来备份：</p>
-<p>打开命令行</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">git init</span><br><span class="line">git checkout -b source</span><br><span class="line">git add . (注意点前面有空格)</span><br><span class="line">git commit -m &quot;init&quot;</span><br><span class="line">git remote add origin  https:&#x2F;&#x2F;github.com&#x2F;yourname&#x2F;yourname.github.io.git</span><br><span class="line">git push -u origin source</span><br></pre></td></tr></table></figure>
-<p>每次备份操作，打开命令行：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">git add .</span><br><span class="line">git commit -m &quot;本次备份的提示语&quot;</span><br><span class="line">git push</span><br></pre></td></tr></table></figure>
-<p>误删本地文件夹，从备份的代码恢复整个 yourname.github.io 文件夹：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d</span><br><span class="line">git clone https:&#x2F;&#x2F;github.com&#x2F;yourname&#x2F;yourname.github.io.git</span><br><span class="line">git checkout source</span><br><span class="line">npm install</span><br></pre></td></tr></table></figure>
-<p>如果是在新的电脑恢复 整个 yourname.github.io 文件夹，<br>需要先重复步骤1 ~ 步骤2，并且其中以下步骤直接跳过，然后再执行上面命令<br>1.2 注册一个 Github 账号<br>1.3 创建一个Repo<br>2.2 初始化你的本地站点</p>
-<h2 id="6-进阶优化配置"><a href="#6-进阶优化配置" class="headerlink" title="6. 进阶优化配置"></a>6. 进阶优化配置</h2><p>以下部分非新手向，只写要点，按需食用</p>
-<h3 id="6-1-版本控制"><a href="#6-1-版本控制" class="headerlink" title="6.1 版本控制"></a>6.1 版本控制</h3><p>使用 git 来控制版本<br>为方便切换分支，<br>master分支添加 .gitignore 文件<br>master分支、source分支内容统一为</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">.DS_Store</span><br><span class="line">*.log</span><br><span class="line">node_modules&#x2F;</span><br><span class="line">public&#x2F;</span><br><span class="line">.deploy*&#x2F;</span><br><span class="line">.idea&#x2F;</span><br></pre></td></tr></table></figure>
-<h3 id="6-2-主题更换"><a href="#6-2-主题更换" class="headerlink" title="6.2 主题更换"></a>6.2 主题更换</h3><p>使用 <a href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> 主题为例，<a href="http://theme-next.iissnan.com/">详细中文文档</a></p>
-<p>注意当一个repo包含其他repo时，使用命令  <code>git submodule add</code> 来安装并且分开管理，而不是 <code>git clone</code>，</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git submodule add https:&#x2F;&#x2F;github.com&#x2F;iissnan&#x2F;hexo-theme-next themes&#x2F;next</span><br></pre></td></tr></table></figure>
-<p>至于主题配置文件，可以保存一份副本到 themes 文件夹里提交到自己的仓库</p>
-<p>注意切换主题后，如果显示不正常，运行 <code>hexo clean</code> 来清理数据<br>特别注意<code>hexo clean</code>同时会清除掉历史文章的发布日期，慎用！</p>
-<p>clone 含有子repo 的项目后，子 repo 目录内没有内容，还需要执行下面两个命令来 clone 子repo</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git submodule init</span><br><span class="line">git submodule update</span><br></pre></td></tr></table></figure>
-<h3 id="6-3-文章末尾添加评论区"><a href="#6-3-文章末尾添加评论区" class="headerlink" title="6.3 文章末尾添加评论区"></a>6.3 文章末尾添加评论区</h3><p>目前由于国内审核机制，国内服务说不定哪天就关闭了。所以推荐国外的服务，比较稳定。使用国外的服务，需要代理上网访问国外，没有的用户则不显示评论区。</p>
-<p><a href="http://www.jianshu.com/p/d68de067ea74">添加Disqus评论</a></p>
-<h3 id="6-4-目录序号"><a href="#6-4-目录序号" class="headerlink" title="6.4 目录序号"></a>6.4 目录序号</h3><p>主题会自动给文章的标题和子标题生成目录，并且加上序号<br>如果要自己写序号，不需要主题自带序号，修改主题配置文件 _config.yml 里的 toc 后面的 member 配置为</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">156行 number: false</span><br></pre></td></tr></table></figure>
-<h3 id="6-5-图片引用"><a href="#6-5-图片引用" class="headerlink" title="6.5 图片引用"></a>6.5 图片引用</h3><p>推荐不使用图床，直接把统一图片存在本地文件夹</p>
-<p>目前不支持 atom markdown预览 和 本地网站里同时正常预览图片</p>
-<p>建议编辑时使用 <code>![](../images/xxx.png)</code></p>
-<p>发布时用atom ctrl+f 统一把 <code>../</code> 替换为 <code>/</code> 即可</p>
-<h3 id="6-6-统计"><a href="#6-6-统计" class="headerlink" title="6.6 统计"></a>6.6 统计</h3><p>阅读量统计可以使用 LeanCloud 计数，注意主题配置文件里有两处 LeanCloud，要配置<code>leancloud_visitors</code></p>
-<p>或者直接使用 不蒜子统计 即可，可同时实现阅读量统计、PV、UV功能。</p>
-<p>个人建议，LeanCloud统计阅读量，不蒜子统计PV、UV</p>
-<p><a href="https://notes.wanghao.work/2015-10-21-%E4%B8%BANexT%E4%B8%BB%E9%A2%98%E6%B7%BB%E5%8A%A0%E6%96%87%E7%AB%A0%E9%98%85%E8%AF%BB%E9%87%8F%E7%BB%9F%E8%AE%A1%E5%8A%9F%E8%83%BD.html">LeanCloud 配置</a><br><a href="http://theme-next.iissnan.com/third-party-services.html#analytics-busuanzi">不蒜子配置</a></p>
-<h3 id="6-7-修改样式"><a href="#6-7-修改样式" class="headerlink" title="6.7 修改样式"></a>6.7 修改样式</h3><p>next 主题使用 <a href="http://stylus-lang.com/">stylus</a> 预编译样式语言</p>
-<p>可以在 <code>themes\next\source\css\_custom\custom.styl</code> 文件里写自己的 stylus 样式</p>
-<p>例如：首行缩进，添加如下代码：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">p</span><br><span class="line">  text-indent 2em</span><br></pre></td></tr></table></figure>
-<h3 id="6-8-显示更新日期"><a href="#6-8-显示更新日期" class="headerlink" title="6.8 显示更新日期"></a>6.8 显示更新日期</h3><p>修改主题配置文件 _config.yml，找到 updated_at,修改为</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">updated_at: true</span><br></pre></td></tr></table></figure>
-<p>然后就会显示更新的日期了</p>
-<p>如果需要手动设置，可以在文章的标签里加入 <code>updated</code>，如下</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: 使用 Hexo 为自己在 Github 上建一个静态 Blog博客 站点</span><br><span class="line">date: 2017-10-08</span><br><span class="line">updated: 2017-11-11</span><br><span class="line">file-title: &#123;&#123; title &#125;&#125;</span><br><span class="line">tags: Hexo</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
-<h3 id="6-9-底部添加备案信息、或者其他文字"><a href="#6-9-底部添加备案信息、或者其他文字" class="headerlink" title="6.9 底部添加备案信息、或者其他文字"></a>6.9 底部添加备案信息、或者其他文字</h3><p>在主题配置文件里找到 custom_text 这行，修改一下即可</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#custom_text: Hosted by &lt;a target&#x3D;&quot;_blank&quot; href&#x3D;&quot;https:&#x2F;&#x2F;pages.github.com&quot;&gt;GitHub Pages&lt;&#x2F;a&gt;</span><br><span class="line">custom_text: Xiaweiss.com 京ICP备17057895号</span><br></pre></td></tr></table></figure>
-<p>或者在主题配置文件里找到 copyright: 这行,修改为</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># If not defined, will be used &#96;author&#96; from Hexo main config.</span><br><span class="line">copyright: &lt;a href&#x3D;&quot;http:&#x2F;&#x2F;xiaweiss.com&quot;&gt;Xiaweiss.com&lt;&#x2F;a&gt; 京ICP备17057895号</span><br></pre></td></tr></table></figure>
-<h3 id="6-10-设置搜索服务"><a href="#6-10-设置搜索服务" class="headerlink" title="6.10 设置搜索服务"></a>6.10 设置搜索服务</h3><p>使用免费的 local search<br>npm 安装包</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">npm install hexo-generator-searchdb --save</span><br></pre></td></tr></table></figure>
-<p>next 主题配置文件里，修改配置文件<br>top_n_per_article 指正文的搜索结果，显示几条。 -1 代表全部显示</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">local_search:</span><br><span class="line">  enable: true</span><br><span class="line">  # if auto, trigger search by changing input</span><br><span class="line">  # if manual, trigger search by pressing enter key or search button</span><br><span class="line">  trigger: auto</span><br><span class="line">  # show top n results per article, show all results by setting to -1</span><br><span class="line">  top_n_per_article: 3</span><br></pre></td></tr></table></figure>
-<h3 id="6-11-添加分类、标签页"><a href="#6-11-添加分类、标签页" class="headerlink" title="6.11 添加分类、标签页"></a>6.11 添加分类、标签页</h3><p>可以按官方文档设置<br><a href="https://github.com/iissnan/hexo-theme-next/wiki/%E5%88%9B%E5%BB%BA%E5%88%86%E7%B1%BB%E9%A1%B5%E9%9D%A2">创建分类页面</a><br><a href="https://github.com/iissnan/hexo-theme-next/wiki/%E5%88%9B%E5%BB%BA%E6%A0%87%E7%AD%BE%E4%BA%91%E9%A1%B5%E9%9D%A2">创建标签云页面</a></p>
-<p>但以上设置会导致多出2个文件夹，而且以后不会在里面放其他文件，所以我个人推荐这样设置<br>在 source 目录下:<br>新建 文件 categories.md：里面写</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: 分类</span><br><span class="line">type: &quot;categories&quot;</span><br><span class="line">comments: false</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
-<p>新建 文件 tags.md：里面写</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: 标签</span><br><span class="line">type: &quot;tags&quot;</span><br><span class="line">comments: false</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
-<p>然后修改主题配置文件，menu设置里的 categories、tags</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">menu:</span><br><span class="line">  home: &#x2F; || home</span><br><span class="line">  categories: &#x2F;categories.html || th</span><br><span class="line">  tags: &#x2F;tags.html || tags</span><br></pre></td></tr></table></figure>
-<h3 id="6-12-设置滚动"><a href="#6-12-设置滚动" class="headerlink" title="6.12 设置滚动"></a>6.12 设置滚动</h3><p>主题配置文件里</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">scroll_to_more: true</span><br></pre></td></tr></table></figure>
-<p>表示从主页进去文章后，直接自动滚动到文章中 more 标签的位置，可以看到网址里多了#more<br>如果需要去掉，设置为false即可</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">save_scroll: false</span><br></pre></td></tr></table></figure>
-<p>表示在本地存储阅读的进度（滚动到的位置），刷新或再次打开页面时，可以接着读。<br>建议打开这个功能，设置为true即可</p>
-<h3 id="6-13-设置-RSS-订阅源"><a href="#6-13-设置-RSS-订阅源" class="headerlink" title="6.13 设置 RSS 订阅源"></a>6.13 设置 RSS 订阅源</h3><p>安装依赖</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">npm install hexo-generator-feed</span><br></pre></td></tr></table></figure>
-<p>项目配置文件里添加配置</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># RSS</span><br><span class="line">feed:</span><br><span class="line">  type: atom</span><br><span class="line">  path: atom.xml</span><br><span class="line">  limit: false</span><br><span class="line">  hub:</span><br><span class="line">  order_by: -updated</span><br></pre></td></tr></table></figure>
-<p>主题配置文件里找到 rss 配置，设置为</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">rss: &#x2F;atom.xml</span><br></pre></td></tr></table></figure>
-<p>rss 阅读器推荐使用 <a href="https://www.inoreader.com/">inoreader</a></p>
-<h2 id="7-界面美化"><a href="#7-界面美化" class="headerlink" title="7. 界面美化"></a>7. 界面美化</h2><h3 id="7-1-右下角-live2d-小人"><a href="#7-1-右下角-live2d-小人" class="headerlink" title="7.1 右下角 live2d 小人"></a>7.1 右下角 live2d 小人</h3><p>中文文档 <a href="https://github.com/EYHN/hexo-helper-live2d/blob/master/README.zh-CN.md">EYHN/hexo-helper-live2d</a></p>
-<p>下面是我目前旧版2.1.5的使用方式，最新版请参考hexo-helper-live2d 中文文档</p>
-<p>旧版配置方式：</p>
-<p>安装</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd yourname.github.io</span><br><span class="line">npm install hexo-helper-live2d@2.1.5</span><br></pre></td></tr></table></figure>
-<p>在 yourname.github.io 的 hexo 配置文件 <code>_config.yml</code> 里添加配置项</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># Live2D</span><br><span class="line">## https:&#x2F;&#x2F;github.com&#x2F;EYHN&#x2F;hexo-helper-live2d</span><br><span class="line">live2d:</span><br><span class="line">  model: koharu # 模型名称 默认值: z16</span><br><span class="line">  width: 150 # 宽度 默认值: 150</span><br><span class="line">  height: 300 # 高度 默认值: 300</span><br><span class="line">  scaling: 1 # 分辨率缩放倍率 默认值: 2</span><br><span class="line">  opacityDefault: 1 # 初始的透明度 默认值: 1</span><br><span class="line">  #opacityHover: 1 # 鼠标悬浮时的透明度 默认值: 1</span><br><span class="line">  mobileShow: true # 是否在移动设备上显示 默认值: true</span><br><span class="line">  mobileScaling: 0.5 # 移动设备缩放倍率 默认值: 0.5</span><br><span class="line">  position: right # 模型左右侧放置位置 默认值: right</span><br><span class="line">  horizontalOffset: 0 # 元素的水平偏移 默认值: 0</span><br><span class="line">  verticalOffset: -20 # 元素的底部偏移 默认值: -20</span><br><span class="line">  className: live2d # 元素的类名 默认值: live2d</span><br><span class="line">  id: live2dcanvas # 元素的id 默认值: live2dcanvas</span><br></pre></td></tr></table></figure>
-<p>我自己使用的是 koharu，如果需要其他的，改为相应的名字即可<br>旧版所有小人请看作者大大博客 <a href="https://huaji8.top/post/live2d-plugin-2.0/">hexo live2d插件 2.0 !</a></p>
-<p>接下来，在 <code>next/layout/_layout.swig</code> 文件里，找到 <code>&lt;/body&gt;</code>,在它前面的行添加代码<br>像这样：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123;&#123; live2d() &#125;&#125;</span><br><span class="line">&lt;&#x2F;body&gt;</span><br></pre></td></tr></table></figure>
-<h3 id="7-2-配置网站顶部背景颜色、二级标题字色"><a href="#7-2-配置网站顶部背景颜色、二级标题字色" class="headerlink" title="7.2 配置网站顶部背景颜色、二级标题字色"></a>7.2 配置网站顶部背景颜色、二级标题字色</h3><p>参照 6.1，添加配置</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">.headband</span><br><span class="line">  background: #0095EE;</span><br><span class="line">.site-meta</span><br><span class="line">  background: #0095EE;</span><br><span class="line">.site-subtitle</span><br><span class="line">  color: white;</span><br></pre></td></tr></table></figure>
-<h3 id="7-3-其他"><a href="#7-3-其他" class="headerlink" title="7.3 其他"></a>7.3 其他</h3><p>界面的优化需要掌握一定的 css 知识，这里不再赘述<br>可以参考 <a href="https://qianling.pw/hexo-optimization/">千灵《Hexo 优化汇总》</a><br>以及我博客源码里 themes 文件夹下文件的的相关注释</p>
-<p>概括来说</p>
-<ol>
-<li>修改预设好的值，在 <code>next/source/css/_variables/custom.styl</code> 添加变量即可</li>
-</ol>
-<p>例如 <code>base.styl</code> 可以看到代码 <code>$blue = #0684bd</code><br>要把所有预设好的蓝色改为白色，<code>custom.styl</code> 里添加 <code>$red = #fff</code> 即可</p>
-<ol start="2">
-<li><p>添加或修改 样式，可以在 <code>next/source/css/_custom/custom.styl</code> 写入 css</p>
-</li>
-<li><p>修改首页，添加 js，修改文字符号等，修改 <code>next/layout/_layout.swig</code> 即可<br>文章页请修改 <code>next/layout/_macro/post.swig</code></p>
-</li>
-</ol>
-<h2 id="8-高级设定"><a href="#8-高级设定" class="headerlink" title="8.高级设定"></a>8.高级设定</h2><h3 id="8-1-next-主题版本更新或回滚"><a href="#8-1-next-主题版本更新或回滚" class="headerlink" title="8.1 next 主题版本更新或回滚"></a>8.1 next 主题版本更新或回滚</h3><p>进入 next 目录</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd themes&#x2F;next</span><br><span class="line">git fetch</span><br><span class="line">git tag</span><br></pre></td></tr></table></figure>
-<p>即可看到当前可用版本列表，使用下面命令即可切换到指定版本，如</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git checkout v5.1.4</span><br></pre></td></tr></table></figure>
-<p>切换过程中会有文件冲突<br>可以切换前执行 git stash，切换后执行 git stash pop，然后修改文件即可</p>
-<p>或者使用软链接的方式，把修改的文件放在 next 文件夹外时，只需要修改文件，重新软链接即可</p>
-<p>感谢阅读，最后附上<a href="https://github.com/xiaweiss/xiaweiss-site">博客源码</a></p>
-<p>参考资料：<br><a href="http://lixiaolai.com/2016/06/22/makecs-build-a-blog-with-hexo-on-github/">李笑来《使用 Hexo 为自己在 Github 上建一个静态 Blog 站点》</a><br><a href="https://qianling.pw/hexo-optimization/">千灵《Hexo 优化汇总》</a><br><a href="https://hexo.io/zh-cn/docs/">Hexo 官方文档</a><br><a href="http://theme-next.iissnan.com/">NexT 主题文档</a></p>
-<blockquote>
-<p>图片来源：<a href="https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=40872946">https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=40872946</a></p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>技术</category>
-      </categories>
-      <tags>
-        <tag>hexo</tag>
       </tags>
   </entry>
 </search>
