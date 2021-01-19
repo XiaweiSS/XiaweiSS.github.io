@@ -1,6 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>使用 git hook 实现服务器代码自动部署</title>
+    <url>/art/2017/20171114-set-git-hooks-to-update-server-code/</url>
+    <content><![CDATA[<blockquote>
+<p>前几天把 Hexo 博客部署到了阿里云服务器，但发现每次推送文章都需要去服务器同步代码。最终寻找到 git hook 来解决了这个问题</p>
+</blockquote>
+<a id="more"></a>
+
+<h2 id="1-说明"><a href="#1-说明" class="headerlink" title="1. 说明"></a>1. 说明</h2><p>在服务器，要建一个相当于 github 存放功能的裸仓库来存储代码。<br>之所以叫裸仓库，是因为这个仓库只是为了存代码用的，没有工作目录，不可以在它里面查看改写代码。</p>
+<p>在网站文件夹下，会有一个工作目录来存放代码，这个目录的代码可以像clone github代码库一样，clone 服务器里的裸仓库。</p>
+<p>当服务器里裸仓库收到提交进来的代码后，会触发 git hook 的 post-receive 事件，配置好的程序就可以自动去工作目录的仓库执行 git pull，服务器代码就自动更新了</p>
+<h2 id="2-配置步骤："><a href="#2-配置步骤：" class="headerlink" title="2. 配置步骤："></a>2. 配置步骤：</h2><p>远程连接服务器，登录 root 账号</p>
+<h3 id="2-1-设置用户"><a href="#2-1-设置用户" class="headerlink" title="2.1 设置用户"></a>2.1 设置用户</h3><p>新增用户xiawei，这里可以写你的名字</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">useradd xiawei</span><br></pre></td></tr></table></figure>
+<p>修改用户密码</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">passwd xiawei</span><br></pre></td></tr></table></figure>
+<p>输入新密码即可</p>
+<p>给添加 sudo 权限 通过修改 /etc/sudoers</p>
+<p>必须使用命令</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">visudo</span><br></pre></td></tr></table></figure>
+<p>按 i 键进入, 找到 root ALL=(ALL) ALL 然后下面添加 xiawei ALL = (ALL) ALL</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">root ALL&#x3D;(ALL) ALL</span><br><span class="line">xiawei ALL &#x3D; (ALL) ALL</span><br></pre></td></tr></table></figure>
+<h3 id="2-2-安装-git"><a href="#2-2-安装-git" class="headerlink" title="2.2 安装 git"></a>2.2 安装 git</h3><p>查看是否安装 git</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git --version</span><br></pre></td></tr></table></figure>
+<p>如果没有看到版本号，则继续安装 git</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum install git</span><br></pre></td></tr></table></figure>
+<p>设置 git 用户名邮箱</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git config --global user.name &quot;yourname&quot;</span><br><span class="line">git config --global user.email &quot;your_email@example.com&quot;</span><br></pre></td></tr></table></figure>
+<h3 id="2-3-建立git裸仓库"><a href="#2-3-建立git裸仓库" class="headerlink" title="2.3 建立git裸仓库"></a>2.3 建立git裸仓库</h3><p>假设网站的在 /www/blog/ 目录下，创建裸仓库</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www</span><br><span class="line">sudo git init --bare blog.git</span><br></pre></td></tr></table></figure>
+<p>更改所属用户和用户组，获得权限</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo chown -R xiawei:xiawei blog.git</span><br><span class="line">sudo chown -R xiawei:xiawei blog</span><br></pre></td></tr></table></figure>
+<h3 id="2-4-建立工作目录-git-仓库"><a href="#2-4-建立工作目录-git-仓库" class="headerlink" title="2.4 建立工作目录 git 仓库"></a>2.4 建立工作目录 git 仓库</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git clone &#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
+<p>如果此时 blog 文件夹不是空的，会不能 clone<br>按先定义仓库，再设置远端仓库地址即可</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git init</span><br><span class="line">git remote add origin &#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
+<p>注意这时要删除掉 index.html 等和本地待提交代码重复的文件</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">rm index.html</span><br></pre></td></tr></table></figure>
+<h3 id="2-5-设置-git-hooks"><a href="#2-5-设置-git-hooks" class="headerlink" title="2.5 设置 git hooks"></a>2.5 设置 git hooks</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;xiaweiss.git&#x2F;hooks&#x2F;</span><br><span class="line">vim post-receive</span><br></pre></td></tr></table></figure>
+<p>按 i 键，将下面这几行代码粘贴进去</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#!&#x2F;bin&#x2F;sh</span><br><span class="line">unset GIT_DIR</span><br><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git fetch --all</span><br><span class="line">git reset --hard origin&#x2F;master</span><br></pre></td></tr></table></figure>
+<p>（原来只使用的 git pull origin master 方式，代码冲突时，还需要手动登陆服务器解决 ）</p>
+<p>赋予 post-receive 文件可执行权限</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">chmod +x post-receive</span><br></pre></td></tr></table></figure>
+<h3 id="2-6-本地-配置"><a href="#2-6-本地-配置" class="headerlink" title="2.6 本地 配置"></a>2.6 本地 配置</h3><p>最后修改 Hexo 配置文件里 deploy项，每次发布代码会提交到这两个仓库</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">deploy:</span><br><span class="line">- type: git</span><br><span class="line">  repo: git@github.com:xiaweiss&#x2F;xiaweiss.github.io.git</span><br><span class="line">- type: git</span><br><span class="line">  repo: xiawei@xiaweiss.com:&#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
+<p>如果是本地的其他项目，可以直接</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git clone xiawei@xiaweiss.com:&#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
+<p>修改代码后，提交即可</p>
+]]></content>
+      <categories>
+        <category>技术</category>
+      </categories>
+      <tags>
+        <tag>git</tag>
+        <tag>环境配置</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Mac 基本开发环境配置</title>
     <url>/art/2017/20171111-set-environment-of-mac/</url>
     <content><![CDATA[<blockquote>
@@ -152,65 +209,8 @@
         <category>技术</category>
       </categories>
       <tags>
+        <tag>环境配置</tag>
         <tag>mac</tag>
-        <tag>环境配置</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>使用 git hook 实现服务器代码自动部署</title>
-    <url>/art/2017/20171114-set-git-hooks-to-update-server-code/</url>
-    <content><![CDATA[<blockquote>
-<p>前几天把 Hexo 博客部署到了阿里云服务器，但发现每次推送文章都需要去服务器同步代码。最终寻找到 git hook 来解决了这个问题</p>
-</blockquote>
-<a id="more"></a>
-
-<h2 id="1-说明"><a href="#1-说明" class="headerlink" title="1. 说明"></a>1. 说明</h2><p>在服务器，要建一个相当于 github 存放功能的裸仓库来存储代码。<br>之所以叫裸仓库，是因为这个仓库只是为了存代码用的，没有工作目录，不可以在它里面查看改写代码。</p>
-<p>在网站文件夹下，会有一个工作目录来存放代码，这个目录的代码可以像clone github代码库一样，clone 服务器里的裸仓库。</p>
-<p>当服务器里裸仓库收到提交进来的代码后，会触发 git hook 的 post-receive 事件，配置好的程序就可以自动去工作目录的仓库执行 git pull，服务器代码就自动更新了</p>
-<h2 id="2-配置步骤："><a href="#2-配置步骤：" class="headerlink" title="2. 配置步骤："></a>2. 配置步骤：</h2><p>远程连接服务器，登录 root 账号</p>
-<h3 id="2-1-设置用户"><a href="#2-1-设置用户" class="headerlink" title="2.1 设置用户"></a>2.1 设置用户</h3><p>新增用户xiawei，这里可以写你的名字</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">useradd xiawei</span><br></pre></td></tr></table></figure>
-<p>修改用户密码</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">passwd xiawei</span><br></pre></td></tr></table></figure>
-<p>输入新密码即可</p>
-<p>给添加 sudo 权限 通过修改 /etc/sudoers</p>
-<p>必须使用命令</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">visudo</span><br></pre></td></tr></table></figure>
-<p>按 i 键进入, 找到 root ALL=(ALL) ALL 然后下面添加 xiawei ALL = (ALL) ALL</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">root ALL&#x3D;(ALL) ALL</span><br><span class="line">xiawei ALL &#x3D; (ALL) ALL</span><br></pre></td></tr></table></figure>
-<h3 id="2-2-安装-git"><a href="#2-2-安装-git" class="headerlink" title="2.2 安装 git"></a>2.2 安装 git</h3><p>查看是否安装 git</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git --version</span><br></pre></td></tr></table></figure>
-<p>如果没有看到版本号，则继续安装 git</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum install git</span><br></pre></td></tr></table></figure>
-<p>设置 git 用户名邮箱</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git config --global user.name &quot;yourname&quot;</span><br><span class="line">git config --global user.email &quot;your_email@example.com&quot;</span><br></pre></td></tr></table></figure>
-<h3 id="2-3-建立git裸仓库"><a href="#2-3-建立git裸仓库" class="headerlink" title="2.3 建立git裸仓库"></a>2.3 建立git裸仓库</h3><p>假设网站的在 /www/blog/ 目录下，创建裸仓库</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www</span><br><span class="line">sudo git init --bare blog.git</span><br></pre></td></tr></table></figure>
-<p>更改所属用户和用户组，获得权限</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo chown -R xiawei:xiawei blog.git</span><br><span class="line">sudo chown -R xiawei:xiawei blog</span><br></pre></td></tr></table></figure>
-<h3 id="2-4-建立工作目录-git-仓库"><a href="#2-4-建立工作目录-git-仓库" class="headerlink" title="2.4 建立工作目录 git 仓库"></a>2.4 建立工作目录 git 仓库</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git clone &#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
-<p>如果此时 blog 文件夹不是空的，会不能 clone<br>按先定义仓库，再设置远端仓库地址即可</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git init</span><br><span class="line">git remote add origin &#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
-<p>注意这时要删除掉 index.html 等和本地待提交代码重复的文件</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">rm index.html</span><br></pre></td></tr></table></figure>
-<h3 id="2-5-设置-git-hooks"><a href="#2-5-设置-git-hooks" class="headerlink" title="2.5 设置 git hooks"></a>2.5 设置 git hooks</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;xiaweiss.git&#x2F;hooks&#x2F;</span><br><span class="line">vim post-receive</span><br></pre></td></tr></table></figure>
-<p>按 i 键，将下面这几行代码粘贴进去</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#!&#x2F;bin&#x2F;sh</span><br><span class="line">unset GIT_DIR</span><br><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git fetch --all</span><br><span class="line">git reset --hard origin&#x2F;master</span><br></pre></td></tr></table></figure>
-<p>（原来只使用的 git pull origin master 方式，代码冲突时，还需要手动登陆服务器解决 ）</p>
-<p>赋予 post-receive 文件可执行权限</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">chmod +x post-receive</span><br></pre></td></tr></table></figure>
-<h3 id="2-6-本地-配置"><a href="#2-6-本地-配置" class="headerlink" title="2.6 本地 配置"></a>2.6 本地 配置</h3><p>最后修改 Hexo 配置文件里 deploy项，每次发布代码会提交到这两个仓库</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">deploy:</span><br><span class="line">- type: git</span><br><span class="line">  repo: git@github.com:xiaweiss&#x2F;xiaweiss.github.io.git</span><br><span class="line">- type: git</span><br><span class="line">  repo: xiawei@xiaweiss.com:&#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
-<p>如果是本地的其他项目，可以直接</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git clone xiawei@xiaweiss.com:&#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
-<p>修改代码后，提交即可</p>
-]]></content>
-      <categories>
-        <category>技术</category>
-      </categories>
-      <tags>
-        <tag>环境配置</tag>
-        <tag>git</tag>
       </tags>
   </entry>
   <entry>
@@ -432,74 +432,6 @@
       <tags>
         <tag>萧秋水</tag>
         <tag>成长</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>前端基础知识</title>
-    <url>/art/2018/20180101-fontend-baseinfo/</url>
-    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20180222.jpg"></p>
-<a id="more"></a>
-
-<h2 id="html"><a href="#html" class="headerlink" title="html"></a>html</h2><h3 id="1-html-5-新特性"><a href="#1-html-5-新特性" class="headerlink" title="1. html 5 新特性"></a>1. html 5 新特性</h3><p>用于绘画的 canvas 元素</p>
-<p>用于媒介回放的 video 和 audio 元素</p>
-<p>对本地离线存储的更好的支持<br>localStorage、sessionStorage 不同浏览器容量不同，容量 4.98M。但注意 javascript 使用 utf-16 编码，所以最多有2.5M<br><a href="http://dev-test.nemikor.com/web-storage/support-test/">http://dev-test.nemikor.com/web-storage/support-test/</a></p>
-<p>Cookie不同浏览器容量不同， 最多容量4M ，50条数据。</p>
-<p>新的特殊内容元素，比如 article、footer、header、nav、section</p>
-<p>新的表单控件，比如 calendar、date、time、email、url、search</p>
-<h3 id="2-同源策略"><a href="#2-同源策略" class="headerlink" title="2. 同源策略"></a>2. 同源策略</h3><p><a href="http://www.ruanyifeng.com/blog/2016/04/same-origin-policy.html">http://www.ruanyifeng.com/blog/2016/04/same-origin-policy.html</a><br>同协议，同端口，同域名（一级二级域名是不同域名）</p>
-<p>如果非同源，共有三种行为受到限制。</p>
-<p>（1） Cookie、LocalStorage 和 IndexDB 无法读取。</p>
-<p>（2） DOM 无法获得。</p>
-<p>（3） AJAX 请求不能发送</p>
-<h3 id="3-跨域"><a href="#3-跨域" class="headerlink" title="3. 跨域"></a>3. 跨域</h3><p>JSONP 它的基本思想是，网页通过添加一个<code>&lt;script&gt;</code>元素，向服务器请求JSON数据，这种做法不受同源政策限制；服务器收到请求后，将数据放在一个指定名字的回调函数里传回来。</p>
-<p>WebSocket是一种通信协议，使用ws://（非加密）和wss://（加密）作为协议前缀。该协议不实行同源政策，只要服务器支持，就可以通过它进行跨源通信。</p>
-<p>CORS是一个W3C标准，全称是”跨域资源共享”（Cross-origin resource sharing）。</p>
-<p>它允许浏览器向跨源服务器，发出XMLHttpRequest请求，从而克服了AJAX只能同源使用的限制。</p>
-<h3 id="4-标签语义化"><a href="#4-标签语义化" class="headerlink" title="4. 标签语义化"></a>4. 标签语义化</h3><p>通过标签判断内容语义，例如根据h1标签判断出内容是标题，根据<code>&lt;p&gt;</code>判断内容是段落、<code>&lt;input&gt;</code>标签是输入框等。</p>
-<p>判断标签是否语义化：去掉样式，看网页结构是否组织良好有序，是否仍然有很好的可读性。</p>
-<p>为什么标签要语义化</p>
-<ol>
-<li>搜索引擎友好。</li>
-<li>更容易让屏幕阅读器读出网页内容。</li>
-<li>去掉或样式丢失的时候能让页面呈现清晰的结构。</li>
-<li>便于团队开发和维护。</li>
-</ol>
-<p>标题使用<code>&lt;h2&gt;</code>而不是<code>&lt;div class=&quot;h2&quot;&gt;</code>,段落使用<code>&lt;p&gt;</code>标签，锚点使用<code>&lt;a&gt;</code>。</p>
-<h2 id="http-状态码"><a href="#http-状态码" class="headerlink" title="http 状态码"></a>http 状态码</h2><p>1** 信息<br>2** 成功  200<br>3** 重定向  304 (未修改)<br>4** 客户端错误<br>5** 服务器错误</p>
-<h2 id="css3"><a href="#css3" class="headerlink" title="css3"></a>css3</h2><p>选择器 [attribute^=value]  :nth-of-type(n) :nth-child(n)<br>盒模型 -&gt; box-sizing:content-box border-box<br>背景和边框-&gt; 圆角边框/背景图<br>文本效果<br>2D/3D 转换 -&gt; 移动translate、缩放scale、转动rotate、拉长或拉伸skew  六个值的矩阵matrix<br>过渡 -&gt; transition<br>动画  CSS3 动画属性<br>多列布局<br>弹性盒子(Flex Box)</p>
-<h2 id="javascript特性"><a href="#javascript特性" class="headerlink" title="javascript特性"></a>javascript特性</h2><h3 id="1-类型"><a href="#1-类型" class="headerlink" title="1 类型"></a>1 类型</h3><p>基本类型 number、boolean、string、null、undefined<br>复杂类型 array、function、object</p>
-<h3 id="2-类型的困惑"><a href="#2-类型的困惑" class="headerlink" title="2 类型的困惑"></a>2 类型的困惑</h3><p>尽量避免用 new</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="built_in">String</span>(<span class="string">&#x27;a&#x27;</span>) <span class="keyword">instanceof</span> <span class="built_in">String</span> <span class="comment">//true</span></span><br><span class="line"><span class="string">&#x27;a&#x27;</span> <span class="keyword">instanceof</span> <span class="built_in">String</span> <span class="comment">//false</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typeof</span> <span class="literal">null</span> <span class="comment">//&#x27;object&#x27;</span></span><br><span class="line"><span class="keyword">typeof</span> []   <span class="comment">//&#x27;object&#x27;</span></span><br><span class="line">[] <span class="keyword">instanceof</span> <span class="built_in">Array</span> <span class="comment">//true</span></span><br></pre></td></tr></table></figure>
-<p>条件表达式里 null、undefined、’’ 会被判定为 false</p>
-<h3 id="3-函数"><a href="#3-函数" class="headerlink" title="3 函数"></a>3 函数</h3><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="function"><span class="keyword">function</span> <span class="title">a</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="string">&#x27;function&#x27;</span> == <span class="keyword">typeof</span> a <span class="comment">//true，这里的 a 是前面那个 var a</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="4-函数的参数变量"><a href="#4-函数的参数变量" class="headerlink" title="4 函数的参数变量"></a>4 函数的参数变量</h3><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = fuction (b,c) &#123;&#125;</span><br><span class="line">a.length <span class="comment">//3</span></span><br></pre></td></tr></table></figure>
-<h3 id="5-闭包"><a href="#5-闭包" class="headerlink" title="5 闭包"></a>5 闭包</h3><p>在某个作用域中定义的变量只能在该作用域或其内部作用域中才能访问到</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="number">5</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">woot</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  a==<span class="number">5</span>;<span class="comment">//false</span></span><br><span class="line">  <span class="built_in">console</span>.log(a==<span class="number">5</span>);</span><br><span class="line">  <span class="keyword">var</span> a=<span class="number">6</span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">test</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    a==<span class="number">6</span>;<span class="comment">//true</span></span><br><span class="line">    <span class="built_in">console</span>.log(a==<span class="number">6</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  test();</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">woot();</span><br></pre></td></tr></table></figure>
-<p>自执行函数，通过声明调用匿名函数，定义新的作用域</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="number">3</span>;</span><br><span class="line">(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> a = <span class="number">5</span>;</span><br><span class="line">&#125;)()</span><br><span class="line"></span><br><span class="line">a == <span class="number">3</span>; <span class="comment">//true</span></span><br></pre></td></tr></table></figure>
-<h3 id="6-类"><a href="#6-类" class="headerlink" title="6 类"></a>6 类</h3><p>类通过函数定义</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Animal</span> (<span class="params">name</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">this</span>.name=name;</span><br><span class="line">&#125;</span><br><span class="line">Animal.prototype.getName() &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">this</span>.name;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="7-深浅拷贝"><a href="#7-深浅拷贝" class="headerlink" title="7 深浅拷贝"></a>7 深浅拷贝</h3><p>属性的可枚举性和所有权 <a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Enumerability_and_ownership_of_properties">https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Enumerability_and_ownership_of_properties</a></p>
-<p><code>for...in</code> 可以循环出 可枚举属性，自身对象及其原型链。再使用 hasOwnProperty 判断，得到自身属性</p>
-<h2 id="es6"><a href="#es6" class="headerlink" title="es6"></a>es6</h2><h3 id="1-let-const"><a href="#1-let-const" class="headerlink" title="1. let, const"></a>1. let, const</h3><p>var命令会发生”变量提升“现象，即变量可以在声明之前使用，值为undefined。这种现象多多少少是有些奇怪的，按照一般的逻辑，变量应该在声明语句之后才可以使用。</p>
-<p>为了纠正这种现象，let命令改变了语法行为，它所声明的变量一定要在声明后使用，否则报错。</p>
-<p>不允许重复声明</p>
-<p>暂时性死区<br>只要块级作用域内存在let命令，它所声明的变量就“绑定”（binding）这个区域，不再受外部的影响。<br>总之，在代码块内，使用let命令声明变量之前，该变量都是不可用的。这在语法上，称为“暂时性死区”（temporal dead zone，简称 TDZ）。</p>
-<p>但对于复合类型的数据（主要是对象和数组），变量指向的内存地址，保存的只是一个指针，const只能保证这个指针是固定的</p>
-<h3 id="2-块级作用域"><a href="#2-块级作用域" class="headerlink" title="2. 块级作用域"></a>2. 块级作用域</h3><p>ES5 只有全局作用域和函数作用域<br>ES6 的块级作用域 {}</p>
-<h3 id="3-es7"><a href="#3-es7" class="headerlink" title="3. es7"></a>3. es7</h3><p>Array.prototype.includes  -&gt; 代替 indexOf，返回true或false，还可以参数规定从第几位开始<br>求冥运算（次方）</p>
-<h2 id="事件传播"><a href="#事件传播" class="headerlink" title="事件传播"></a>事件传播</h2><p>冒泡捕获<br>先捕获再冒泡</p>
-<p>阻止传播 e.stopPropagation();</p>
-<p>事件委托</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> parent = <span class="built_in">document</span>.getElementById(<span class="string">&quot;parent&quot;</span>);</span><br><span class="line"><span class="keyword">var</span> child = <span class="built_in">document</span>.getElementById(<span class="string">&quot;child&quot;</span>);</span><br><span class="line">parent.onclick = <span class="function"><span class="keyword">function</span>(<span class="params">e</span>)</span>&#123;</span><br><span class="line">  <span class="keyword">if</span>(e.target.id == <span class="string">&quot;child&quot;</span>)&#123;</span><br><span class="line">      <span class="built_in">console</span>.log(<span class="string">&quot;您点击了child元素&quot;</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="React-生命周期"><a href="#React-生命周期" class="headerlink" title="React 生命周期"></a>React 生命周期</h2><p><a href="http://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">http://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/</a></p>
-<p>getderivedstatefromprops</p>
-]]></content>
-      <categories>
-        <category>技术</category>
-      </categories>
-      <tags>
-        <tag>javascript</tag>
       </tags>
   </entry>
   <entry>
@@ -805,6 +737,74 @@
       </tags>
   </entry>
   <entry>
+    <title>前端基础知识</title>
+    <url>/art/2018/20180101-fontend-baseinfo/</url>
+    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20180222.jpg"></p>
+<a id="more"></a>
+
+<h2 id="html"><a href="#html" class="headerlink" title="html"></a>html</h2><h3 id="1-html-5-新特性"><a href="#1-html-5-新特性" class="headerlink" title="1. html 5 新特性"></a>1. html 5 新特性</h3><p>用于绘画的 canvas 元素</p>
+<p>用于媒介回放的 video 和 audio 元素</p>
+<p>对本地离线存储的更好的支持<br>localStorage、sessionStorage 不同浏览器容量不同，容量 4.98M。但注意 javascript 使用 utf-16 编码，所以最多有2.5M<br><a href="http://dev-test.nemikor.com/web-storage/support-test/">http://dev-test.nemikor.com/web-storage/support-test/</a></p>
+<p>Cookie不同浏览器容量不同， 最多容量4M ，50条数据。</p>
+<p>新的特殊内容元素，比如 article、footer、header、nav、section</p>
+<p>新的表单控件，比如 calendar、date、time、email、url、search</p>
+<h3 id="2-同源策略"><a href="#2-同源策略" class="headerlink" title="2. 同源策略"></a>2. 同源策略</h3><p><a href="http://www.ruanyifeng.com/blog/2016/04/same-origin-policy.html">http://www.ruanyifeng.com/blog/2016/04/same-origin-policy.html</a><br>同协议，同端口，同域名（一级二级域名是不同域名）</p>
+<p>如果非同源，共有三种行为受到限制。</p>
+<p>（1） Cookie、LocalStorage 和 IndexDB 无法读取。</p>
+<p>（2） DOM 无法获得。</p>
+<p>（3） AJAX 请求不能发送</p>
+<h3 id="3-跨域"><a href="#3-跨域" class="headerlink" title="3. 跨域"></a>3. 跨域</h3><p>JSONP 它的基本思想是，网页通过添加一个<code>&lt;script&gt;</code>元素，向服务器请求JSON数据，这种做法不受同源政策限制；服务器收到请求后，将数据放在一个指定名字的回调函数里传回来。</p>
+<p>WebSocket是一种通信协议，使用ws://（非加密）和wss://（加密）作为协议前缀。该协议不实行同源政策，只要服务器支持，就可以通过它进行跨源通信。</p>
+<p>CORS是一个W3C标准，全称是”跨域资源共享”（Cross-origin resource sharing）。</p>
+<p>它允许浏览器向跨源服务器，发出XMLHttpRequest请求，从而克服了AJAX只能同源使用的限制。</p>
+<h3 id="4-标签语义化"><a href="#4-标签语义化" class="headerlink" title="4. 标签语义化"></a>4. 标签语义化</h3><p>通过标签判断内容语义，例如根据h1标签判断出内容是标题，根据<code>&lt;p&gt;</code>判断内容是段落、<code>&lt;input&gt;</code>标签是输入框等。</p>
+<p>判断标签是否语义化：去掉样式，看网页结构是否组织良好有序，是否仍然有很好的可读性。</p>
+<p>为什么标签要语义化</p>
+<ol>
+<li>搜索引擎友好。</li>
+<li>更容易让屏幕阅读器读出网页内容。</li>
+<li>去掉或样式丢失的时候能让页面呈现清晰的结构。</li>
+<li>便于团队开发和维护。</li>
+</ol>
+<p>标题使用<code>&lt;h2&gt;</code>而不是<code>&lt;div class=&quot;h2&quot;&gt;</code>,段落使用<code>&lt;p&gt;</code>标签，锚点使用<code>&lt;a&gt;</code>。</p>
+<h2 id="http-状态码"><a href="#http-状态码" class="headerlink" title="http 状态码"></a>http 状态码</h2><p>1** 信息<br>2** 成功  200<br>3** 重定向  304 (未修改)<br>4** 客户端错误<br>5** 服务器错误</p>
+<h2 id="css3"><a href="#css3" class="headerlink" title="css3"></a>css3</h2><p>选择器 [attribute^=value]  :nth-of-type(n) :nth-child(n)<br>盒模型 -&gt; box-sizing:content-box border-box<br>背景和边框-&gt; 圆角边框/背景图<br>文本效果<br>2D/3D 转换 -&gt; 移动translate、缩放scale、转动rotate、拉长或拉伸skew  六个值的矩阵matrix<br>过渡 -&gt; transition<br>动画  CSS3 动画属性<br>多列布局<br>弹性盒子(Flex Box)</p>
+<h2 id="javascript特性"><a href="#javascript特性" class="headerlink" title="javascript特性"></a>javascript特性</h2><h3 id="1-类型"><a href="#1-类型" class="headerlink" title="1 类型"></a>1 类型</h3><p>基本类型 number、boolean、string、null、undefined<br>复杂类型 array、function、object</p>
+<h3 id="2-类型的困惑"><a href="#2-类型的困惑" class="headerlink" title="2 类型的困惑"></a>2 类型的困惑</h3><p>尽量避免用 new</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="built_in">String</span>(<span class="string">&#x27;a&#x27;</span>) <span class="keyword">instanceof</span> <span class="built_in">String</span> <span class="comment">//true</span></span><br><span class="line"><span class="string">&#x27;a&#x27;</span> <span class="keyword">instanceof</span> <span class="built_in">String</span> <span class="comment">//false</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typeof</span> <span class="literal">null</span> <span class="comment">//&#x27;object&#x27;</span></span><br><span class="line"><span class="keyword">typeof</span> []   <span class="comment">//&#x27;object&#x27;</span></span><br><span class="line">[] <span class="keyword">instanceof</span> <span class="built_in">Array</span> <span class="comment">//true</span></span><br></pre></td></tr></table></figure>
+<p>条件表达式里 null、undefined、’’ 会被判定为 false</p>
+<h3 id="3-函数"><a href="#3-函数" class="headerlink" title="3 函数"></a>3 函数</h3><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="function"><span class="keyword">function</span> <span class="title">a</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="string">&#x27;function&#x27;</span> == <span class="keyword">typeof</span> a <span class="comment">//true，这里的 a 是前面那个 var a</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="4-函数的参数变量"><a href="#4-函数的参数变量" class="headerlink" title="4 函数的参数变量"></a>4 函数的参数变量</h3><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = fuction (b,c) &#123;&#125;</span><br><span class="line">a.length <span class="comment">//3</span></span><br></pre></td></tr></table></figure>
+<h3 id="5-闭包"><a href="#5-闭包" class="headerlink" title="5 闭包"></a>5 闭包</h3><p>在某个作用域中定义的变量只能在该作用域或其内部作用域中才能访问到</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="number">5</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">woot</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  a==<span class="number">5</span>;<span class="comment">//false</span></span><br><span class="line">  <span class="built_in">console</span>.log(a==<span class="number">5</span>);</span><br><span class="line">  <span class="keyword">var</span> a=<span class="number">6</span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">test</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    a==<span class="number">6</span>;<span class="comment">//true</span></span><br><span class="line">    <span class="built_in">console</span>.log(a==<span class="number">6</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  test();</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">woot();</span><br></pre></td></tr></table></figure>
+<p>自执行函数，通过声明调用匿名函数，定义新的作用域</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="number">3</span>;</span><br><span class="line">(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> a = <span class="number">5</span>;</span><br><span class="line">&#125;)()</span><br><span class="line"></span><br><span class="line">a == <span class="number">3</span>; <span class="comment">//true</span></span><br></pre></td></tr></table></figure>
+<h3 id="6-类"><a href="#6-类" class="headerlink" title="6 类"></a>6 类</h3><p>类通过函数定义</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Animal</span> (<span class="params">name</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">this</span>.name=name;</span><br><span class="line">&#125;</span><br><span class="line">Animal.prototype.getName() &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">this</span>.name;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="7-深浅拷贝"><a href="#7-深浅拷贝" class="headerlink" title="7 深浅拷贝"></a>7 深浅拷贝</h3><p>属性的可枚举性和所有权 <a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Enumerability_and_ownership_of_properties">https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Enumerability_and_ownership_of_properties</a></p>
+<p><code>for...in</code> 可以循环出 可枚举属性，自身对象及其原型链。再使用 hasOwnProperty 判断，得到自身属性</p>
+<h2 id="es6"><a href="#es6" class="headerlink" title="es6"></a>es6</h2><h3 id="1-let-const"><a href="#1-let-const" class="headerlink" title="1. let, const"></a>1. let, const</h3><p>var命令会发生”变量提升“现象，即变量可以在声明之前使用，值为undefined。这种现象多多少少是有些奇怪的，按照一般的逻辑，变量应该在声明语句之后才可以使用。</p>
+<p>为了纠正这种现象，let命令改变了语法行为，它所声明的变量一定要在声明后使用，否则报错。</p>
+<p>不允许重复声明</p>
+<p>暂时性死区<br>只要块级作用域内存在let命令，它所声明的变量就“绑定”（binding）这个区域，不再受外部的影响。<br>总之，在代码块内，使用let命令声明变量之前，该变量都是不可用的。这在语法上，称为“暂时性死区”（temporal dead zone，简称 TDZ）。</p>
+<p>但对于复合类型的数据（主要是对象和数组），变量指向的内存地址，保存的只是一个指针，const只能保证这个指针是固定的</p>
+<h3 id="2-块级作用域"><a href="#2-块级作用域" class="headerlink" title="2. 块级作用域"></a>2. 块级作用域</h3><p>ES5 只有全局作用域和函数作用域<br>ES6 的块级作用域 {}</p>
+<h3 id="3-es7"><a href="#3-es7" class="headerlink" title="3. es7"></a>3. es7</h3><p>Array.prototype.includes  -&gt; 代替 indexOf，返回true或false，还可以参数规定从第几位开始<br>求冥运算（次方）</p>
+<h2 id="事件传播"><a href="#事件传播" class="headerlink" title="事件传播"></a>事件传播</h2><p>冒泡捕获<br>先捕获再冒泡</p>
+<p>阻止传播 e.stopPropagation();</p>
+<p>事件委托</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> parent = <span class="built_in">document</span>.getElementById(<span class="string">&quot;parent&quot;</span>);</span><br><span class="line"><span class="keyword">var</span> child = <span class="built_in">document</span>.getElementById(<span class="string">&quot;child&quot;</span>);</span><br><span class="line">parent.onclick = <span class="function"><span class="keyword">function</span>(<span class="params">e</span>)</span>&#123;</span><br><span class="line">  <span class="keyword">if</span>(e.target.id == <span class="string">&quot;child&quot;</span>)&#123;</span><br><span class="line">      <span class="built_in">console</span>.log(<span class="string">&quot;您点击了child元素&quot;</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="React-生命周期"><a href="#React-生命周期" class="headerlink" title="React 生命周期"></a>React 生命周期</h2><p><a href="http://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">http://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/</a></p>
+<p>getderivedstatefromprops</p>
+]]></content>
+      <categories>
+        <category>技术</category>
+      </categories>
+      <tags>
+        <tag>javascript</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>h5 视频解决方案 videojs</title>
     <url>/art/2018/20180108-videojs/</url>
     <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20180108.jpg"></p>
@@ -920,6 +920,81 @@
       <tags>
         <tag>wepy</tag>
         <tag>小程序</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>php 学习笔记</title>
+    <url>/art/2018/20180124-php-primer-note/</url>
+    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20180124.jpg"></p>
+<blockquote>
+<p>一直想做点自己的小东西，所以开始学习后端知识了<br>目前是一些基础的语法速学记录，还在更新中，以后有时间会整理归纳</p>
+</blockquote>
+<a id="more"></a>
+
+<p>php 代码块 <?php   ?><br>php 连接符 .<br>多行时，每行结尾必须加 ;<br>单行注释 //<br>多行注释 <code>/*   */</code><br>变量 $开头 变量名必须以字母或下划线开始，如<code>”$_name”,”$name” ,”$name2”</code>等，但是”$9name”是不对的。<br>下划线命名法  <code>$my_apple</code>、驼峰命名法 <code>$myApple</code><br>获取当前PHP消耗的内存 memory_get_usage()<br>在PHP中，支持8种原始类型，其中包括四种标量类型、两种复合类型和两种特殊类型<br>echo 打印<br>var_dump 输出类型和值<br>var_export 打印数组</p>
+<p>布尔类型 不区分大小写 echo true;得到值1，echo false; 不输出值<br>== 比较运算符优先于 = 赋值运算符</p>
+<p>整型 123<br>负数 -123<br>八进制数 0123<br>十六进制数 0x1a</p>
+<p>浮点型 1.234<br>科学计数法，小写e或大写E  1.2e3 //1200  7.0e-10  //0.007</p>
+<p>字符串<br>字符串型可以用三种方法定义：单引号形式、双引号形式和Heredoc结构形式。<br>字符串中包含引号的时候，1 单引号中嵌入双引号 2 双引号中嵌入单引号 3 里面的引号前使用转义符 \</p>
+<p>当双引号中包含变量时，变量会与双引号中的内容连接在一起；<br>当单引号中包含变量时，变量会被当做字符串输出。</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="variable">$love</span> = <span class="string">&quot;I love you!&quot;</span>;</span><br><span class="line"><span class="variable">$string1</span> = <span class="string">&quot;hi,<span class="subst">$love</span>&quot;</span>;<span class="comment">// hi,I love you!</span></span><br><span class="line"><span class="variable">$string2</span> = <span class="string">&#x27;hi,$love&#x27;</span>;<span class="comment">// hi,$love</span></span><br></pre></td></tr></table></figure>
+<p>当我的字符串很长怎么办？</p>
+<p>我们可以使用Heredoc结构形式的方法来解决该问题，首先使用定界符表示字符串（&lt;&lt;&lt;），接着在“&lt;&lt;&lt;“之后提供一个标识符GOD，然后是字符串，最后以提供的这个标识符结束字符串</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="variable">$string1</span> = &lt;&lt;&lt;GOD</span><br><span class="line">A</span><br><span class="line">B</span><br><span class="line">C</span><br><span class="line">GOD;</span><br><span class="line"></span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$string1</span>;<span class="comment">//A B C</span></span><br></pre></td></tr></table></figure>
+<p>在赋值符号后，输入定界符“&lt;&lt;&lt;”,接着是标识符，你可以用你的女神作为标识符“GOD”，如第1行，也可以使用你喜欢的狗狗，“DOG”作为标识符，但是，结尾处的标识符也必须是一样的。此外，在结尾的一行，如第4行，一定要另起一行，并且此行除了“GOD”，并以“；”号结束之外，不能有任何其他字符，前后都不能有，包括空格，否则会出现错误的哦。</p>
+<p>特殊类型1—资源 1.txt<br>特殊类型2—空类型 null 大写NULL也可以</p>
+<p>echo NULL，输出无结果</p>
+<p>$var3 = “节日快乐！”;<br>unset($var3);//NULL</p>
+<p>常量 不允许重复定义、修改值<br>定义 define(‘name’,value)  注意第三个参数写 true，可以大小写不敏感<br>还有一种定义方式，const PI = 3.14; 大小写敏感</p>
+<p>取值 可以直接取值，也可以使用 constant(‘name’)</p>
+<p><a href="https://stackoverflow.com/questions/2447791/define-vs-const">dinfine 和 const 的区别</a><br>注意<br>define() 必须在 class 外使用，在全局生效，运行时执行<br>const 在条件表达式内部不能使用，在当前命名空间生效，编译时执行，定义的速度更快<br>一般不用条件表达式时，尽量用 const</p>
+<p>系统常量<br><strong>FILE</strong> 文件名和路径<br><strong>LINE</strong> 当前代码在第几行<br>PHP_VERSION 当前解析器的版本号<br>PHP_OS 执行当前PHP版本的操作系统名称</p>
+<p>defined(‘常量名’) 检测常量是否定义，返回 true 或 false</p>
+<p>PHP运算符一般分为算术运算符、赋值运算符、比较运算符、三元运算符、逻辑运算符、字符串连接运算符、错误控制运算符。</p>
+<p>赋值运算符 一般赋值 =   引用赋值 &amp;，例如 $c = &amp;$a;<br>“&amp;”：引用赋值，意味着两个变量都指向同一个数据。它将使两个变量共享一块内存，如果这个内存存储的数据变了，那么两个变量的值都会发生变化。</p>
+<p>逻辑运算符<br>与 &amp;&amp;、或 ||、非！、异或 xor (注意 and or xor 运算优先级很低，需要小括号括住)</p>
+<p>字符串连接运算符 <code>.</code> 、 <code>.=</code></p>
+<p>错误控制运算符 @，可以放在变量和函数执行语句之前<br>开启了 track_errors 后，可以使用变量 $php_errormsg 输出错误信息</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line">ini_set(<span class="string">&#x27;track_errors&#x27;</span>, <span class="number">1</span>);</span><br><span class="line"><span class="variable">$conn</span> = @mysql_connect(<span class="string">&#x27;localhost&#x27;</span>,<span class="string">&#x27;username&#x27;</span>,<span class="string">&#x27;password&#x27;</span>);</span><br><span class="line"><span class="keyword">echo</span> <span class="string">&quot;出错了，错误原因是：&quot;</span>.<span class="variable">$php_errormsg</span>;</span><br></pre></td></tr></table></figure>
+<p>算术运算符 <code>+ 、- 、* 、/ 、% 、+= 、-= 、*= 、/= 、%=</code><br>向下取整 floor(4.25); //4<br>向上取整 ceil(4.25); //5</p>
+<p>条件结构  if、switch<br>循环结构  while、do while、for、foreach</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="keyword">foreach</span> (数组 <span class="keyword">as</span> 值)&#123;</span><br><span class="line"><span class="comment">//执行的任务</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">foreach</span> (数组 <span class="keyword">as</span> 下标 =&gt; 值)&#123;</span><br><span class="line"> <span class="comment">//执行的任务</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>数组<br>//设置某个变量为一个空数组</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="variable">$arr</span> = <span class="keyword">array</span>();</span><br><span class="line"><span class="variable">$fruit</span> = <span class="keyword">array</span>(<span class="string">&quot;苹果&quot;</span>,<span class="string">&quot;香蕉&quot;</span>,<span class="string">&quot;菠萝&quot;</span>);</span><br><span class="line">var_export(<span class="variable">$fruit</span>);<span class="comment">//打印数组</span></span><br></pre></td></tr></table></figure>
+<p>索引数组赋值有三种方式:</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="variable">$arr</span>[<span class="number">0</span>]=<span class="string">&#x27;苹果&#x27;</span>;</span><br><span class="line"><span class="keyword">array</span>(<span class="string">&#x27;0&#x27;</span>=&gt;<span class="string">&#x27;苹果&#x27;</span>);</span><br><span class="line"><span class="keyword">array</span>(<span class="string">&#x27;苹果&#x27;</span>);<span class="comment">//自动产生索引 0</span></span><br><span class="line"></span><br><span class="line"><span class="variable">$arr</span>[] = <span class="string">&#x27;梨&#x27;</span>;<span class="comment">//末尾插入新值</span></span><br></pre></td></tr></table></figure>
+<p>访问某个数组中索引的值<br>$arr[0] 或 $arr[‘0’];</p>
+<p>获取数组长度 count($array);</p>
+<p>php类</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="comment">//定义一个类，类名必须是字母或下划线开头</span></span><br><span class="line"><span class="comment">//$this 指向实例化后的类，来访问该类里的其他变量</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> <span class="variable">$name</span> = <span class="string">&#x27;汽车&#x27;</span>;</span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">getName</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//实例化一个car对象</span></span><br><span class="line"><span class="variable">$car</span> = <span class="keyword">new</span> Car();<span class="comment">//这里括号不传参数时，可以省略</span></span><br><span class="line"><span class="variable">$car</span>-&gt;name = <span class="string">&#x27;奥迪A6&#x27;</span>; <span class="comment">//设置对象的属性值</span></span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$car</span>-&gt;getName();  <span class="comment">//调用对象的方法 输出对象的名字</span></span><br></pre></td></tr></table></figure>
+<p>类的的属性和 fuction 前面有关键字public（公有），protected（受保护）或 private（私有），var 视为公有<br>类的 function 可以不写关键字，视为公有。属性必须写，否则报错。<br>受保护的不可以被外部调用，私有的只能被自己内部调用</p>
+<p>使用关键字static修饰的，称之为静态方法，静态方法不需要实例化对象，可以通过类名直接调用，操作符为双冒号::</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">static</span> <span class="function"><span class="keyword">function</span> <span class="title">getName</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&#x27;汽车&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">​&#125;</span><br><span class="line"><span class="keyword">echo</span> Car::getName(); <span class="comment">//结果为“汽车</span></span><br></pre></td></tr></table></figure>
+<p>注意静态方法，可以像普通方法一样调用，但静态属性不可以<br>静态方法内不可以使用 $this</p>
+<p>静态属性 可以使用 static::$属性名，或者 self::$属性名 访问<br>静态方法 使用 static::方法名() 执行<br>访问父类时，使用 parent，例如 parent::方法名();</p>
+<p>注意下面代码，写不写 static 输出结果是一样的。但属性这么玩会报错。</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">b</span> </span>&#123;</span><br><span class="line">  <span class="built_in">static</span> <span class="function"><span class="keyword">function</span> <span class="title">show</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">123</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="variable">$obj</span> = <span class="keyword">new</span> b();</span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$obj</span>-&gt;show();<span class="comment">//123</span></span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$obj</span>::show();<span class="comment">//123</span></span><br></pre></td></tr></table></figure>
+<p>类的构造函数，实例化 new 类时，这个函数会被执行</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"></span>)</span>;</span><br></pre></td></tr></table></figure>
+<p>在子类中如果定义了__construct则不会调用父类的__construct，如果需要同时调用父类的构造函数，需要使用<code>parent::__construct()</code>显式的调用。</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;父类的构造函数被调用\n&quot;</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Truck</span> <span class="keyword">extends</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;子类的构造函数被调用\n&quot;</span>;</span><br><span class="line">    <span class="built_in">parent</span>::__construct();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="variable">$car</span> = <span class="keyword">new</span> Truck();</span><br></pre></td></tr></table></figure>
+<p>类的析构函数，类被销毁时会调用 <code>__destruct</code></p>
+<p>类继承<br>子类可以继承<br>父类的属性和方法<br>但当子类有同名的属性和方法时，父类的会不执行，可以静态方法的方式来访问。</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="variable">$speed</span> = <span class="number">0</span>; <span class="comment">//汽车的起始速度是0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">speedUp</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;speed += <span class="number">10</span>;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;speed;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//定义继承于Car的Truck类</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Truck</span> <span class="keyword">extends</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">speedUp</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="built_in">parent</span>::speedUp();</span><br><span class="line">        <span class="keyword">$this</span>-&gt;speed += <span class="number">50</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="variable">$car</span> = <span class="keyword">new</span> Truck();</span><br><span class="line"><span class="variable">$car</span>-&gt;speedUp();</span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$car</span>-&gt;speed;</span><br></pre></td></tr></table></figure>
+<p>Cookie<br>设置 cookie</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line">setcookie(<span class="string">&#x27;test2&#x27;</span>, <span class="string">&#x27;哈&#x27;</span>, time() + <span class="number">10</span>, <span class="string">&#x27;/&#x27;</span>);<span class="comment">//存入的值为 %E5%93%88</span></span><br><span class="line">setrawcookie(<span class="string">&#x27;test3&#x27;</span>, <span class="string">&#x27;哈&#x27;</span>);<span class="comment">//存入的值为 哈</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+<blockquote>
+<p>图片来源：<a href="https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=59688723">https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=59688723</a><br>参考资料：<br><a href="https://www.imooc.com/learn/54">慕课 PHP 入门篇</a><br><a href="https://www.imooc.com/learn/26">慕课 PHP 进阶篇</a></p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>技术</category>
+      </categories>
+      <tags>
+        <tag>php</tag>
+        <tag>note</tag>
       </tags>
   </entry>
   <entry>
@@ -1295,81 +1370,6 @@
       <categories>
         <category>读书</category>
       </categories>
-  </entry>
-  <entry>
-    <title>php 学习笔记</title>
-    <url>/art/2018/20180124-php-primer-note/</url>
-    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20180124.jpg"></p>
-<blockquote>
-<p>一直想做点自己的小东西，所以开始学习后端知识了<br>目前是一些基础的语法速学记录，还在更新中，以后有时间会整理归纳</p>
-</blockquote>
-<a id="more"></a>
-
-<p>php 代码块 <?php   ?><br>php 连接符 .<br>多行时，每行结尾必须加 ;<br>单行注释 //<br>多行注释 <code>/*   */</code><br>变量 $开头 变量名必须以字母或下划线开始，如<code>”$_name”,”$name” ,”$name2”</code>等，但是”$9name”是不对的。<br>下划线命名法  <code>$my_apple</code>、驼峰命名法 <code>$myApple</code><br>获取当前PHP消耗的内存 memory_get_usage()<br>在PHP中，支持8种原始类型，其中包括四种标量类型、两种复合类型和两种特殊类型<br>echo 打印<br>var_dump 输出类型和值<br>var_export 打印数组</p>
-<p>布尔类型 不区分大小写 echo true;得到值1，echo false; 不输出值<br>== 比较运算符优先于 = 赋值运算符</p>
-<p>整型 123<br>负数 -123<br>八进制数 0123<br>十六进制数 0x1a</p>
-<p>浮点型 1.234<br>科学计数法，小写e或大写E  1.2e3 //1200  7.0e-10  //0.007</p>
-<p>字符串<br>字符串型可以用三种方法定义：单引号形式、双引号形式和Heredoc结构形式。<br>字符串中包含引号的时候，1 单引号中嵌入双引号 2 双引号中嵌入单引号 3 里面的引号前使用转义符 \</p>
-<p>当双引号中包含变量时，变量会与双引号中的内容连接在一起；<br>当单引号中包含变量时，变量会被当做字符串输出。</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="variable">$love</span> = <span class="string">&quot;I love you!&quot;</span>;</span><br><span class="line"><span class="variable">$string1</span> = <span class="string">&quot;hi,<span class="subst">$love</span>&quot;</span>;<span class="comment">// hi,I love you!</span></span><br><span class="line"><span class="variable">$string2</span> = <span class="string">&#x27;hi,$love&#x27;</span>;<span class="comment">// hi,$love</span></span><br></pre></td></tr></table></figure>
-<p>当我的字符串很长怎么办？</p>
-<p>我们可以使用Heredoc结构形式的方法来解决该问题，首先使用定界符表示字符串（&lt;&lt;&lt;），接着在“&lt;&lt;&lt;“之后提供一个标识符GOD，然后是字符串，最后以提供的这个标识符结束字符串</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="variable">$string1</span> = &lt;&lt;&lt;GOD</span><br><span class="line">A</span><br><span class="line">B</span><br><span class="line">C</span><br><span class="line">GOD;</span><br><span class="line"></span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$string1</span>;<span class="comment">//A B C</span></span><br></pre></td></tr></table></figure>
-<p>在赋值符号后，输入定界符“&lt;&lt;&lt;”,接着是标识符，你可以用你的女神作为标识符“GOD”，如第1行，也可以使用你喜欢的狗狗，“DOG”作为标识符，但是，结尾处的标识符也必须是一样的。此外，在结尾的一行，如第4行，一定要另起一行，并且此行除了“GOD”，并以“；”号结束之外，不能有任何其他字符，前后都不能有，包括空格，否则会出现错误的哦。</p>
-<p>特殊类型1—资源 1.txt<br>特殊类型2—空类型 null 大写NULL也可以</p>
-<p>echo NULL，输出无结果</p>
-<p>$var3 = “节日快乐！”;<br>unset($var3);//NULL</p>
-<p>常量 不允许重复定义、修改值<br>定义 define(‘name’,value)  注意第三个参数写 true，可以大小写不敏感<br>还有一种定义方式，const PI = 3.14; 大小写敏感</p>
-<p>取值 可以直接取值，也可以使用 constant(‘name’)</p>
-<p><a href="https://stackoverflow.com/questions/2447791/define-vs-const">dinfine 和 const 的区别</a><br>注意<br>define() 必须在 class 外使用，在全局生效，运行时执行<br>const 在条件表达式内部不能使用，在当前命名空间生效，编译时执行，定义的速度更快<br>一般不用条件表达式时，尽量用 const</p>
-<p>系统常量<br><strong>FILE</strong> 文件名和路径<br><strong>LINE</strong> 当前代码在第几行<br>PHP_VERSION 当前解析器的版本号<br>PHP_OS 执行当前PHP版本的操作系统名称</p>
-<p>defined(‘常量名’) 检测常量是否定义，返回 true 或 false</p>
-<p>PHP运算符一般分为算术运算符、赋值运算符、比较运算符、三元运算符、逻辑运算符、字符串连接运算符、错误控制运算符。</p>
-<p>赋值运算符 一般赋值 =   引用赋值 &amp;，例如 $c = &amp;$a;<br>“&amp;”：引用赋值，意味着两个变量都指向同一个数据。它将使两个变量共享一块内存，如果这个内存存储的数据变了，那么两个变量的值都会发生变化。</p>
-<p>逻辑运算符<br>与 &amp;&amp;、或 ||、非！、异或 xor (注意 and or xor 运算优先级很低，需要小括号括住)</p>
-<p>字符串连接运算符 <code>.</code> 、 <code>.=</code></p>
-<p>错误控制运算符 @，可以放在变量和函数执行语句之前<br>开启了 track_errors 后，可以使用变量 $php_errormsg 输出错误信息</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line">ini_set(<span class="string">&#x27;track_errors&#x27;</span>, <span class="number">1</span>);</span><br><span class="line"><span class="variable">$conn</span> = @mysql_connect(<span class="string">&#x27;localhost&#x27;</span>,<span class="string">&#x27;username&#x27;</span>,<span class="string">&#x27;password&#x27;</span>);</span><br><span class="line"><span class="keyword">echo</span> <span class="string">&quot;出错了，错误原因是：&quot;</span>.<span class="variable">$php_errormsg</span>;</span><br></pre></td></tr></table></figure>
-<p>算术运算符 <code>+ 、- 、* 、/ 、% 、+= 、-= 、*= 、/= 、%=</code><br>向下取整 floor(4.25); //4<br>向上取整 ceil(4.25); //5</p>
-<p>条件结构  if、switch<br>循环结构  while、do while、for、foreach</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="keyword">foreach</span> (数组 <span class="keyword">as</span> 值)&#123;</span><br><span class="line"><span class="comment">//执行的任务</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">foreach</span> (数组 <span class="keyword">as</span> 下标 =&gt; 值)&#123;</span><br><span class="line"> <span class="comment">//执行的任务</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>数组<br>//设置某个变量为一个空数组</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="variable">$arr</span> = <span class="keyword">array</span>();</span><br><span class="line"><span class="variable">$fruit</span> = <span class="keyword">array</span>(<span class="string">&quot;苹果&quot;</span>,<span class="string">&quot;香蕉&quot;</span>,<span class="string">&quot;菠萝&quot;</span>);</span><br><span class="line">var_export(<span class="variable">$fruit</span>);<span class="comment">//打印数组</span></span><br></pre></td></tr></table></figure>
-<p>索引数组赋值有三种方式:</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="variable">$arr</span>[<span class="number">0</span>]=<span class="string">&#x27;苹果&#x27;</span>;</span><br><span class="line"><span class="keyword">array</span>(<span class="string">&#x27;0&#x27;</span>=&gt;<span class="string">&#x27;苹果&#x27;</span>);</span><br><span class="line"><span class="keyword">array</span>(<span class="string">&#x27;苹果&#x27;</span>);<span class="comment">//自动产生索引 0</span></span><br><span class="line"></span><br><span class="line"><span class="variable">$arr</span>[] = <span class="string">&#x27;梨&#x27;</span>;<span class="comment">//末尾插入新值</span></span><br></pre></td></tr></table></figure>
-<p>访问某个数组中索引的值<br>$arr[0] 或 $arr[‘0’];</p>
-<p>获取数组长度 count($array);</p>
-<p>php类</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="comment">//定义一个类，类名必须是字母或下划线开头</span></span><br><span class="line"><span class="comment">//$this 指向实例化后的类，来访问该类里的其他变量</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> <span class="variable">$name</span> = <span class="string">&#x27;汽车&#x27;</span>;</span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">getName</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//实例化一个car对象</span></span><br><span class="line"><span class="variable">$car</span> = <span class="keyword">new</span> Car();<span class="comment">//这里括号不传参数时，可以省略</span></span><br><span class="line"><span class="variable">$car</span>-&gt;name = <span class="string">&#x27;奥迪A6&#x27;</span>; <span class="comment">//设置对象的属性值</span></span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$car</span>-&gt;getName();  <span class="comment">//调用对象的方法 输出对象的名字</span></span><br></pre></td></tr></table></figure>
-<p>类的的属性和 fuction 前面有关键字public（公有），protected（受保护）或 private（私有），var 视为公有<br>类的 function 可以不写关键字，视为公有。属性必须写，否则报错。<br>受保护的不可以被外部调用，私有的只能被自己内部调用</p>
-<p>使用关键字static修饰的，称之为静态方法，静态方法不需要实例化对象，可以通过类名直接调用，操作符为双冒号::</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">static</span> <span class="function"><span class="keyword">function</span> <span class="title">getName</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&#x27;汽车&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">​&#125;</span><br><span class="line"><span class="keyword">echo</span> Car::getName(); <span class="comment">//结果为“汽车</span></span><br></pre></td></tr></table></figure>
-<p>注意静态方法，可以像普通方法一样调用，但静态属性不可以<br>静态方法内不可以使用 $this</p>
-<p>静态属性 可以使用 static::$属性名，或者 self::$属性名 访问<br>静态方法 使用 static::方法名() 执行<br>访问父类时，使用 parent，例如 parent::方法名();</p>
-<p>注意下面代码，写不写 static 输出结果是一样的。但属性这么玩会报错。</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">b</span> </span>&#123;</span><br><span class="line">  <span class="built_in">static</span> <span class="function"><span class="keyword">function</span> <span class="title">show</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">123</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="variable">$obj</span> = <span class="keyword">new</span> b();</span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$obj</span>-&gt;show();<span class="comment">//123</span></span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$obj</span>::show();<span class="comment">//123</span></span><br></pre></td></tr></table></figure>
-<p>类的构造函数，实例化 new 类时，这个函数会被执行</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"></span>)</span>;</span><br></pre></td></tr></table></figure>
-<p>在子类中如果定义了__construct则不会调用父类的__construct，如果需要同时调用父类的构造函数，需要使用<code>parent::__construct()</code>显式的调用。</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;父类的构造函数被调用\n&quot;</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Truck</span> <span class="keyword">extends</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;子类的构造函数被调用\n&quot;</span>;</span><br><span class="line">    <span class="built_in">parent</span>::__construct();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="variable">$car</span> = <span class="keyword">new</span> Truck();</span><br></pre></td></tr></table></figure>
-<p>类的析构函数，类被销毁时会调用 <code>__destruct</code></p>
-<p>类继承<br>子类可以继承<br>父类的属性和方法<br>但当子类有同名的属性和方法时，父类的会不执行，可以静态方法的方式来访问。</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="variable">$speed</span> = <span class="number">0</span>; <span class="comment">//汽车的起始速度是0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">speedUp</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;speed += <span class="number">10</span>;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;speed;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//定义继承于Car的Truck类</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Truck</span> <span class="keyword">extends</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">speedUp</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="built_in">parent</span>::speedUp();</span><br><span class="line">        <span class="keyword">$this</span>-&gt;speed += <span class="number">50</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="variable">$car</span> = <span class="keyword">new</span> Truck();</span><br><span class="line"><span class="variable">$car</span>-&gt;speedUp();</span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$car</span>-&gt;speed;</span><br></pre></td></tr></table></figure>
-<p>Cookie<br>设置 cookie</p>
-<figure class="highlight php"><table><tr><td class="code"><pre><span class="line">setcookie(<span class="string">&#x27;test2&#x27;</span>, <span class="string">&#x27;哈&#x27;</span>, time() + <span class="number">10</span>, <span class="string">&#x27;/&#x27;</span>);<span class="comment">//存入的值为 %E5%93%88</span></span><br><span class="line">setrawcookie(<span class="string">&#x27;test3&#x27;</span>, <span class="string">&#x27;哈&#x27;</span>);<span class="comment">//存入的值为 哈</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-
-<blockquote>
-<p>图片来源：<a href="https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=59688723">https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=59688723</a><br>参考资料：<br><a href="https://www.imooc.com/learn/54">慕课 PHP 入门篇</a><br><a href="https://www.imooc.com/learn/26">慕课 PHP 进阶篇</a></p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>技术</category>
-      </categories>
-      <tags>
-        <tag>php</tag>
-        <tag>note</tag>
-      </tags>
   </entry>
   <entry>
     <title>Hexo 博客搭建、进阶配置指南</title>

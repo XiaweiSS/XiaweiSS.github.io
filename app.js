@@ -8,7 +8,7 @@ const app = new Koa();
 
 // Force HTTPS using default resolver
 app.use(enforceHttps({
-  port: 8081
+  port: 443
 }));
 
 // index page
@@ -23,5 +23,5 @@ var options = {
 }
 
 // start the server
-http.createServer(app.callback()).listen(8080);
-https.createServer(options, app.callback()).listen(8081);
+http.createServer(app.callback()).listen(80);
+https.createServer(options, app.callback()).listen(443);
