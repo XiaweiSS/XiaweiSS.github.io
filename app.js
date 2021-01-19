@@ -6,7 +6,7 @@ const https = require('https')
 const Koa = require('koa')
 const koaCors = require('@koa/cors');
 const koaStatic = require('koa-static')
-const enforceHttps = require('koa-sslify').default
+const enforceHttps = require('koa-sslify')
 
 const prod = true
 
@@ -23,7 +23,7 @@ app.use(koaStatic(
 
 if (prod) {
   // Force HTTPS on page
-  app.use(enforceHttps({port: 443}))
+  app.use(enforceHttps())
   // SSL options
   const options = {
     key: fs.readFileSync('/home/xiawei/xiawei.cc.key'),

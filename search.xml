@@ -1,146 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>使用 git hook 实现服务器代码自动部署</title>
-    <url>/art/2017/20171114-set-git-hooks-to-update-server-code/</url>
-    <content><![CDATA[<blockquote>
-<p>前几天把 Hexo 博客部署到了阿里云服务器，但发现每次推送文章都需要去服务器同步代码。最终寻找到 git hook 来解决了这个问题</p>
-</blockquote>
-<a id="more"></a>
-
-<h2 id="1-说明"><a href="#1-说明" class="headerlink" title="1. 说明"></a>1. 说明</h2><p>在服务器，要建一个相当于 github 存放功能的裸仓库来存储代码。<br>之所以叫裸仓库，是因为这个仓库只是为了存代码用的，没有工作目录，不可以在它里面查看改写代码。</p>
-<p>在网站文件夹下，会有一个工作目录来存放代码，这个目录的代码可以像clone github代码库一样，clone 服务器里的裸仓库。</p>
-<p>当服务器里裸仓库收到提交进来的代码后，会触发 git hook 的 post-receive 事件，配置好的程序就可以自动去工作目录的仓库执行 git pull，服务器代码就自动更新了</p>
-<h2 id="2-配置步骤："><a href="#2-配置步骤：" class="headerlink" title="2. 配置步骤："></a>2. 配置步骤：</h2><p>远程连接服务器，登录 root 账号</p>
-<h3 id="2-1-设置用户"><a href="#2-1-设置用户" class="headerlink" title="2.1 设置用户"></a>2.1 设置用户</h3><p>新增用户xiawei，这里可以写你的名字</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">useradd xiawei</span><br></pre></td></tr></table></figure>
-<p>修改用户密码</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">passwd xiawei</span><br></pre></td></tr></table></figure>
-<p>输入新密码即可</p>
-<p>给添加 sudo 权限 通过修改 /etc/sudoers</p>
-<p>必须使用命令</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">visudo</span><br></pre></td></tr></table></figure>
-<p>按 i 键进入, 找到 root ALL=(ALL) ALL 然后下面添加 xiawei ALL = (ALL) ALL</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">root ALL&#x3D;(ALL) ALL</span><br><span class="line">xiawei ALL &#x3D; (ALL) ALL</span><br></pre></td></tr></table></figure>
-<h3 id="2-2-安装-git"><a href="#2-2-安装-git" class="headerlink" title="2.2 安装 git"></a>2.2 安装 git</h3><p>查看是否安装 git</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git --version</span><br></pre></td></tr></table></figure>
-<p>如果没有看到版本号，则继续安装 git</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum install git</span><br></pre></td></tr></table></figure>
-<p>设置 git 用户名邮箱</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git config --global user.name &quot;yourname&quot;</span><br><span class="line">git config --global user.email &quot;your_email@example.com&quot;</span><br></pre></td></tr></table></figure>
-<h3 id="2-3-建立git裸仓库"><a href="#2-3-建立git裸仓库" class="headerlink" title="2.3 建立git裸仓库"></a>2.3 建立git裸仓库</h3><p>假设网站的在 /www/blog/ 目录下，创建裸仓库</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www</span><br><span class="line">sudo git init --bare blog.git</span><br></pre></td></tr></table></figure>
-<p>更改所属用户和用户组，获得权限</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo chown -R xiawei:xiawei blog.git</span><br><span class="line">sudo chown -R xiawei:xiawei blog</span><br></pre></td></tr></table></figure>
-<h3 id="2-4-建立工作目录-git-仓库"><a href="#2-4-建立工作目录-git-仓库" class="headerlink" title="2.4 建立工作目录 git 仓库"></a>2.4 建立工作目录 git 仓库</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git clone &#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
-<p>如果此时 blog 文件夹不是空的，会不能 clone<br>按先定义仓库，再设置远端仓库地址即可</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git init</span><br><span class="line">git remote add origin &#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
-<p>注意这时要删除掉 index.html 等和本地待提交代码重复的文件</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">rm index.html</span><br></pre></td></tr></table></figure>
-<h3 id="2-5-设置-git-hooks"><a href="#2-5-设置-git-hooks" class="headerlink" title="2.5 设置 git hooks"></a>2.5 设置 git hooks</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;xiaweiss.git&#x2F;hooks&#x2F;</span><br><span class="line">vim post-receive</span><br></pre></td></tr></table></figure>
-<p>按 i 键，将下面这几行代码粘贴进去</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#!&#x2F;bin&#x2F;sh</span><br><span class="line">unset GIT_DIR</span><br><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git fetch --all</span><br><span class="line">git reset --hard origin&#x2F;master</span><br></pre></td></tr></table></figure>
-<p>（原来只使用的 git pull origin master 方式，代码冲突时，还需要手动登陆服务器解决 ）</p>
-<p>赋予 post-receive 文件可执行权限</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">chmod +x post-receive</span><br></pre></td></tr></table></figure>
-<h3 id="2-6-本地-配置"><a href="#2-6-本地-配置" class="headerlink" title="2.6 本地 配置"></a>2.6 本地 配置</h3><p>最后修改 Hexo 配置文件里 deploy项，每次发布代码会提交到这两个仓库</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">deploy:</span><br><span class="line">- type: git</span><br><span class="line">  repo: git@github.com:xiaweiss&#x2F;xiaweiss.github.io.git</span><br><span class="line">- type: git</span><br><span class="line">  repo: xiawei@xiaweiss.com:&#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
-<p>如果是本地的其他项目，可以直接</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git clone xiawei@xiaweiss.com:&#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
-<p>修改代码后，提交即可</p>
-]]></content>
-      <categories>
-        <category>技术</category>
-      </categories>
-      <tags>
-        <tag>git</tag>
-        <tag>环境配置</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>在centOS7 编译安装 php、apache</title>
-    <url>/art/2017/20171115-install-php-and-apache-on-centos7/</url>
-    <content><![CDATA[<blockquote>
-<p>之前购买了阿里云服务器，为了运行自己的网站，需要 webServer<br>apache httpd + php 或者 nginx + php 都是不错的选择<br>新手还是推荐使用 宝塔面板，可以一键安装部署</p>
-</blockquote>
-<a id="more"></a>
-
-<h2 id="0-安装图形界面（不建议）"><a href="#0-安装图形界面（不建议）" class="headerlink" title="0. 安装图形界面（不建议）"></a>0. 安装图形界面（不建议）</h2><p>不推荐安装，会降低服务器性能。但自己本地练习，可以考虑安装</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum group install &quot;GNOME Desktop&quot; &quot;Graphical Administration Tools&quot;</span><br><span class="line">yum groupinstall &quot;Server with GUI&quot;</span><br></pre></td></tr></table></figure>
-<p>默认启动图形界面：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># ln -sf &#x2F;lib&#x2F;systemd&#x2F;system&#x2F;runlevel5.target &#x2F;etc&#x2F;systemd&#x2F;system&#x2F;default.target</span><br></pre></td></tr></table></figure>
-<p>命令行界面：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># ln -sf &#x2F;lib&#x2F;systemd&#x2F;system&#x2F;runlevel3.target &#x2F;etc&#x2F;systemd&#x2F;system&#x2F;default.target</span><br></pre></td></tr></table></figure>
-<p>命令行界面下，启动图形界面：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># startx</span><br></pre></td></tr></table></figure>
-<h2 id="1-远程连接工具"><a href="#1-远程连接工具" class="headerlink" title="1. 远程连接工具"></a>1. 远程连接工具</h2><p>windows 使用 Xshell<br>Linux 和 mac 使用 Terminal 即可</p>
-<h2 id="2-设置用户"><a href="#2-设置用户" class="headerlink" title="2. 设置用户"></a>2. 设置用户</h2><p>首先登录 root 账号</p>
-<p>新增用户</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">useradd xiawei</span><br></pre></td></tr></table></figure>
-<p>修改用户密码</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">passwd 新密码</span><br></pre></td></tr></table></figure>
-<p>添加 sudo 权限<br>通过修改 /etc/sudoers</p>
-<p>必须使用命令</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">visudo</span><br></pre></td></tr></table></figure>
-<p>找到 root  ALL=(ALL)   ALL<br>然后添加 xiawei ALL = (ALL)  ALL</p>
-<h2 id="3-准备工作"><a href="#3-准备工作" class="headerlink" title="3. 准备工作"></a>3. 准备工作</h2><p>源码目录：  <strong>~/source</strong><br>安装目录： <strong>/usr/local/soft</strong><br>网站目录： <strong>/usr/local/soft/web</strong></p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$mkdir source</span><br><span class="line">   $sudo mkdir &#x2F;usr&#x2F;local&#x2F;soft</span><br><span class="line">   $sudo chown sxin:sxin &#x2F;usr&#x2F;local&#x2F;soft&#x2F;</span><br><span class="line">   $mkdir &#x2F;usr&#x2F;local&#x2F;soft&#x2F;web</span><br></pre></td></tr></table></figure>
-<p>我们从官网下载Httpd和Php的源码</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$wget -P ~&#x2F;source&#x2F; http:&#x2F;&#x2F;cn2.php.net&#x2F;distributions&#x2F;php-7.1.5.tar.gz</span><br><span class="line"> $wget -P ~&#x2F;source&#x2F; http:&#x2F;&#x2F;archive.apache.org&#x2F;dist&#x2F;httpd&#x2F;httpd-2.4.25.tar.gz</span><br></pre></td></tr></table></figure>
-<p>解压</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$cd ~&#x2F;source</span><br><span class="line">$tar -zxvf php-7.1.5.tar.gz &amp;&amp; tar -zxvf httpd-2.4.25.tar.gz</span><br></pre></td></tr></table></figure>
-<h2 id="4-安装Httpd-2-4"><a href="#4-安装Httpd-2-4" class="headerlink" title="4. 安装Httpd 2.4"></a>4. 安装Httpd 2.4</h2><p>Httpd Version 2.4 Compiling and Installing    <a href="http://httpd.apache.org/docs/2.4/install.html">http://httpd.apache.org/docs/2.4/install.html</a></p>
-<h3 id="4-1-Requirements"><a href="#4-1-Requirements" class="headerlink" title="4.1 Requirements"></a>4.1 Requirements</h3><p>根据官网的文档。我们要先安装apr,apr-util和pcre</p>
-<p>下载apr,apr-util,pcre源码</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$wget -P ~&#x2F;source&#x2F; http:&#x2F;&#x2F;archive.apache.org&#x2F;dist&#x2F;apr&#x2F;apr-1.5.2.tar.gz</span><br><span class="line">$wget -P ~&#x2F;source&#x2F; http:&#x2F;&#x2F;archive.apache.org&#x2F;dist&#x2F;apr&#x2F;apr-util-1.5.4.tar.gz</span><br><span class="line">$wget -P ~&#x2F;source&#x2F; ftp:&#x2F;&#x2F;ftp.csx.cam.ac.uk&#x2F;pub&#x2F;software&#x2F;programming&#x2F;pcre&#x2F;pcre-8.39.tar.gz</span><br></pre></td></tr></table></figure>
-<p>解压</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$cd ~&#x2F;source&#x2F; &amp;&amp; tar -zxvf apr-1.5.2.tar.gz &amp;&amp; tar -zxvf apr-util-1.5.4.tar.gz &amp;&amp; tar -zxvf pcre-8.39.tar.gz</span><br></pre></td></tr></table></figure>
-<p>编译安装apr</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$cd ~&#x2F;source&#x2F;apr-1.5.2&#x2F;</span><br><span class="line">$.&#x2F;configure --prefix&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;apr</span><br><span class="line">$make</span><br><span class="line">$make install</span><br></pre></td></tr></table></figure>
-<p>编译安装apr-util</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$cd ~&#x2F;source&#x2F;apr-util-1.5.4&#x2F;</span><br><span class="line">$.&#x2F;configure --prefix&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;apr-util --with-apr&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;apr</span><br><span class="line">$make</span><br><span class="line">$make install</span><br></pre></td></tr></table></figure>
-<p>编译安装pcre</p>
-<blockquote>
-<p>如果安装时出错 configure: error: You need a C++ compiler for C++ support<br>解决:安装 yum install -y gcc gcc-c++</p>
-</blockquote>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$cd ~&#x2F;source&#x2F;pcre-8.39&#x2F;</span><br><span class="line">$.&#x2F;configure --prefix&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;pcre</span><br><span class="line">$make</span><br><span class="line">$make install</span><br></pre></td></tr></table></figure>
-<h3 id="4-2-编译安装httpd"><a href="#4-2-编译安装httpd" class="headerlink" title="4.2 编译安装httpd"></a>4.2 编译安装httpd</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$cd ~&#x2F;source&#x2F;httpd-2.4.25&#x2F;</span><br><span class="line">$.&#x2F;configure --prefix&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;httpd24 --with-apr&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;apr --with-apr-util&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;apr-util&#x2F; --with-pcre&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;pcre --enable-so</span><br><span class="line">$make</span><br><span class="line">$make install</span><br></pre></td></tr></table></figure>
-<p>注:如果编译过程中 遇到  “Did not find pcre-config script at”等类似的错误 说明 pcre版本下载错了。 下的是PCRE2 要下载PCRE. 8.X是PCRE 10.X是PCRE2</p>
-<h2 id="5-安装PHP-7-1-5"><a href="#5-安装PHP-7-1-5" class="headerlink" title="5. 安装PHP 7.1.5"></a>5. 安装PHP 7.1.5</h2><p>官方文档：<br>  <a href="http://php.net/manual/en/install.unix.apache2.php">英文版</a><br>    <a href="http://php.net/manual/zh/install.unix.php">中文版</a></p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$cd ~&#x2F;source&#x2F;php-7.1.5</span><br><span class="line">$.&#x2F;configure --prefix&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;php71 --with-config-file-path&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;php71&#x2F;conf --with-apxs2&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;httpd24&#x2F;bin&#x2F;apxs</span><br><span class="line">$make</span><br><span class="line">$make install</span><br></pre></td></tr></table></figure>
-<p>注:如果编译过程中 遇到  “xml2-config not found. Please check your libxml2 installation”等类似的错误<br>请执行”sudo yum install libxml2 libxml2-devel -y”<br>编译过程中会遇到很多warning . 这个可以忽略。不过后面用过相关库会报错。 可以直接yum安装 也可以编译安装.和上面apr类似.也可以 用到了在安装扩展</p>
-<h2 id="6-配置"><a href="#6-配置" class="headerlink" title="6. 配置"></a>6. 配置</h2><h3 id="6-1-配置PHP（可选）"><a href="#6-1-配置PHP（可选）" class="headerlink" title="6.1 配置PHP（可选）"></a>6.1 配置PHP（可选）</h3><p>将 source php 文件夹里的配置文件拷贝</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$mkdir &#x2F;usr&#x2F;local&#x2F;soft&#x2F;php71&#x2F;conf</span><br><span class="line">$cp php.ini-development &#x2F;usr&#x2F;local&#x2F;soft&#x2F;php71&#x2F;conf&#x2F;php.ini</span><br><span class="line">$vim &#x2F;usr&#x2F;local&#x2F;soft&#x2F;php71&#x2F;conf&#x2F;php.ini</span><br></pre></td></tr></table></figure>
-<p>定位到 include_path<br>输入/include_pah</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">include_path &#x3D; &quot;.:&#x2F;usr&#x2F;local&#x2F;soft&#x2F;php71&#x2F;lib&#x2F;php&quot;</span><br></pre></td></tr></table></figure>
-<p>(Esc :wq)</p>
-<h3 id="6-2-配置HTTP"><a href="#6-2-配置HTTP" class="headerlink" title="6.2 配置HTTP"></a>6.2 配置HTTP</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$vim &#x2F;usr&#x2F;local&#x2F;soft&#x2F;httpd24&#x2F;conf&#x2F;httpd.conf</span><br></pre></td></tr></table></figure>
-<p>整合PHP+HTTPD<br>定位到 LoadModule 附近[随便] (其实第一行 libphp7.so 已经有了)</p>
-<p>LoadModule php7_module modules/libphp7.so<br>AddType application/x-httpd-php .php<br>AddType application/x-httpd-php-source .phps 监听端口 (没用80端口，80端口留给ngigx转发. 因为如果服务器有tomcat和httpd共存的话就只能其中一个用80端口)<br>Listen 1024 配置虚拟主机<br>运行用户[xxx 当前登录用户] User xxx<br>Group xxx</p>
-<p>打开 Include conf/extra/httpd-vhosts.conf (最前面的#去掉)</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$vim &#x2F;usr&#x2F;local&#x2F;soft&#x2F;httpd24&#x2F;conf&#x2F;extra&#x2F;httpd-vhosts.conf</span><br><span class="line">$mkdir -p &#x2F;usr&#x2F;local&#x2F;soft&#x2F;web&#x2F;lesson1</span><br></pre></td></tr></table></figure>
-<p>写入</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;VirtualHost *:1024&gt;</span><br><span class="line">DocumentRoot &#x2F;usr&#x2F;local&#x2F;soft&#x2F;web&#x2F;lesson1</span><br><span class="line">ServerName localhost:1024</span><br><span class="line">DirectoryIndex index.html index.php</span><br><span class="line">&lt;Directory &quot;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;web&#x2F;lesson1&quot;&gt;</span><br><span class="line">Options FollowSymLinks</span><br><span class="line">Require all granted</span><br><span class="line">&lt;&#x2F;Directory&gt;</span><br><span class="line">&lt;&#x2F;VirtualHost&gt;</span><br></pre></td></tr></table></figure>
-
-<h2 id="7-启动HTTPD"><a href="#7-启动HTTPD" class="headerlink" title="7. 启动HTTPD"></a>7. 启动HTTPD</h2><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$&#x2F;usr&#x2F;local&#x2F;soft&#x2F;httpd24&#x2F;bin&#x2F;apachectl start</span><br></pre></td></tr></table></figure>
-<p>如果出现 “AH00558: httpd: Could not reliably determine the server”s fully qualified domain name, using 127.0.0.1. Set the “ServerName” directive globally to suppress this message”<br>等提示信息 可以直接忽略或者去配置文件 把ServerName写上</p>
-<p>通过 <code>ps -ef|grep httpd</code> 可以看服务是否启动成功</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$vim &#x2F;usr&#x2F;local&#x2F;soft&#x2F;web&#x2F;lesson1&#x2F;index.php</span><br><span class="line">&lt;?php echo &quot;hello jtthink&quot;;</span><br></pre></td></tr></table></figure>
-<p>访问 localhost:1024/index.php 即可看到结果.</p>
-<h2 id="8-配置-阿里云-安全组设置，开放端口"><a href="#8-配置-阿里云-安全组设置，开放端口" class="headerlink" title="8. 配置 阿里云 安全组设置，开放端口"></a>8. 配置 阿里云 安全组设置，开放端口</h2><p>阿里云设有安全拦截，必须开发端口才可以访问<br><a href="https://bbs.aliyun.com/read/320667.html?spm=0.0.0.0.c7jrks">阿里云文档</a></p>
-<p>参考资料：<br><a href="http://www.itzgeek.com/how-tos/linux/centos-how-tos/install-gnome-gui-on-centos-7-rhel-7.html">Install Gnome GUI on CentOS 7 / RHEL 7 - ITzGeek</a><br><a href="http://b.jtthink.com/read.php?tid=195">Centos72下PHP71+Httpd24的 环境搭建（一） </a><br><a href="http://b.jtthink.com/read.php?tid=196">Centos72下PHP71+Httpd24的 环境搭建（二） </a></p>
-]]></content>
-      <categories>
-        <category>技术</category>
-      </categories>
-      <tags>
-        <tag>环境配置</tag>
-        <tag>apache</tag>
-        <tag>centOS</tag>
-        <tag>php</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Mac 基本开发环境配置</title>
     <url>/art/2017/20171111-set-environment-of-mac/</url>
     <content><![CDATA[<blockquote>
@@ -292,8 +152,148 @@
         <category>技术</category>
       </categories>
       <tags>
-        <tag>环境配置</tag>
         <tag>mac</tag>
+        <tag>环境配置</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>使用 git hook 实现服务器代码自动部署</title>
+    <url>/art/2017/20171114-set-git-hooks-to-update-server-code/</url>
+    <content><![CDATA[<blockquote>
+<p>前几天把 Hexo 博客部署到了阿里云服务器，但发现每次推送文章都需要去服务器同步代码。最终寻找到 git hook 来解决了这个问题</p>
+</blockquote>
+<a id="more"></a>
+
+<h2 id="1-说明"><a href="#1-说明" class="headerlink" title="1. 说明"></a>1. 说明</h2><p>在服务器，要建一个相当于 github 存放功能的裸仓库来存储代码。<br>之所以叫裸仓库，是因为这个仓库只是为了存代码用的，没有工作目录，不可以在它里面查看改写代码。</p>
+<p>在网站文件夹下，会有一个工作目录来存放代码，这个目录的代码可以像clone github代码库一样，clone 服务器里的裸仓库。</p>
+<p>当服务器里裸仓库收到提交进来的代码后，会触发 git hook 的 post-receive 事件，配置好的程序就可以自动去工作目录的仓库执行 git pull，服务器代码就自动更新了</p>
+<h2 id="2-配置步骤："><a href="#2-配置步骤：" class="headerlink" title="2. 配置步骤："></a>2. 配置步骤：</h2><p>远程连接服务器，登录 root 账号</p>
+<h3 id="2-1-设置用户"><a href="#2-1-设置用户" class="headerlink" title="2.1 设置用户"></a>2.1 设置用户</h3><p>新增用户xiawei，这里可以写你的名字</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">useradd xiawei</span><br></pre></td></tr></table></figure>
+<p>修改用户密码</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">passwd xiawei</span><br></pre></td></tr></table></figure>
+<p>输入新密码即可</p>
+<p>给添加 sudo 权限 通过修改 /etc/sudoers</p>
+<p>必须使用命令</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">visudo</span><br></pre></td></tr></table></figure>
+<p>按 i 键进入, 找到 root ALL=(ALL) ALL 然后下面添加 xiawei ALL = (ALL) ALL</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">root ALL&#x3D;(ALL) ALL</span><br><span class="line">xiawei ALL &#x3D; (ALL) ALL</span><br></pre></td></tr></table></figure>
+<h3 id="2-2-安装-git"><a href="#2-2-安装-git" class="headerlink" title="2.2 安装 git"></a>2.2 安装 git</h3><p>查看是否安装 git</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git --version</span><br></pre></td></tr></table></figure>
+<p>如果没有看到版本号，则继续安装 git</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum install git</span><br></pre></td></tr></table></figure>
+<p>设置 git 用户名邮箱</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git config --global user.name &quot;yourname&quot;</span><br><span class="line">git config --global user.email &quot;your_email@example.com&quot;</span><br></pre></td></tr></table></figure>
+<h3 id="2-3-建立git裸仓库"><a href="#2-3-建立git裸仓库" class="headerlink" title="2.3 建立git裸仓库"></a>2.3 建立git裸仓库</h3><p>假设网站的在 /www/blog/ 目录下，创建裸仓库</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www</span><br><span class="line">sudo git init --bare blog.git</span><br></pre></td></tr></table></figure>
+<p>更改所属用户和用户组，获得权限</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo chown -R xiawei:xiawei blog.git</span><br><span class="line">sudo chown -R xiawei:xiawei blog</span><br></pre></td></tr></table></figure>
+<h3 id="2-4-建立工作目录-git-仓库"><a href="#2-4-建立工作目录-git-仓库" class="headerlink" title="2.4 建立工作目录 git 仓库"></a>2.4 建立工作目录 git 仓库</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git clone &#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
+<p>如果此时 blog 文件夹不是空的，会不能 clone<br>按先定义仓库，再设置远端仓库地址即可</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git init</span><br><span class="line">git remote add origin &#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
+<p>注意这时要删除掉 index.html 等和本地待提交代码重复的文件</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">rm index.html</span><br></pre></td></tr></table></figure>
+<h3 id="2-5-设置-git-hooks"><a href="#2-5-设置-git-hooks" class="headerlink" title="2.5 设置 git hooks"></a>2.5 设置 git hooks</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;xiaweiss.git&#x2F;hooks&#x2F;</span><br><span class="line">vim post-receive</span><br></pre></td></tr></table></figure>
+<p>按 i 键，将下面这几行代码粘贴进去</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#!&#x2F;bin&#x2F;sh</span><br><span class="line">unset GIT_DIR</span><br><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git fetch --all</span><br><span class="line">git reset --hard origin&#x2F;master</span><br></pre></td></tr></table></figure>
+<p>（原来只使用的 git pull origin master 方式，代码冲突时，还需要手动登陆服务器解决 ）</p>
+<p>赋予 post-receive 文件可执行权限</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">chmod +x post-receive</span><br></pre></td></tr></table></figure>
+<h3 id="2-6-本地-配置"><a href="#2-6-本地-配置" class="headerlink" title="2.6 本地 配置"></a>2.6 本地 配置</h3><p>最后修改 Hexo 配置文件里 deploy项，每次发布代码会提交到这两个仓库</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">deploy:</span><br><span class="line">- type: git</span><br><span class="line">  repo: git@github.com:xiaweiss&#x2F;xiaweiss.github.io.git</span><br><span class="line">- type: git</span><br><span class="line">  repo: xiawei@xiaweiss.com:&#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
+<p>如果是本地的其他项目，可以直接</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git clone xiawei@xiaweiss.com:&#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
+<p>修改代码后，提交即可</p>
+]]></content>
+      <categories>
+        <category>技术</category>
+      </categories>
+      <tags>
+        <tag>环境配置</tag>
+        <tag>git</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>在centOS7 编译安装 php、apache</title>
+    <url>/art/2017/20171115-install-php-and-apache-on-centos7/</url>
+    <content><![CDATA[<blockquote>
+<p>之前购买了阿里云服务器，为了运行自己的网站，需要 webServer<br>apache httpd + php 或者 nginx + php 都是不错的选择<br>新手还是推荐使用 宝塔面板，可以一键安装部署</p>
+</blockquote>
+<a id="more"></a>
+
+<h2 id="0-安装图形界面（不建议）"><a href="#0-安装图形界面（不建议）" class="headerlink" title="0. 安装图形界面（不建议）"></a>0. 安装图形界面（不建议）</h2><p>不推荐安装，会降低服务器性能。但自己本地练习，可以考虑安装</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum group install &quot;GNOME Desktop&quot; &quot;Graphical Administration Tools&quot;</span><br><span class="line">yum groupinstall &quot;Server with GUI&quot;</span><br></pre></td></tr></table></figure>
+<p>默认启动图形界面：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># ln -sf &#x2F;lib&#x2F;systemd&#x2F;system&#x2F;runlevel5.target &#x2F;etc&#x2F;systemd&#x2F;system&#x2F;default.target</span><br></pre></td></tr></table></figure>
+<p>命令行界面：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># ln -sf &#x2F;lib&#x2F;systemd&#x2F;system&#x2F;runlevel3.target &#x2F;etc&#x2F;systemd&#x2F;system&#x2F;default.target</span><br></pre></td></tr></table></figure>
+<p>命令行界面下，启动图形界面：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># startx</span><br></pre></td></tr></table></figure>
+<h2 id="1-远程连接工具"><a href="#1-远程连接工具" class="headerlink" title="1. 远程连接工具"></a>1. 远程连接工具</h2><p>windows 使用 Xshell<br>Linux 和 mac 使用 Terminal 即可</p>
+<h2 id="2-设置用户"><a href="#2-设置用户" class="headerlink" title="2. 设置用户"></a>2. 设置用户</h2><p>首先登录 root 账号</p>
+<p>新增用户</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">useradd xiawei</span><br></pre></td></tr></table></figure>
+<p>修改用户密码</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">passwd 新密码</span><br></pre></td></tr></table></figure>
+<p>添加 sudo 权限<br>通过修改 /etc/sudoers</p>
+<p>必须使用命令</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">visudo</span><br></pre></td></tr></table></figure>
+<p>找到 root  ALL=(ALL)   ALL<br>然后添加 xiawei ALL = (ALL)  ALL</p>
+<h2 id="3-准备工作"><a href="#3-准备工作" class="headerlink" title="3. 准备工作"></a>3. 准备工作</h2><p>源码目录：  <strong>~/source</strong><br>安装目录： <strong>/usr/local/soft</strong><br>网站目录： <strong>/usr/local/soft/web</strong></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$mkdir source</span><br><span class="line">   $sudo mkdir &#x2F;usr&#x2F;local&#x2F;soft</span><br><span class="line">   $sudo chown sxin:sxin &#x2F;usr&#x2F;local&#x2F;soft&#x2F;</span><br><span class="line">   $mkdir &#x2F;usr&#x2F;local&#x2F;soft&#x2F;web</span><br></pre></td></tr></table></figure>
+<p>我们从官网下载Httpd和Php的源码</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$wget -P ~&#x2F;source&#x2F; http:&#x2F;&#x2F;cn2.php.net&#x2F;distributions&#x2F;php-7.1.5.tar.gz</span><br><span class="line"> $wget -P ~&#x2F;source&#x2F; http:&#x2F;&#x2F;archive.apache.org&#x2F;dist&#x2F;httpd&#x2F;httpd-2.4.25.tar.gz</span><br></pre></td></tr></table></figure>
+<p>解压</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$cd ~&#x2F;source</span><br><span class="line">$tar -zxvf php-7.1.5.tar.gz &amp;&amp; tar -zxvf httpd-2.4.25.tar.gz</span><br></pre></td></tr></table></figure>
+<h2 id="4-安装Httpd-2-4"><a href="#4-安装Httpd-2-4" class="headerlink" title="4. 安装Httpd 2.4"></a>4. 安装Httpd 2.4</h2><p>Httpd Version 2.4 Compiling and Installing    <a href="http://httpd.apache.org/docs/2.4/install.html">http://httpd.apache.org/docs/2.4/install.html</a></p>
+<h3 id="4-1-Requirements"><a href="#4-1-Requirements" class="headerlink" title="4.1 Requirements"></a>4.1 Requirements</h3><p>根据官网的文档。我们要先安装apr,apr-util和pcre</p>
+<p>下载apr,apr-util,pcre源码</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$wget -P ~&#x2F;source&#x2F; http:&#x2F;&#x2F;archive.apache.org&#x2F;dist&#x2F;apr&#x2F;apr-1.5.2.tar.gz</span><br><span class="line">$wget -P ~&#x2F;source&#x2F; http:&#x2F;&#x2F;archive.apache.org&#x2F;dist&#x2F;apr&#x2F;apr-util-1.5.4.tar.gz</span><br><span class="line">$wget -P ~&#x2F;source&#x2F; ftp:&#x2F;&#x2F;ftp.csx.cam.ac.uk&#x2F;pub&#x2F;software&#x2F;programming&#x2F;pcre&#x2F;pcre-8.39.tar.gz</span><br></pre></td></tr></table></figure>
+<p>解压</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$cd ~&#x2F;source&#x2F; &amp;&amp; tar -zxvf apr-1.5.2.tar.gz &amp;&amp; tar -zxvf apr-util-1.5.4.tar.gz &amp;&amp; tar -zxvf pcre-8.39.tar.gz</span><br></pre></td></tr></table></figure>
+<p>编译安装apr</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$cd ~&#x2F;source&#x2F;apr-1.5.2&#x2F;</span><br><span class="line">$.&#x2F;configure --prefix&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;apr</span><br><span class="line">$make</span><br><span class="line">$make install</span><br></pre></td></tr></table></figure>
+<p>编译安装apr-util</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$cd ~&#x2F;source&#x2F;apr-util-1.5.4&#x2F;</span><br><span class="line">$.&#x2F;configure --prefix&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;apr-util --with-apr&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;apr</span><br><span class="line">$make</span><br><span class="line">$make install</span><br></pre></td></tr></table></figure>
+<p>编译安装pcre</p>
+<blockquote>
+<p>如果安装时出错 configure: error: You need a C++ compiler for C++ support<br>解决:安装 yum install -y gcc gcc-c++</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$cd ~&#x2F;source&#x2F;pcre-8.39&#x2F;</span><br><span class="line">$.&#x2F;configure --prefix&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;pcre</span><br><span class="line">$make</span><br><span class="line">$make install</span><br></pre></td></tr></table></figure>
+<h3 id="4-2-编译安装httpd"><a href="#4-2-编译安装httpd" class="headerlink" title="4.2 编译安装httpd"></a>4.2 编译安装httpd</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$cd ~&#x2F;source&#x2F;httpd-2.4.25&#x2F;</span><br><span class="line">$.&#x2F;configure --prefix&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;httpd24 --with-apr&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;apr --with-apr-util&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;apr-util&#x2F; --with-pcre&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;pcre --enable-so</span><br><span class="line">$make</span><br><span class="line">$make install</span><br></pre></td></tr></table></figure>
+<p>注:如果编译过程中 遇到  “Did not find pcre-config script at”等类似的错误 说明 pcre版本下载错了。 下的是PCRE2 要下载PCRE. 8.X是PCRE 10.X是PCRE2</p>
+<h2 id="5-安装PHP-7-1-5"><a href="#5-安装PHP-7-1-5" class="headerlink" title="5. 安装PHP 7.1.5"></a>5. 安装PHP 7.1.5</h2><p>官方文档：<br>  <a href="http://php.net/manual/en/install.unix.apache2.php">英文版</a><br>    <a href="http://php.net/manual/zh/install.unix.php">中文版</a></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$cd ~&#x2F;source&#x2F;php-7.1.5</span><br><span class="line">$.&#x2F;configure --prefix&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;php71 --with-config-file-path&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;php71&#x2F;conf --with-apxs2&#x3D;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;httpd24&#x2F;bin&#x2F;apxs</span><br><span class="line">$make</span><br><span class="line">$make install</span><br></pre></td></tr></table></figure>
+<p>注:如果编译过程中 遇到  “xml2-config not found. Please check your libxml2 installation”等类似的错误<br>请执行”sudo yum install libxml2 libxml2-devel -y”<br>编译过程中会遇到很多warning . 这个可以忽略。不过后面用过相关库会报错。 可以直接yum安装 也可以编译安装.和上面apr类似.也可以 用到了在安装扩展</p>
+<h2 id="6-配置"><a href="#6-配置" class="headerlink" title="6. 配置"></a>6. 配置</h2><h3 id="6-1-配置PHP（可选）"><a href="#6-1-配置PHP（可选）" class="headerlink" title="6.1 配置PHP（可选）"></a>6.1 配置PHP（可选）</h3><p>将 source php 文件夹里的配置文件拷贝</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$mkdir &#x2F;usr&#x2F;local&#x2F;soft&#x2F;php71&#x2F;conf</span><br><span class="line">$cp php.ini-development &#x2F;usr&#x2F;local&#x2F;soft&#x2F;php71&#x2F;conf&#x2F;php.ini</span><br><span class="line">$vim &#x2F;usr&#x2F;local&#x2F;soft&#x2F;php71&#x2F;conf&#x2F;php.ini</span><br></pre></td></tr></table></figure>
+<p>定位到 include_path<br>输入/include_pah</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">include_path &#x3D; &quot;.:&#x2F;usr&#x2F;local&#x2F;soft&#x2F;php71&#x2F;lib&#x2F;php&quot;</span><br></pre></td></tr></table></figure>
+<p>(Esc :wq)</p>
+<h3 id="6-2-配置HTTP"><a href="#6-2-配置HTTP" class="headerlink" title="6.2 配置HTTP"></a>6.2 配置HTTP</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$vim &#x2F;usr&#x2F;local&#x2F;soft&#x2F;httpd24&#x2F;conf&#x2F;httpd.conf</span><br></pre></td></tr></table></figure>
+<p>整合PHP+HTTPD<br>定位到 LoadModule 附近[随便] (其实第一行 libphp7.so 已经有了)</p>
+<p>LoadModule php7_module modules/libphp7.so<br>AddType application/x-httpd-php .php<br>AddType application/x-httpd-php-source .phps 监听端口 (没用80端口，80端口留给ngigx转发. 因为如果服务器有tomcat和httpd共存的话就只能其中一个用80端口)<br>Listen 1024 配置虚拟主机<br>运行用户[xxx 当前登录用户] User xxx<br>Group xxx</p>
+<p>打开 Include conf/extra/httpd-vhosts.conf (最前面的#去掉)</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$vim &#x2F;usr&#x2F;local&#x2F;soft&#x2F;httpd24&#x2F;conf&#x2F;extra&#x2F;httpd-vhosts.conf</span><br><span class="line">$mkdir -p &#x2F;usr&#x2F;local&#x2F;soft&#x2F;web&#x2F;lesson1</span><br></pre></td></tr></table></figure>
+<p>写入</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;VirtualHost *:1024&gt;</span><br><span class="line">DocumentRoot &#x2F;usr&#x2F;local&#x2F;soft&#x2F;web&#x2F;lesson1</span><br><span class="line">ServerName localhost:1024</span><br><span class="line">DirectoryIndex index.html index.php</span><br><span class="line">&lt;Directory &quot;&#x2F;usr&#x2F;local&#x2F;soft&#x2F;web&#x2F;lesson1&quot;&gt;</span><br><span class="line">Options FollowSymLinks</span><br><span class="line">Require all granted</span><br><span class="line">&lt;&#x2F;Directory&gt;</span><br><span class="line">&lt;&#x2F;VirtualHost&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="7-启动HTTPD"><a href="#7-启动HTTPD" class="headerlink" title="7. 启动HTTPD"></a>7. 启动HTTPD</h2><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$&#x2F;usr&#x2F;local&#x2F;soft&#x2F;httpd24&#x2F;bin&#x2F;apachectl start</span><br></pre></td></tr></table></figure>
+<p>如果出现 “AH00558: httpd: Could not reliably determine the server”s fully qualified domain name, using 127.0.0.1. Set the “ServerName” directive globally to suppress this message”<br>等提示信息 可以直接忽略或者去配置文件 把ServerName写上</p>
+<p>通过 <code>ps -ef|grep httpd</code> 可以看服务是否启动成功</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$vim &#x2F;usr&#x2F;local&#x2F;soft&#x2F;web&#x2F;lesson1&#x2F;index.php</span><br><span class="line">&lt;?php echo &quot;hello jtthink&quot;;</span><br></pre></td></tr></table></figure>
+<p>访问 localhost:1024/index.php 即可看到结果.</p>
+<h2 id="8-配置-阿里云-安全组设置，开放端口"><a href="#8-配置-阿里云-安全组设置，开放端口" class="headerlink" title="8. 配置 阿里云 安全组设置，开放端口"></a>8. 配置 阿里云 安全组设置，开放端口</h2><p>阿里云设有安全拦截，必须开发端口才可以访问<br><a href="https://bbs.aliyun.com/read/320667.html?spm=0.0.0.0.c7jrks">阿里云文档</a></p>
+<p>参考资料：<br><a href="http://www.itzgeek.com/how-tos/linux/centos-how-tos/install-gnome-gui-on-centos-7-rhel-7.html">Install Gnome GUI on CentOS 7 / RHEL 7 - ITzGeek</a><br><a href="http://b.jtthink.com/read.php?tid=195">Centos72下PHP71+Httpd24的 环境搭建（一） </a><br><a href="http://b.jtthink.com/read.php?tid=196">Centos72下PHP71+Httpd24的 环境搭建（二） </a></p>
+]]></content>
+      <categories>
+        <category>技术</category>
+      </categories>
+      <tags>
+        <tag>环境配置</tag>
+        <tag>apache</tag>
+        <tag>centOS</tag>
+        <tag>php</tag>
       </tags>
   </entry>
   <entry>
@@ -432,6 +432,74 @@
       <tags>
         <tag>萧秋水</tag>
         <tag>成长</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>前端基础知识</title>
+    <url>/art/2018/20180101-fontend-baseinfo/</url>
+    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20180222.jpg"></p>
+<a id="more"></a>
+
+<h2 id="html"><a href="#html" class="headerlink" title="html"></a>html</h2><h3 id="1-html-5-新特性"><a href="#1-html-5-新特性" class="headerlink" title="1. html 5 新特性"></a>1. html 5 新特性</h3><p>用于绘画的 canvas 元素</p>
+<p>用于媒介回放的 video 和 audio 元素</p>
+<p>对本地离线存储的更好的支持<br>localStorage、sessionStorage 不同浏览器容量不同，容量 4.98M。但注意 javascript 使用 utf-16 编码，所以最多有2.5M<br><a href="http://dev-test.nemikor.com/web-storage/support-test/">http://dev-test.nemikor.com/web-storage/support-test/</a></p>
+<p>Cookie不同浏览器容量不同， 最多容量4M ，50条数据。</p>
+<p>新的特殊内容元素，比如 article、footer、header、nav、section</p>
+<p>新的表单控件，比如 calendar、date、time、email、url、search</p>
+<h3 id="2-同源策略"><a href="#2-同源策略" class="headerlink" title="2. 同源策略"></a>2. 同源策略</h3><p><a href="http://www.ruanyifeng.com/blog/2016/04/same-origin-policy.html">http://www.ruanyifeng.com/blog/2016/04/same-origin-policy.html</a><br>同协议，同端口，同域名（一级二级域名是不同域名）</p>
+<p>如果非同源，共有三种行为受到限制。</p>
+<p>（1） Cookie、LocalStorage 和 IndexDB 无法读取。</p>
+<p>（2） DOM 无法获得。</p>
+<p>（3） AJAX 请求不能发送</p>
+<h3 id="3-跨域"><a href="#3-跨域" class="headerlink" title="3. 跨域"></a>3. 跨域</h3><p>JSONP 它的基本思想是，网页通过添加一个<code>&lt;script&gt;</code>元素，向服务器请求JSON数据，这种做法不受同源政策限制；服务器收到请求后，将数据放在一个指定名字的回调函数里传回来。</p>
+<p>WebSocket是一种通信协议，使用ws://（非加密）和wss://（加密）作为协议前缀。该协议不实行同源政策，只要服务器支持，就可以通过它进行跨源通信。</p>
+<p>CORS是一个W3C标准，全称是”跨域资源共享”（Cross-origin resource sharing）。</p>
+<p>它允许浏览器向跨源服务器，发出XMLHttpRequest请求，从而克服了AJAX只能同源使用的限制。</p>
+<h3 id="4-标签语义化"><a href="#4-标签语义化" class="headerlink" title="4. 标签语义化"></a>4. 标签语义化</h3><p>通过标签判断内容语义，例如根据h1标签判断出内容是标题，根据<code>&lt;p&gt;</code>判断内容是段落、<code>&lt;input&gt;</code>标签是输入框等。</p>
+<p>判断标签是否语义化：去掉样式，看网页结构是否组织良好有序，是否仍然有很好的可读性。</p>
+<p>为什么标签要语义化</p>
+<ol>
+<li>搜索引擎友好。</li>
+<li>更容易让屏幕阅读器读出网页内容。</li>
+<li>去掉或样式丢失的时候能让页面呈现清晰的结构。</li>
+<li>便于团队开发和维护。</li>
+</ol>
+<p>标题使用<code>&lt;h2&gt;</code>而不是<code>&lt;div class=&quot;h2&quot;&gt;</code>,段落使用<code>&lt;p&gt;</code>标签，锚点使用<code>&lt;a&gt;</code>。</p>
+<h2 id="http-状态码"><a href="#http-状态码" class="headerlink" title="http 状态码"></a>http 状态码</h2><p>1** 信息<br>2** 成功  200<br>3** 重定向  304 (未修改)<br>4** 客户端错误<br>5** 服务器错误</p>
+<h2 id="css3"><a href="#css3" class="headerlink" title="css3"></a>css3</h2><p>选择器 [attribute^=value]  :nth-of-type(n) :nth-child(n)<br>盒模型 -&gt; box-sizing:content-box border-box<br>背景和边框-&gt; 圆角边框/背景图<br>文本效果<br>2D/3D 转换 -&gt; 移动translate、缩放scale、转动rotate、拉长或拉伸skew  六个值的矩阵matrix<br>过渡 -&gt; transition<br>动画  CSS3 动画属性<br>多列布局<br>弹性盒子(Flex Box)</p>
+<h2 id="javascript特性"><a href="#javascript特性" class="headerlink" title="javascript特性"></a>javascript特性</h2><h3 id="1-类型"><a href="#1-类型" class="headerlink" title="1 类型"></a>1 类型</h3><p>基本类型 number、boolean、string、null、undefined<br>复杂类型 array、function、object</p>
+<h3 id="2-类型的困惑"><a href="#2-类型的困惑" class="headerlink" title="2 类型的困惑"></a>2 类型的困惑</h3><p>尽量避免用 new</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="built_in">String</span>(<span class="string">&#x27;a&#x27;</span>) <span class="keyword">instanceof</span> <span class="built_in">String</span> <span class="comment">//true</span></span><br><span class="line"><span class="string">&#x27;a&#x27;</span> <span class="keyword">instanceof</span> <span class="built_in">String</span> <span class="comment">//false</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typeof</span> <span class="literal">null</span> <span class="comment">//&#x27;object&#x27;</span></span><br><span class="line"><span class="keyword">typeof</span> []   <span class="comment">//&#x27;object&#x27;</span></span><br><span class="line">[] <span class="keyword">instanceof</span> <span class="built_in">Array</span> <span class="comment">//true</span></span><br></pre></td></tr></table></figure>
+<p>条件表达式里 null、undefined、’’ 会被判定为 false</p>
+<h3 id="3-函数"><a href="#3-函数" class="headerlink" title="3 函数"></a>3 函数</h3><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="function"><span class="keyword">function</span> <span class="title">a</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="string">&#x27;function&#x27;</span> == <span class="keyword">typeof</span> a <span class="comment">//true，这里的 a 是前面那个 var a</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="4-函数的参数变量"><a href="#4-函数的参数变量" class="headerlink" title="4 函数的参数变量"></a>4 函数的参数变量</h3><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = fuction (b,c) &#123;&#125;</span><br><span class="line">a.length <span class="comment">//3</span></span><br></pre></td></tr></table></figure>
+<h3 id="5-闭包"><a href="#5-闭包" class="headerlink" title="5 闭包"></a>5 闭包</h3><p>在某个作用域中定义的变量只能在该作用域或其内部作用域中才能访问到</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="number">5</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">woot</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  a==<span class="number">5</span>;<span class="comment">//false</span></span><br><span class="line">  <span class="built_in">console</span>.log(a==<span class="number">5</span>);</span><br><span class="line">  <span class="keyword">var</span> a=<span class="number">6</span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">test</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    a==<span class="number">6</span>;<span class="comment">//true</span></span><br><span class="line">    <span class="built_in">console</span>.log(a==<span class="number">6</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  test();</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">woot();</span><br></pre></td></tr></table></figure>
+<p>自执行函数，通过声明调用匿名函数，定义新的作用域</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="number">3</span>;</span><br><span class="line">(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> a = <span class="number">5</span>;</span><br><span class="line">&#125;)()</span><br><span class="line"></span><br><span class="line">a == <span class="number">3</span>; <span class="comment">//true</span></span><br></pre></td></tr></table></figure>
+<h3 id="6-类"><a href="#6-类" class="headerlink" title="6 类"></a>6 类</h3><p>类通过函数定义</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Animal</span> (<span class="params">name</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">this</span>.name=name;</span><br><span class="line">&#125;</span><br><span class="line">Animal.prototype.getName() &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">this</span>.name;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="7-深浅拷贝"><a href="#7-深浅拷贝" class="headerlink" title="7 深浅拷贝"></a>7 深浅拷贝</h3><p>属性的可枚举性和所有权 <a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Enumerability_and_ownership_of_properties">https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Enumerability_and_ownership_of_properties</a></p>
+<p><code>for...in</code> 可以循环出 可枚举属性，自身对象及其原型链。再使用 hasOwnProperty 判断，得到自身属性</p>
+<h2 id="es6"><a href="#es6" class="headerlink" title="es6"></a>es6</h2><h3 id="1-let-const"><a href="#1-let-const" class="headerlink" title="1. let, const"></a>1. let, const</h3><p>var命令会发生”变量提升“现象，即变量可以在声明之前使用，值为undefined。这种现象多多少少是有些奇怪的，按照一般的逻辑，变量应该在声明语句之后才可以使用。</p>
+<p>为了纠正这种现象，let命令改变了语法行为，它所声明的变量一定要在声明后使用，否则报错。</p>
+<p>不允许重复声明</p>
+<p>暂时性死区<br>只要块级作用域内存在let命令，它所声明的变量就“绑定”（binding）这个区域，不再受外部的影响。<br>总之，在代码块内，使用let命令声明变量之前，该变量都是不可用的。这在语法上，称为“暂时性死区”（temporal dead zone，简称 TDZ）。</p>
+<p>但对于复合类型的数据（主要是对象和数组），变量指向的内存地址，保存的只是一个指针，const只能保证这个指针是固定的</p>
+<h3 id="2-块级作用域"><a href="#2-块级作用域" class="headerlink" title="2. 块级作用域"></a>2. 块级作用域</h3><p>ES5 只有全局作用域和函数作用域<br>ES6 的块级作用域 {}</p>
+<h3 id="3-es7"><a href="#3-es7" class="headerlink" title="3. es7"></a>3. es7</h3><p>Array.prototype.includes  -&gt; 代替 indexOf，返回true或false，还可以参数规定从第几位开始<br>求冥运算（次方）</p>
+<h2 id="事件传播"><a href="#事件传播" class="headerlink" title="事件传播"></a>事件传播</h2><p>冒泡捕获<br>先捕获再冒泡</p>
+<p>阻止传播 e.stopPropagation();</p>
+<p>事件委托</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> parent = <span class="built_in">document</span>.getElementById(<span class="string">&quot;parent&quot;</span>);</span><br><span class="line"><span class="keyword">var</span> child = <span class="built_in">document</span>.getElementById(<span class="string">&quot;child&quot;</span>);</span><br><span class="line">parent.onclick = <span class="function"><span class="keyword">function</span>(<span class="params">e</span>)</span>&#123;</span><br><span class="line">  <span class="keyword">if</span>(e.target.id == <span class="string">&quot;child&quot;</span>)&#123;</span><br><span class="line">      <span class="built_in">console</span>.log(<span class="string">&quot;您点击了child元素&quot;</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="React-生命周期"><a href="#React-生命周期" class="headerlink" title="React 生命周期"></a>React 生命周期</h2><p><a href="http://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">http://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/</a></p>
+<p>getderivedstatefromprops</p>
+]]></content>
+      <categories>
+        <category>技术</category>
+      </categories>
+      <tags>
+        <tag>javascript</tag>
       </tags>
   </entry>
   <entry>
@@ -859,74 +927,6 @@
       </tags>
   </entry>
   <entry>
-    <title>前端基础知识</title>
-    <url>/art/2018/20180101-fontend-baseinfo/</url>
-    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20180222.jpg"></p>
-<a id="more"></a>
-
-<h2 id="html"><a href="#html" class="headerlink" title="html"></a>html</h2><h3 id="1-html-5-新特性"><a href="#1-html-5-新特性" class="headerlink" title="1. html 5 新特性"></a>1. html 5 新特性</h3><p>用于绘画的 canvas 元素</p>
-<p>用于媒介回放的 video 和 audio 元素</p>
-<p>对本地离线存储的更好的支持<br>localStorage、sessionStorage 不同浏览器容量不同，容量 4.98M。但注意 javascript 使用 utf-16 编码，所以最多有2.5M<br><a href="http://dev-test.nemikor.com/web-storage/support-test/">http://dev-test.nemikor.com/web-storage/support-test/</a></p>
-<p>Cookie不同浏览器容量不同， 最多容量4M ，50条数据。</p>
-<p>新的特殊内容元素，比如 article、footer、header、nav、section</p>
-<p>新的表单控件，比如 calendar、date、time、email、url、search</p>
-<h3 id="2-同源策略"><a href="#2-同源策略" class="headerlink" title="2. 同源策略"></a>2. 同源策略</h3><p><a href="http://www.ruanyifeng.com/blog/2016/04/same-origin-policy.html">http://www.ruanyifeng.com/blog/2016/04/same-origin-policy.html</a><br>同协议，同端口，同域名（一级二级域名是不同域名）</p>
-<p>如果非同源，共有三种行为受到限制。</p>
-<p>（1） Cookie、LocalStorage 和 IndexDB 无法读取。</p>
-<p>（2） DOM 无法获得。</p>
-<p>（3） AJAX 请求不能发送</p>
-<h3 id="3-跨域"><a href="#3-跨域" class="headerlink" title="3. 跨域"></a>3. 跨域</h3><p>JSONP 它的基本思想是，网页通过添加一个<code>&lt;script&gt;</code>元素，向服务器请求JSON数据，这种做法不受同源政策限制；服务器收到请求后，将数据放在一个指定名字的回调函数里传回来。</p>
-<p>WebSocket是一种通信协议，使用ws://（非加密）和wss://（加密）作为协议前缀。该协议不实行同源政策，只要服务器支持，就可以通过它进行跨源通信。</p>
-<p>CORS是一个W3C标准，全称是”跨域资源共享”（Cross-origin resource sharing）。</p>
-<p>它允许浏览器向跨源服务器，发出XMLHttpRequest请求，从而克服了AJAX只能同源使用的限制。</p>
-<h3 id="4-标签语义化"><a href="#4-标签语义化" class="headerlink" title="4. 标签语义化"></a>4. 标签语义化</h3><p>通过标签判断内容语义，例如根据h1标签判断出内容是标题，根据<code>&lt;p&gt;</code>判断内容是段落、<code>&lt;input&gt;</code>标签是输入框等。</p>
-<p>判断标签是否语义化：去掉样式，看网页结构是否组织良好有序，是否仍然有很好的可读性。</p>
-<p>为什么标签要语义化</p>
-<ol>
-<li>搜索引擎友好。</li>
-<li>更容易让屏幕阅读器读出网页内容。</li>
-<li>去掉或样式丢失的时候能让页面呈现清晰的结构。</li>
-<li>便于团队开发和维护。</li>
-</ol>
-<p>标题使用<code>&lt;h2&gt;</code>而不是<code>&lt;div class=&quot;h2&quot;&gt;</code>,段落使用<code>&lt;p&gt;</code>标签，锚点使用<code>&lt;a&gt;</code>。</p>
-<h2 id="http-状态码"><a href="#http-状态码" class="headerlink" title="http 状态码"></a>http 状态码</h2><p>1** 信息<br>2** 成功  200<br>3** 重定向  304 (未修改)<br>4** 客户端错误<br>5** 服务器错误</p>
-<h2 id="css3"><a href="#css3" class="headerlink" title="css3"></a>css3</h2><p>选择器 [attribute^=value]  :nth-of-type(n) :nth-child(n)<br>盒模型 -&gt; box-sizing:content-box border-box<br>背景和边框-&gt; 圆角边框/背景图<br>文本效果<br>2D/3D 转换 -&gt; 移动translate、缩放scale、转动rotate、拉长或拉伸skew  六个值的矩阵matrix<br>过渡 -&gt; transition<br>动画  CSS3 动画属性<br>多列布局<br>弹性盒子(Flex Box)</p>
-<h2 id="javascript特性"><a href="#javascript特性" class="headerlink" title="javascript特性"></a>javascript特性</h2><h3 id="1-类型"><a href="#1-类型" class="headerlink" title="1 类型"></a>1 类型</h3><p>基本类型 number、boolean、string、null、undefined<br>复杂类型 array、function、object</p>
-<h3 id="2-类型的困惑"><a href="#2-类型的困惑" class="headerlink" title="2 类型的困惑"></a>2 类型的困惑</h3><p>尽量避免用 new</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="built_in">String</span>(<span class="string">&#x27;a&#x27;</span>) <span class="keyword">instanceof</span> <span class="built_in">String</span> <span class="comment">//true</span></span><br><span class="line"><span class="string">&#x27;a&#x27;</span> <span class="keyword">instanceof</span> <span class="built_in">String</span> <span class="comment">//false</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typeof</span> <span class="literal">null</span> <span class="comment">//&#x27;object&#x27;</span></span><br><span class="line"><span class="keyword">typeof</span> []   <span class="comment">//&#x27;object&#x27;</span></span><br><span class="line">[] <span class="keyword">instanceof</span> <span class="built_in">Array</span> <span class="comment">//true</span></span><br></pre></td></tr></table></figure>
-<p>条件表达式里 null、undefined、’’ 会被判定为 false</p>
-<h3 id="3-函数"><a href="#3-函数" class="headerlink" title="3 函数"></a>3 函数</h3><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="function"><span class="keyword">function</span> <span class="title">a</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="string">&#x27;function&#x27;</span> == <span class="keyword">typeof</span> a <span class="comment">//true，这里的 a 是前面那个 var a</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="4-函数的参数变量"><a href="#4-函数的参数变量" class="headerlink" title="4 函数的参数变量"></a>4 函数的参数变量</h3><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = fuction (b,c) &#123;&#125;</span><br><span class="line">a.length <span class="comment">//3</span></span><br></pre></td></tr></table></figure>
-<h3 id="5-闭包"><a href="#5-闭包" class="headerlink" title="5 闭包"></a>5 闭包</h3><p>在某个作用域中定义的变量只能在该作用域或其内部作用域中才能访问到</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="number">5</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">woot</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  a==<span class="number">5</span>;<span class="comment">//false</span></span><br><span class="line">  <span class="built_in">console</span>.log(a==<span class="number">5</span>);</span><br><span class="line">  <span class="keyword">var</span> a=<span class="number">6</span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">test</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    a==<span class="number">6</span>;<span class="comment">//true</span></span><br><span class="line">    <span class="built_in">console</span>.log(a==<span class="number">6</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  test();</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">woot();</span><br></pre></td></tr></table></figure>
-<p>自执行函数，通过声明调用匿名函数，定义新的作用域</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="number">3</span>;</span><br><span class="line">(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> a = <span class="number">5</span>;</span><br><span class="line">&#125;)()</span><br><span class="line"></span><br><span class="line">a == <span class="number">3</span>; <span class="comment">//true</span></span><br></pre></td></tr></table></figure>
-<h3 id="6-类"><a href="#6-类" class="headerlink" title="6 类"></a>6 类</h3><p>类通过函数定义</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Animal</span> (<span class="params">name</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">this</span>.name=name;</span><br><span class="line">&#125;</span><br><span class="line">Animal.prototype.getName() &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">this</span>.name;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="7-深浅拷贝"><a href="#7-深浅拷贝" class="headerlink" title="7 深浅拷贝"></a>7 深浅拷贝</h3><p>属性的可枚举性和所有权 <a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Enumerability_and_ownership_of_properties">https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Enumerability_and_ownership_of_properties</a></p>
-<p><code>for...in</code> 可以循环出 可枚举属性，自身对象及其原型链。再使用 hasOwnProperty 判断，得到自身属性</p>
-<h2 id="es6"><a href="#es6" class="headerlink" title="es6"></a>es6</h2><h3 id="1-let-const"><a href="#1-let-const" class="headerlink" title="1. let, const"></a>1. let, const</h3><p>var命令会发生”变量提升“现象，即变量可以在声明之前使用，值为undefined。这种现象多多少少是有些奇怪的，按照一般的逻辑，变量应该在声明语句之后才可以使用。</p>
-<p>为了纠正这种现象，let命令改变了语法行为，它所声明的变量一定要在声明后使用，否则报错。</p>
-<p>不允许重复声明</p>
-<p>暂时性死区<br>只要块级作用域内存在let命令，它所声明的变量就“绑定”（binding）这个区域，不再受外部的影响。<br>总之，在代码块内，使用let命令声明变量之前，该变量都是不可用的。这在语法上，称为“暂时性死区”（temporal dead zone，简称 TDZ）。</p>
-<p>但对于复合类型的数据（主要是对象和数组），变量指向的内存地址，保存的只是一个指针，const只能保证这个指针是固定的</p>
-<h3 id="2-块级作用域"><a href="#2-块级作用域" class="headerlink" title="2. 块级作用域"></a>2. 块级作用域</h3><p>ES5 只有全局作用域和函数作用域<br>ES6 的块级作用域 {}</p>
-<h3 id="3-es7"><a href="#3-es7" class="headerlink" title="3. es7"></a>3. es7</h3><p>Array.prototype.includes  -&gt; 代替 indexOf，返回true或false，还可以参数规定从第几位开始<br>求冥运算（次方）</p>
-<h2 id="事件传播"><a href="#事件传播" class="headerlink" title="事件传播"></a>事件传播</h2><p>冒泡捕获<br>先捕获再冒泡</p>
-<p>阻止传播 e.stopPropagation();</p>
-<p>事件委托</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> parent = <span class="built_in">document</span>.getElementById(<span class="string">&quot;parent&quot;</span>);</span><br><span class="line"><span class="keyword">var</span> child = <span class="built_in">document</span>.getElementById(<span class="string">&quot;child&quot;</span>);</span><br><span class="line">parent.onclick = <span class="function"><span class="keyword">function</span>(<span class="params">e</span>)</span>&#123;</span><br><span class="line">  <span class="keyword">if</span>(e.target.id == <span class="string">&quot;child&quot;</span>)&#123;</span><br><span class="line">      <span class="built_in">console</span>.log(<span class="string">&quot;您点击了child元素&quot;</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="React-生命周期"><a href="#React-生命周期" class="headerlink" title="React 生命周期"></a>React 生命周期</h2><p><a href="http://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">http://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/</a></p>
-<p>getderivedstatefromprops</p>
-]]></content>
-      <categories>
-        <category>技术</category>
-      </categories>
-      <tags>
-        <tag>javascript</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>微信小程序 wepy 框架</title>
     <url>/art/2018/20180222-wechat-app-wepy/</url>
     <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20180222.jpg"></p>
@@ -1164,6 +1164,104 @@
       </tags>
   </entry>
   <entry>
+    <title>Swift 指南学习笔记</title>
+    <url>/art/2018/20181225-swift-language-guide/</url>
+    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20181225.jpg" alt="20181225"></p>
+<blockquote>
+<p>正在学习 Swift 中，简要的笔记~</p>
+</blockquote>
+<a id="more"></a>
+<p><a href="https://www.pixiv.net/member_illust.php?mode=medium&illust_id=41544976">封面图来源</a></p>
+<p><a href="https://www.cnswift.org/the-basics">中文翻译 Swift 指南</a>(需要科学上网)<br><a href="https://docs.swift.org/swift-book/LanguageGuide/TheBasics.html">官方文档 Swift Language Guide</a><br>推荐使用的划词翻译 Chrome 插件：<a href="https://chrome.google.com/webstore/search/%E7%BF%BB%E8%AF%91%E4%BE%A0">翻译侠</a><br>如果官方版本有问题，请暂时使用这个 <a href="https://github.com/magic-FE/translate-man/issues/60">替代版本</a></p>
+<h3 id="基础内容"><a href="#基础内容" class="headerlink" title="基础内容"></a>基础内容</h3><h4 id="数据类型"><a href="#数据类型" class="headerlink" title="数据类型"></a>数据类型</h4><ul>
+<li>Int      整数</li>
+<li>Double   浮点数 精度15位（不推荐 Float，精度6位）</li>
+<li>Bool     布尔值</li>
+<li>Tuples   元组, Tuples 不可以直接使用，语法例如(Int, String)</li>
+<li>nil      表示没有值</li>
+<li>Optional 可选类型，在类型后加上 ？表示。例如Int?，表示值可能为 nil，或者 Int 类型</li>
+<li>Array    数组</li>
+</ul>
+<p>TODO: 获取判断数据类型  type(of: date)</p>
+<h4 id="数据类型转换"><a href="#数据类型转换" class="headerlink" title="数据类型转换"></a>数据类型转换</h4><p>所有转换都使用数据类型的函数来转换，即全部都为显式转换<br>例如字符串 Int(“32”)</p>
+<h4 id="变量声明"><a href="#变量声明" class="headerlink" title="变量声明"></a>变量声明</h4><p>var 声明变量<br>let 声明常量</p>
+<p>声明变量时必须指定默认值。<code>var foo: Int = 1</code><br>没有默认值时，也可以指定为可选类型。<code>var foo: Int?</code><br>赋值的情况下类型指定可以省略，系统会自动推断，按住 option 键点击变量，即可看到类型推断的结果</p>
+<h4 id="调试输出"><a href="#调试输出" class="headerlink" title="调试输出"></a>调试输出</h4><p>print(foo, bar)</p>
+<h4 id="if-语句及强制展开"><a href="#if-语句及强制展开" class="headerlink" title="if 语句及强制展开"></a>if 语句及强制展开</h4><p>给可选类型赋值时，得到的值仍然是可选类型<br>例如声明 <code>var foo: Int? = 1</code>, foo 的值为 <code>Optional(1)</code></p>
+<p>使用可选类型内部的值有以下几种方式</p>
+<ol>
+<li>确认变量有值时，使用 <code>!</code> 强制展开（Forced Unwrapping）<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> foo <span class="operator">!=</span> <span class="literal">nil</span> &#123;</span><br><span class="line">  foo<span class="operator">!</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>使用 if 语句自带的语法，进行可选项绑定（Optional Binding）<br>即如果 foo 内部的值不为 nil 时，它的内部的值会赋给 bar<br>变量 bar 只能在当前的 if 代码块内使用<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> bar <span class="operator">=</span> foo &#123;</span><br><span class="line">  bar</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>隐式展开可选项 Implicitly Unwrapped Optionals<br>把 <code>!</code> 放在类型声明后了，语法更简洁，bar 值是 foo 变量内部的值 或者 nil<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">let bar: Int! &#x3D; foo</span><br></pre></td></tr></table></figure></li>
+<li>利用 合并空值运算符 Nil-Coalescing Operator<br>如果 foo 内部有值，则返回内部值。如果 foo 内部值为 nil，则返回 <code>??</code> 后的默认值<br>默认值的类型必须与 foo 内置值类型相同<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">foo ?? nil</span><br></pre></td></tr></table></figure>
+<h4 id="错误处理"><a href="#错误处理" class="headerlink" title="错误处理"></a>错误处理</h4></li>
+</ol>
+<p>函数可以把自身的错误传递出去，传递到调用函数的作用域</p>
+<p>通过 throws 来标记这种函数</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">canThrowErrors</span><span class="params">()</span></span> <span class="keyword">throws</span> -&gt; <span class="type">String</span></span><br></pre></td></tr></table></figure>
+<p>执行时，要求加上 try 标识符</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">try</span> canThrowErrors()</span><br></pre></td></tr></table></figure>
+<p>由于有可能抛出错误信息，所以需要对错误进行捕获处理<br>错误会默认在 error 变量里</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">  <span class="keyword">try</span> canThrowErrors()</span><br><span class="line">&#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">  <span class="built_in">print</span>(error)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>另外还有 try? 和 try! 可以使用</p>
+<p>使用 try? 错误时会得到值 nil</p>
+<p>以下的 x、y 的处理相同的</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> x <span class="operator">=</span> <span class="keyword">try?</span> canThrowErrors()</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> y: <span class="type">Int</span>?</span><br><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">    y <span class="operator">=</span> <span class="keyword">try</span> canThrowErrors()</span><br><span class="line">&#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">    y <span class="operator">=</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>自己确保不会出错时，可以使用 try! 取消错误传递，例如加载本地图片时<br>但如果出错了，会报运行时错误</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> photo <span class="operator">=</span> <span class="keyword">try!</span> loadImage(<span class="string">&quot;./Resources/John Appleseed.jpg&quot;</span>)</span><br></pre></td></tr></table></figure>
+<h3 id="基本运算符"><a href="#基本运算符" class="headerlink" title="基本运算符"></a>基本运算符</h3><h4 id="算术运算符"><a href="#算术运算符" class="headerlink" title="算术运算符 + - * / %  +=  -="></a>算术运算符 + - * / %  +=  -=</h4><h4 id="一元减号运算符-Unary-Plus-Operator，可以取到负值"><a href="#一元减号运算符-Unary-Plus-Operator，可以取到负值" class="headerlink" title="一元减号运算符 Unary Plus Operator，可以取到负值"></a>一元减号运算符 Unary Plus Operator，可以取到负值</h4><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> foo <span class="operator">=</span> <span class="number">3</span></span><br><span class="line"><span class="operator">-</span>foo <span class="comment">// -3</span></span><br><span class="line">foo <span class="operator">=</span> <span class="operator">-</span><span class="number">3</span></span><br><span class="line"><span class="operator">-</span>foo <span class="comment">// 3</span></span><br></pre></td></tr></table></figure>
+<h4 id="合并空值运算符-Nil-Coalescing-Operator"><a href="#合并空值运算符-Nil-Coalescing-Operator" class="headerlink" title="合并空值运算符 Nil-Coalescing Operator"></a>合并空值运算符 Nil-Coalescing Operator</h4><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">a <span class="operator">??</span> b</span><br></pre></td></tr></table></figure>
+<p>如果可选项 a 有值则展开，如果没有值，是 nil ，则返回默认值 b 。表达式 a 必须是一个可选类型。表达式 b 必须与 a 的储存类型相同。</p>
+<h4 id="区间运算符-Range-Operators"><a href="#区间运算符-Range-Operators" class="headerlink" title="区间运算符 Range Operators"></a>区间运算符 Range Operators</h4><p>闭区间 ClosedRange 例如 <code>1...5</code> 1,2,3,4,5<br>半开区间 Range 例如 <code>0..&lt;5</code>  0,1,2,3,4</p>
+<h3 id="字符串"><a href="#字符串" class="headerlink" title="字符串"></a>字符串</h3><p>isEmpty 判断是否为空<br>字符串插值</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> multiplier <span class="operator">=</span> <span class="number">3</span></span><br><span class="line"><span class="keyword">let</span> message <span class="operator">=</span> <span class="string">&quot;<span class="subst">\(multiplier)</span> times 2.5 is <span class="subst">\(Double(multiplier) <span class="operator">*</span> <span class="number">2.5</span>)</span>&quot;</span></span><br><span class="line"><span class="comment">// message is &quot;3 times 2.5 is 7.5&quot;</span></span><br></pre></td></tr></table></figure>
+<h3 id="集合类型"><a href="#集合类型" class="headerlink" title="集合类型"></a>集合类型</h3><p><img data-src="https://xiawei.cc/images/20181225-collection-types-intro.png" alt="CollectionTypes_intro_2x"><br>数组 Array<br>集合 Set<br>字典 Dictionary</p>
+<p>某个集合类型声明后，它内部所有值都是相同的类型</p>
+<h4 id="数组"><a href="#数组" class="headerlink" title="数组"></a>数组</h4><p>Array<Element> 或 [Element], 启动 Element 是内部元素的类型</p>
+<p>声明数组</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a <span class="operator">=</span> <span class="type">Array</span>&lt;<span class="type">Int</span>&gt;() <span class="comment">// 空数组 []</span></span><br><span class="line"><span class="keyword">var</span> b <span class="operator">=</span> [<span class="type">Int</span>]()      <span class="comment">// 空数组 []</span></span><br><span class="line"><span class="keyword">var</span> c <span class="operator">=</span> <span class="type">Array</span>(repeating: <span class="number">0.0</span>, count: <span class="number">3</span>) <span class="comment">// [0.0, 0.0, 0.0]</span></span><br><span class="line"><span class="keyword">var</span> shoppingList: [<span class="type">String</span>] <span class="operator">=</span> [<span class="string">&quot;Eggs&quot;</span>, <span class="string">&quot;Milk&quot;</span>]</span><br></pre></td></tr></table></figure>
+<p>数组方法</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">isEmpty</span><br><span class="line">count</span><br><span class="line">append(<span class="keyword">_</span>:)</span><br><span class="line">remove(at:)</span><br><span class="line">insert(<span class="keyword">_</span>:at:)</span><br></pre></td></tr></table></figure>
+<p>修改某个范围的值<br><code>shoppingList[4...6] = [&quot;Bananas&quot;, &quot;Apples&quot;]</code></p>
+<p>遍历数组</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> value <span class="keyword">in</span> shoppingList &#123;</span><br><span class="line">    <span class="built_in">print</span>(value)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> index <span class="keyword">in</span> <span class="number">0</span><span class="operator">..&lt;</span>shoppingList.count &#123;</span><br><span class="line">    <span class="keyword">let</span> value <span class="operator">=</span> shoppingList[index]</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;index: <span class="subst">\(index)</span>, value: <span class="subst">\(value)</span>&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// enumerated 方法返回元组</span></span><br><span class="line"><span class="keyword">for</span> (index, value) <span class="keyword">in</span> shoppingList.enumerated() &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;index: <span class="subst">\(index)</span>, value: <span class="subst">\(value)</span>&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="合集"><a href="#合集" class="headerlink" title="合集"></a>合集</h4><p>合集将不重复的值，无序存放<br>Set<Element></p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> num: <span class="type">Set</span>&lt;<span class="type">Int</span>&gt; <span class="operator">=</span> [<span class="number">2</span>, <span class="number">1</span>, <span class="number">3</span>]</span><br></pre></td></tr></table></figure>
+<p>合集方法</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">isEmpty</span><br><span class="line">contains(<span class="keyword">_</span>:)</span><br><span class="line">insert(<span class="keyword">_</span>:)</span><br><span class="line">remove(<span class="keyword">_</span>:)</span><br><span class="line">removeAll()</span><br></pre></td></tr></table></figure>
+<p>遍历合集<br>合集是无序的，遍历前使用 sorted 可以排序</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> value <span class="keyword">in</span> num.sorted() &#123;</span><br><span class="line">    <span class="built_in">print</span>(value) <span class="comment">// 1,2,3</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> value <span class="keyword">in</span> num.sorted(by: <span class="operator">&gt;</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(value) <span class="comment">// 3,2,1</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>合集操作<br><img data-src="https://xiawei.cc/images/20181225-set-venn-diagram.png" alt="setVennDiagram_2x-1"><br>intersection、symmetricDifference、union、subtracting</p>
+<h3 id="闭包"><a href="#闭包" class="headerlink" title="闭包"></a>闭包</h3><p>函数里可以传递函数作为参数，先声明一个接受函数作为参数的函数</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">calculator</span><span class="params">(n1: Int, n2: Int, operation: <span class="params">(Int, Int)</span></span></span>-&gt;<span class="type">Int</span>) -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> operation(n1, n2)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>使用声明函数的方式来调用</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">add</span> <span class="params">(num1: Int, num2: Int)</span></span> -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> num1 <span class="operator">+</span> num2</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">calculator(n1: <span class="number">1</span>, n2: <span class="number">2</span>, operation: add)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>使用闭包的方式来调用</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">calculator(n1: <span class="number">1</span>, n2: <span class="number">2</span>, operation: &#123;(num1: <span class="type">Int</span>, num2: <span class="type">Int</span>) -&gt; <span class="type">Int</span> <span class="keyword">in</span></span><br><span class="line">    <span class="keyword">return</span> num1 <span class="operator">+</span> num2</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>由于 swift 可以类型推断，而且 calculator 函数里声明过类型，可以去掉类型，简化为</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">calculator(n1: <span class="number">1</span>, n2: <span class="number">2</span>, operation: &#123;(num1, num2) <span class="keyword">in</span></span><br><span class="line">    <span class="keyword">return</span> num1 <span class="operator">+</span> num2</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>由于只有一行代码 return xxx，可以去掉 return 简化为</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">calculator(n1: <span class="number">1</span>, n2: <span class="number">2</span>, operation: &#123;(num1, num2) <span class="keyword">in</span> num1 <span class="operator">+</span> num2&#125;)</span><br></pre></td></tr></table></figure>
+<p>闭包中，编译器会将参数标识为0、1、2，…，其中0代表第一个参数值，以此类推</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">calculator(n1: <span class="number">1</span>, n2: <span class="number">2</span>, operation: &#123; <span class="variable">$0</span> <span class="operator">+</span> <span class="variable">$1</span> &#125;)</span><br></pre></td></tr></table></figure>
+<p>甚至可以进一步简化，如果函数的最后一个参数是闭包，则可以先删除operation参数名称，再将闭包代码移到函数右边小括号的外面</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">calculator(n1: <span class="number">1</span>, n2: <span class="number">2</span>) &#123; <span class="variable">$0</span> <span class="operator">+</span> <span class="variable">$1</span> &#125;</span><br></pre></td></tr></table></figure>
+<p>又例如把数组的每项值加一</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> array <span class="operator">=</span> [<span class="number">2</span>, <span class="number">5</span>, <span class="number">3</span>, <span class="number">7</span>, <span class="number">23</span>, <span class="number">54</span>]</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">addOne</span> <span class="params">(n1: Int)</span></span> -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> n1 <span class="operator">+</span> <span class="number">1</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">array.map(addOne)</span><br></pre></td></tr></table></figure>
+<p>使用闭包可以简化为</p>
+<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">array.map &#123;<span class="variable">$0</span> <span class="operator">+</span> <span class="number">1</span>&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="ChangeLog"><a href="#ChangeLog" class="headerlink" title="ChangeLog"></a>ChangeLog</h3><p>20190129 添加错误捕获<br>20190213 添加闭包</p>
+]]></content>
+      <categories>
+        <category>技术</category>
+      </categories>
+      <tags>
+        <tag>iOS</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Normalizr 使用教程</title>
     <url>/art/2018/20181227-normalizr/</url>
     <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20181227.jpg" alt="20181227"></p>
@@ -1272,104 +1370,6 @@
       <categories>
         <category>读书</category>
       </categories>
-  </entry>
-  <entry>
-    <title>Swift 指南学习笔记</title>
-    <url>/art/2018/20181225-swift-language-guide/</url>
-    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20181225.jpg" alt="20181225"></p>
-<blockquote>
-<p>正在学习 Swift 中，简要的笔记~</p>
-</blockquote>
-<a id="more"></a>
-<p><a href="https://www.pixiv.net/member_illust.php?mode=medium&illust_id=41544976">封面图来源</a></p>
-<p><a href="https://www.cnswift.org/the-basics">中文翻译 Swift 指南</a>(需要科学上网)<br><a href="https://docs.swift.org/swift-book/LanguageGuide/TheBasics.html">官方文档 Swift Language Guide</a><br>推荐使用的划词翻译 Chrome 插件：<a href="https://chrome.google.com/webstore/search/%E7%BF%BB%E8%AF%91%E4%BE%A0">翻译侠</a><br>如果官方版本有问题，请暂时使用这个 <a href="https://github.com/magic-FE/translate-man/issues/60">替代版本</a></p>
-<h3 id="基础内容"><a href="#基础内容" class="headerlink" title="基础内容"></a>基础内容</h3><h4 id="数据类型"><a href="#数据类型" class="headerlink" title="数据类型"></a>数据类型</h4><ul>
-<li>Int      整数</li>
-<li>Double   浮点数 精度15位（不推荐 Float，精度6位）</li>
-<li>Bool     布尔值</li>
-<li>Tuples   元组, Tuples 不可以直接使用，语法例如(Int, String)</li>
-<li>nil      表示没有值</li>
-<li>Optional 可选类型，在类型后加上 ？表示。例如Int?，表示值可能为 nil，或者 Int 类型</li>
-<li>Array    数组</li>
-</ul>
-<p>TODO: 获取判断数据类型  type(of: date)</p>
-<h4 id="数据类型转换"><a href="#数据类型转换" class="headerlink" title="数据类型转换"></a>数据类型转换</h4><p>所有转换都使用数据类型的函数来转换，即全部都为显式转换<br>例如字符串 Int(“32”)</p>
-<h4 id="变量声明"><a href="#变量声明" class="headerlink" title="变量声明"></a>变量声明</h4><p>var 声明变量<br>let 声明常量</p>
-<p>声明变量时必须指定默认值。<code>var foo: Int = 1</code><br>没有默认值时，也可以指定为可选类型。<code>var foo: Int?</code><br>赋值的情况下类型指定可以省略，系统会自动推断，按住 option 键点击变量，即可看到类型推断的结果</p>
-<h4 id="调试输出"><a href="#调试输出" class="headerlink" title="调试输出"></a>调试输出</h4><p>print(foo, bar)</p>
-<h4 id="if-语句及强制展开"><a href="#if-语句及强制展开" class="headerlink" title="if 语句及强制展开"></a>if 语句及强制展开</h4><p>给可选类型赋值时，得到的值仍然是可选类型<br>例如声明 <code>var foo: Int? = 1</code>, foo 的值为 <code>Optional(1)</code></p>
-<p>使用可选类型内部的值有以下几种方式</p>
-<ol>
-<li>确认变量有值时，使用 <code>!</code> 强制展开（Forced Unwrapping）<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> foo <span class="operator">!=</span> <span class="literal">nil</span> &#123;</span><br><span class="line">  foo<span class="operator">!</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li>使用 if 语句自带的语法，进行可选项绑定（Optional Binding）<br>即如果 foo 内部的值不为 nil 时，它的内部的值会赋给 bar<br>变量 bar 只能在当前的 if 代码块内使用<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> <span class="keyword">let</span> bar <span class="operator">=</span> foo &#123;</span><br><span class="line">  bar</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li>隐式展开可选项 Implicitly Unwrapped Optionals<br>把 <code>!</code> 放在类型声明后了，语法更简洁，bar 值是 foo 变量内部的值 或者 nil<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">let bar: Int! &#x3D; foo</span><br></pre></td></tr></table></figure></li>
-<li>利用 合并空值运算符 Nil-Coalescing Operator<br>如果 foo 内部有值，则返回内部值。如果 foo 内部值为 nil，则返回 <code>??</code> 后的默认值<br>默认值的类型必须与 foo 内置值类型相同<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">foo ?? nil</span><br></pre></td></tr></table></figure>
-<h4 id="错误处理"><a href="#错误处理" class="headerlink" title="错误处理"></a>错误处理</h4></li>
-</ol>
-<p>函数可以把自身的错误传递出去，传递到调用函数的作用域</p>
-<p>通过 throws 来标记这种函数</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">canThrowErrors</span><span class="params">()</span></span> <span class="keyword">throws</span> -&gt; <span class="type">String</span></span><br></pre></td></tr></table></figure>
-<p>执行时，要求加上 try 标识符</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">try</span> canThrowErrors()</span><br></pre></td></tr></table></figure>
-<p>由于有可能抛出错误信息，所以需要对错误进行捕获处理<br>错误会默认在 error 变量里</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">  <span class="keyword">try</span> canThrowErrors()</span><br><span class="line">&#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">  <span class="built_in">print</span>(error)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>另外还有 try? 和 try! 可以使用</p>
-<p>使用 try? 错误时会得到值 nil</p>
-<p>以下的 x、y 的处理相同的</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> x <span class="operator">=</span> <span class="keyword">try?</span> canThrowErrors()</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> y: <span class="type">Int</span>?</span><br><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">    y <span class="operator">=</span> <span class="keyword">try</span> canThrowErrors()</span><br><span class="line">&#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">    y <span class="operator">=</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>自己确保不会出错时，可以使用 try! 取消错误传递，例如加载本地图片时<br>但如果出错了，会报运行时错误</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> photo <span class="operator">=</span> <span class="keyword">try!</span> loadImage(<span class="string">&quot;./Resources/John Appleseed.jpg&quot;</span>)</span><br></pre></td></tr></table></figure>
-<h3 id="基本运算符"><a href="#基本运算符" class="headerlink" title="基本运算符"></a>基本运算符</h3><h4 id="算术运算符"><a href="#算术运算符" class="headerlink" title="算术运算符 + - * / %  +=  -="></a>算术运算符 + - * / %  +=  -=</h4><h4 id="一元减号运算符-Unary-Plus-Operator，可以取到负值"><a href="#一元减号运算符-Unary-Plus-Operator，可以取到负值" class="headerlink" title="一元减号运算符 Unary Plus Operator，可以取到负值"></a>一元减号运算符 Unary Plus Operator，可以取到负值</h4><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> foo <span class="operator">=</span> <span class="number">3</span></span><br><span class="line"><span class="operator">-</span>foo <span class="comment">// -3</span></span><br><span class="line">foo <span class="operator">=</span> <span class="operator">-</span><span class="number">3</span></span><br><span class="line"><span class="operator">-</span>foo <span class="comment">// 3</span></span><br></pre></td></tr></table></figure>
-<h4 id="合并空值运算符-Nil-Coalescing-Operator"><a href="#合并空值运算符-Nil-Coalescing-Operator" class="headerlink" title="合并空值运算符 Nil-Coalescing Operator"></a>合并空值运算符 Nil-Coalescing Operator</h4><figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">a <span class="operator">??</span> b</span><br></pre></td></tr></table></figure>
-<p>如果可选项 a 有值则展开，如果没有值，是 nil ，则返回默认值 b 。表达式 a 必须是一个可选类型。表达式 b 必须与 a 的储存类型相同。</p>
-<h4 id="区间运算符-Range-Operators"><a href="#区间运算符-Range-Operators" class="headerlink" title="区间运算符 Range Operators"></a>区间运算符 Range Operators</h4><p>闭区间 ClosedRange 例如 <code>1...5</code> 1,2,3,4,5<br>半开区间 Range 例如 <code>0..&lt;5</code>  0,1,2,3,4</p>
-<h3 id="字符串"><a href="#字符串" class="headerlink" title="字符串"></a>字符串</h3><p>isEmpty 判断是否为空<br>字符串插值</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> multiplier <span class="operator">=</span> <span class="number">3</span></span><br><span class="line"><span class="keyword">let</span> message <span class="operator">=</span> <span class="string">&quot;<span class="subst">\(multiplier)</span> times 2.5 is <span class="subst">\(Double(multiplier) <span class="operator">*</span> <span class="number">2.5</span>)</span>&quot;</span></span><br><span class="line"><span class="comment">// message is &quot;3 times 2.5 is 7.5&quot;</span></span><br></pre></td></tr></table></figure>
-<h3 id="集合类型"><a href="#集合类型" class="headerlink" title="集合类型"></a>集合类型</h3><p><img data-src="https://xiawei.cc/images/20181225-collection-types-intro.png" alt="CollectionTypes_intro_2x"><br>数组 Array<br>集合 Set<br>字典 Dictionary</p>
-<p>某个集合类型声明后，它内部所有值都是相同的类型</p>
-<h4 id="数组"><a href="#数组" class="headerlink" title="数组"></a>数组</h4><p>Array<Element> 或 [Element], 启动 Element 是内部元素的类型</p>
-<p>声明数组</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a <span class="operator">=</span> <span class="type">Array</span>&lt;<span class="type">Int</span>&gt;() <span class="comment">// 空数组 []</span></span><br><span class="line"><span class="keyword">var</span> b <span class="operator">=</span> [<span class="type">Int</span>]()      <span class="comment">// 空数组 []</span></span><br><span class="line"><span class="keyword">var</span> c <span class="operator">=</span> <span class="type">Array</span>(repeating: <span class="number">0.0</span>, count: <span class="number">3</span>) <span class="comment">// [0.0, 0.0, 0.0]</span></span><br><span class="line"><span class="keyword">var</span> shoppingList: [<span class="type">String</span>] <span class="operator">=</span> [<span class="string">&quot;Eggs&quot;</span>, <span class="string">&quot;Milk&quot;</span>]</span><br></pre></td></tr></table></figure>
-<p>数组方法</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">isEmpty</span><br><span class="line">count</span><br><span class="line">append(<span class="keyword">_</span>:)</span><br><span class="line">remove(at:)</span><br><span class="line">insert(<span class="keyword">_</span>:at:)</span><br></pre></td></tr></table></figure>
-<p>修改某个范围的值<br><code>shoppingList[4...6] = [&quot;Bananas&quot;, &quot;Apples&quot;]</code></p>
-<p>遍历数组</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> value <span class="keyword">in</span> shoppingList &#123;</span><br><span class="line">    <span class="built_in">print</span>(value)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> index <span class="keyword">in</span> <span class="number">0</span><span class="operator">..&lt;</span>shoppingList.count &#123;</span><br><span class="line">    <span class="keyword">let</span> value <span class="operator">=</span> shoppingList[index]</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;index: <span class="subst">\(index)</span>, value: <span class="subst">\(value)</span>&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// enumerated 方法返回元组</span></span><br><span class="line"><span class="keyword">for</span> (index, value) <span class="keyword">in</span> shoppingList.enumerated() &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;index: <span class="subst">\(index)</span>, value: <span class="subst">\(value)</span>&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="合集"><a href="#合集" class="headerlink" title="合集"></a>合集</h4><p>合集将不重复的值，无序存放<br>Set<Element></p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> num: <span class="type">Set</span>&lt;<span class="type">Int</span>&gt; <span class="operator">=</span> [<span class="number">2</span>, <span class="number">1</span>, <span class="number">3</span>]</span><br></pre></td></tr></table></figure>
-<p>合集方法</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">isEmpty</span><br><span class="line">contains(<span class="keyword">_</span>:)</span><br><span class="line">insert(<span class="keyword">_</span>:)</span><br><span class="line">remove(<span class="keyword">_</span>:)</span><br><span class="line">removeAll()</span><br></pre></td></tr></table></figure>
-<p>遍历合集<br>合集是无序的，遍历前使用 sorted 可以排序</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> value <span class="keyword">in</span> num.sorted() &#123;</span><br><span class="line">    <span class="built_in">print</span>(value) <span class="comment">// 1,2,3</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> value <span class="keyword">in</span> num.sorted(by: <span class="operator">&gt;</span>) &#123;</span><br><span class="line">    <span class="built_in">print</span>(value) <span class="comment">// 3,2,1</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>合集操作<br><img data-src="https://xiawei.cc/images/20181225-set-venn-diagram.png" alt="setVennDiagram_2x-1"><br>intersection、symmetricDifference、union、subtracting</p>
-<h3 id="闭包"><a href="#闭包" class="headerlink" title="闭包"></a>闭包</h3><p>函数里可以传递函数作为参数，先声明一个接受函数作为参数的函数</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">calculator</span><span class="params">(n1: Int, n2: Int, operation: <span class="params">(Int, Int)</span></span></span>-&gt;<span class="type">Int</span>) -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> operation(n1, n2)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>使用声明函数的方式来调用</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">add</span> <span class="params">(num1: Int, num2: Int)</span></span> -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> num1 <span class="operator">+</span> num2</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">calculator(n1: <span class="number">1</span>, n2: <span class="number">2</span>, operation: add)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>使用闭包的方式来调用</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">calculator(n1: <span class="number">1</span>, n2: <span class="number">2</span>, operation: &#123;(num1: <span class="type">Int</span>, num2: <span class="type">Int</span>) -&gt; <span class="type">Int</span> <span class="keyword">in</span></span><br><span class="line">    <span class="keyword">return</span> num1 <span class="operator">+</span> num2</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
-<p>由于 swift 可以类型推断，而且 calculator 函数里声明过类型，可以去掉类型，简化为</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">calculator(n1: <span class="number">1</span>, n2: <span class="number">2</span>, operation: &#123;(num1, num2) <span class="keyword">in</span></span><br><span class="line">    <span class="keyword">return</span> num1 <span class="operator">+</span> num2</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
-<p>由于只有一行代码 return xxx，可以去掉 return 简化为</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">calculator(n1: <span class="number">1</span>, n2: <span class="number">2</span>, operation: &#123;(num1, num2) <span class="keyword">in</span> num1 <span class="operator">+</span> num2&#125;)</span><br></pre></td></tr></table></figure>
-<p>闭包中，编译器会将参数标识为0、1、2，…，其中0代表第一个参数值，以此类推</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">calculator(n1: <span class="number">1</span>, n2: <span class="number">2</span>, operation: &#123; <span class="variable">$0</span> <span class="operator">+</span> <span class="variable">$1</span> &#125;)</span><br></pre></td></tr></table></figure>
-<p>甚至可以进一步简化，如果函数的最后一个参数是闭包，则可以先删除operation参数名称，再将闭包代码移到函数右边小括号的外面</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">calculator(n1: <span class="number">1</span>, n2: <span class="number">2</span>) &#123; <span class="variable">$0</span> <span class="operator">+</span> <span class="variable">$1</span> &#125;</span><br></pre></td></tr></table></figure>
-<p>又例如把数组的每项值加一</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> array <span class="operator">=</span> [<span class="number">2</span>, <span class="number">5</span>, <span class="number">3</span>, <span class="number">7</span>, <span class="number">23</span>, <span class="number">54</span>]</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">addOne</span> <span class="params">(n1: Int)</span></span> -&gt; <span class="type">Int</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> n1 <span class="operator">+</span> <span class="number">1</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">array.map(addOne)</span><br></pre></td></tr></table></figure>
-<p>使用闭包可以简化为</p>
-<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line">array.map &#123;<span class="variable">$0</span> <span class="operator">+</span> <span class="number">1</span>&#125;</span><br></pre></td></tr></table></figure>
-
-
-<h3 id="ChangeLog"><a href="#ChangeLog" class="headerlink" title="ChangeLog"></a>ChangeLog</h3><p>20190129 添加错误捕获<br>20190213 添加闭包</p>
-]]></content>
-      <categories>
-        <category>技术</category>
-      </categories>
-      <tags>
-        <tag>iOS</tag>
-      </tags>
   </entry>
   <entry>
     <title>Hexo 博客搭建、进阶配置指南</title>

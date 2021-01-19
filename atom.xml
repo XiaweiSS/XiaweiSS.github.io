@@ -81,9 +81,9 @@
     <category term="技术" scheme="https://xiawei.cc/categories/%E6%8A%80%E6%9C%AF/"/>
     
     
-    <category term="环境配置" scheme="https://xiawei.cc/tags/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/"/>
-    
     <category term="mac" scheme="https://xiawei.cc/tags/mac/"/>
+    
+    <category term="环境配置" scheme="https://xiawei.cc/tags/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/"/>
     
   </entry>
   
@@ -154,9 +154,9 @@
     <category term="技术" scheme="https://xiawei.cc/categories/%E6%8A%80%E6%9C%AF/"/>
     
     
-    <category term="git" scheme="https://xiawei.cc/tags/git/"/>
-    
     <category term="环境配置" scheme="https://xiawei.cc/tags/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/"/>
+    
+    <category term="git" scheme="https://xiawei.cc/tags/git/"/>
     
   </entry>
   
