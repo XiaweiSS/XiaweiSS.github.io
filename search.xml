@@ -1,6 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>使用 git hook 实现服务器代码自动部署</title>
+    <url>/art/2017/20171114-set-git-hooks-to-update-server-code/</url>
+    <content><![CDATA[<blockquote>
+<p>前几天把 Hexo 博客部署到了阿里云服务器，但发现每次推送文章都需要去服务器同步代码。最终寻找到 git hook 来解决了这个问题</p>
+</blockquote>
+<a id="more"></a>
+
+<h2 id="1-说明"><a href="#1-说明" class="headerlink" title="1. 说明"></a>1. 说明</h2><p>在服务器，要建一个相当于 github 存放功能的裸仓库来存储代码。<br>之所以叫裸仓库，是因为这个仓库只是为了存代码用的，没有工作目录，不可以在它里面查看改写代码。</p>
+<p>在网站文件夹下，会有一个工作目录来存放代码，这个目录的代码可以像clone github代码库一样，clone 服务器里的裸仓库。</p>
+<p>当服务器里裸仓库收到提交进来的代码后，会触发 git hook 的 post-receive 事件，配置好的程序就可以自动去工作目录的仓库执行 git pull，服务器代码就自动更新了</p>
+<h2 id="2-配置步骤："><a href="#2-配置步骤：" class="headerlink" title="2. 配置步骤："></a>2. 配置步骤：</h2><p>远程连接服务器，登录 root 账号</p>
+<h3 id="2-1-设置用户"><a href="#2-1-设置用户" class="headerlink" title="2.1 设置用户"></a>2.1 设置用户</h3><p>新增用户xiawei，这里可以写你的名字</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">useradd xiawei</span><br></pre></td></tr></table></figure>
+<p>修改用户密码</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">passwd xiawei</span><br></pre></td></tr></table></figure>
+<p>输入新密码即可</p>
+<p>给添加 sudo 权限 通过修改 /etc/sudoers</p>
+<p>必须使用命令</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">visudo</span><br></pre></td></tr></table></figure>
+<p>按 i 键进入, 找到 root ALL=(ALL) ALL 然后下面添加 xiawei ALL = (ALL) ALL</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">root ALL&#x3D;(ALL) ALL</span><br><span class="line">xiawei ALL &#x3D; (ALL) ALL</span><br></pre></td></tr></table></figure>
+<h3 id="2-2-安装-git"><a href="#2-2-安装-git" class="headerlink" title="2.2 安装 git"></a>2.2 安装 git</h3><p>查看是否安装 git</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git --version</span><br></pre></td></tr></table></figure>
+<p>如果没有看到版本号，则继续安装 git</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum install git</span><br></pre></td></tr></table></figure>
+<p>设置 git 用户名邮箱</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git config --global user.name &quot;yourname&quot;</span><br><span class="line">git config --global user.email &quot;your_email@example.com&quot;</span><br></pre></td></tr></table></figure>
+<h3 id="2-3-建立git裸仓库"><a href="#2-3-建立git裸仓库" class="headerlink" title="2.3 建立git裸仓库"></a>2.3 建立git裸仓库</h3><p>假设网站的在 /www/blog/ 目录下，创建裸仓库</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www</span><br><span class="line">sudo git init --bare blog.git</span><br></pre></td></tr></table></figure>
+<p>更改所属用户和用户组，获得权限</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo chown -R xiawei:xiawei blog.git</span><br><span class="line">sudo chown -R xiawei:xiawei blog</span><br></pre></td></tr></table></figure>
+<h3 id="2-4-建立工作目录-git-仓库"><a href="#2-4-建立工作目录-git-仓库" class="headerlink" title="2.4 建立工作目录 git 仓库"></a>2.4 建立工作目录 git 仓库</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git clone &#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
+<p>如果此时 blog 文件夹不是空的，会不能 clone<br>按先定义仓库，再设置远端仓库地址即可</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git init</span><br><span class="line">git remote add origin &#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
+<p>注意这时要删除掉 index.html 等和本地待提交代码重复的文件</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">rm index.html</span><br></pre></td></tr></table></figure>
+<h3 id="2-5-设置-git-hooks"><a href="#2-5-设置-git-hooks" class="headerlink" title="2.5 设置 git hooks"></a>2.5 设置 git hooks</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;xiaweiss.git&#x2F;hooks&#x2F;</span><br><span class="line">vim post-receive</span><br></pre></td></tr></table></figure>
+<p>按 i 键，将下面这几行代码粘贴进去</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#!&#x2F;bin&#x2F;sh</span><br><span class="line">unset GIT_DIR</span><br><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git fetch --all</span><br><span class="line">git reset --hard origin&#x2F;master</span><br></pre></td></tr></table></figure>
+<p>（原来只使用的 git pull origin master 方式，代码冲突时，还需要手动登陆服务器解决 ）</p>
+<p>赋予 post-receive 文件可执行权限</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">chmod +x post-receive</span><br></pre></td></tr></table></figure>
+<h3 id="2-6-本地-配置"><a href="#2-6-本地-配置" class="headerlink" title="2.6 本地 配置"></a>2.6 本地 配置</h3><p>最后修改 Hexo 配置文件里 deploy项，每次发布代码会提交到这两个仓库</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">deploy:</span><br><span class="line">- type: git</span><br><span class="line">  repo: git@github.com:xiaweiss&#x2F;xiaweiss.github.io.git</span><br><span class="line">- type: git</span><br><span class="line">  repo: xiawei@xiaweiss.com:&#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
+<p>如果是本地的其他项目，可以直接</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git clone xiawei@xiaweiss.com:&#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
+<p>修改代码后，提交即可</p>
+]]></content>
+      <categories>
+        <category>技术</category>
+      </categories>
+      <tags>
+        <tag>git</tag>
+        <tag>环境配置</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Mac 基本开发环境配置</title>
     <url>/art/2017/20171111-set-environment-of-mac/</url>
     <content><![CDATA[<blockquote>
@@ -152,65 +209,8 @@
         <category>技术</category>
       </categories>
       <tags>
+        <tag>环境配置</tag>
         <tag>mac</tag>
-        <tag>环境配置</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>使用 git hook 实现服务器代码自动部署</title>
-    <url>/art/2017/20171114-set-git-hooks-to-update-server-code/</url>
-    <content><![CDATA[<blockquote>
-<p>前几天把 Hexo 博客部署到了阿里云服务器，但发现每次推送文章都需要去服务器同步代码。最终寻找到 git hook 来解决了这个问题</p>
-</blockquote>
-<a id="more"></a>
-
-<h2 id="1-说明"><a href="#1-说明" class="headerlink" title="1. 说明"></a>1. 说明</h2><p>在服务器，要建一个相当于 github 存放功能的裸仓库来存储代码。<br>之所以叫裸仓库，是因为这个仓库只是为了存代码用的，没有工作目录，不可以在它里面查看改写代码。</p>
-<p>在网站文件夹下，会有一个工作目录来存放代码，这个目录的代码可以像clone github代码库一样，clone 服务器里的裸仓库。</p>
-<p>当服务器里裸仓库收到提交进来的代码后，会触发 git hook 的 post-receive 事件，配置好的程序就可以自动去工作目录的仓库执行 git pull，服务器代码就自动更新了</p>
-<h2 id="2-配置步骤："><a href="#2-配置步骤：" class="headerlink" title="2. 配置步骤："></a>2. 配置步骤：</h2><p>远程连接服务器，登录 root 账号</p>
-<h3 id="2-1-设置用户"><a href="#2-1-设置用户" class="headerlink" title="2.1 设置用户"></a>2.1 设置用户</h3><p>新增用户xiawei，这里可以写你的名字</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">useradd xiawei</span><br></pre></td></tr></table></figure>
-<p>修改用户密码</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">passwd xiawei</span><br></pre></td></tr></table></figure>
-<p>输入新密码即可</p>
-<p>给添加 sudo 权限 通过修改 /etc/sudoers</p>
-<p>必须使用命令</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">visudo</span><br></pre></td></tr></table></figure>
-<p>按 i 键进入, 找到 root ALL=(ALL) ALL 然后下面添加 xiawei ALL = (ALL) ALL</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">root ALL&#x3D;(ALL) ALL</span><br><span class="line">xiawei ALL &#x3D; (ALL) ALL</span><br></pre></td></tr></table></figure>
-<h3 id="2-2-安装-git"><a href="#2-2-安装-git" class="headerlink" title="2.2 安装 git"></a>2.2 安装 git</h3><p>查看是否安装 git</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git --version</span><br></pre></td></tr></table></figure>
-<p>如果没有看到版本号，则继续安装 git</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yum install git</span><br></pre></td></tr></table></figure>
-<p>设置 git 用户名邮箱</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git config --global user.name &quot;yourname&quot;</span><br><span class="line">git config --global user.email &quot;your_email@example.com&quot;</span><br></pre></td></tr></table></figure>
-<h3 id="2-3-建立git裸仓库"><a href="#2-3-建立git裸仓库" class="headerlink" title="2.3 建立git裸仓库"></a>2.3 建立git裸仓库</h3><p>假设网站的在 /www/blog/ 目录下，创建裸仓库</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www</span><br><span class="line">sudo git init --bare blog.git</span><br></pre></td></tr></table></figure>
-<p>更改所属用户和用户组，获得权限</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">sudo chown -R xiawei:xiawei blog.git</span><br><span class="line">sudo chown -R xiawei:xiawei blog</span><br></pre></td></tr></table></figure>
-<h3 id="2-4-建立工作目录-git-仓库"><a href="#2-4-建立工作目录-git-仓库" class="headerlink" title="2.4 建立工作目录 git 仓库"></a>2.4 建立工作目录 git 仓库</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git clone &#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
-<p>如果此时 blog 文件夹不是空的，会不能 clone<br>按先定义仓库，再设置远端仓库地址即可</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git init</span><br><span class="line">git remote add origin &#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
-<p>注意这时要删除掉 index.html 等和本地待提交代码重复的文件</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">rm index.html</span><br></pre></td></tr></table></figure>
-<h3 id="2-5-设置-git-hooks"><a href="#2-5-设置-git-hooks" class="headerlink" title="2.5 设置 git hooks"></a>2.5 设置 git hooks</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;www&#x2F;xiaweiss.git&#x2F;hooks&#x2F;</span><br><span class="line">vim post-receive</span><br></pre></td></tr></table></figure>
-<p>按 i 键，将下面这几行代码粘贴进去</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#!&#x2F;bin&#x2F;sh</span><br><span class="line">unset GIT_DIR</span><br><span class="line">cd &#x2F;www&#x2F;blog</span><br><span class="line">git fetch --all</span><br><span class="line">git reset --hard origin&#x2F;master</span><br></pre></td></tr></table></figure>
-<p>（原来只使用的 git pull origin master 方式，代码冲突时，还需要手动登陆服务器解决 ）</p>
-<p>赋予 post-receive 文件可执行权限</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">chmod +x post-receive</span><br></pre></td></tr></table></figure>
-<h3 id="2-6-本地-配置"><a href="#2-6-本地-配置" class="headerlink" title="2.6 本地 配置"></a>2.6 本地 配置</h3><p>最后修改 Hexo 配置文件里 deploy项，每次发布代码会提交到这两个仓库</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">deploy:</span><br><span class="line">- type: git</span><br><span class="line">  repo: git@github.com:xiaweiss&#x2F;xiaweiss.github.io.git</span><br><span class="line">- type: git</span><br><span class="line">  repo: xiawei@xiaweiss.com:&#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
-<p>如果是本地的其他项目，可以直接</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git clone xiawei@xiaweiss.com:&#x2F;www&#x2F;blog.git</span><br></pre></td></tr></table></figure>
-<p>修改代码后，提交即可</p>
-]]></content>
-      <categories>
-        <category>技术</category>
-      </categories>
-      <tags>
-        <tag>环境配置</tag>
-        <tag>git</tag>
       </tags>
   </entry>
   <entry>
@@ -294,144 +294,6 @@
         <tag>apache</tag>
         <tag>centOS</tag>
         <tag>php</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>萧秋水《进阶》：关于成长的思考</title>
-    <url>/art/2017/20171210-book-%E8%90%A7%E7%A7%8B%E6%B0%B4-%E8%BF%9B%E9%98%B6/</url>
-    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20171210.png"></p>
-<blockquote>
-<p>前不久看到 <code>秋叶大叔</code> 公众号推送，入手了这本标题有点鸡汤，但并不鸡汤的书<br>作为读完书的成果，来写我的第一篇书评，如有纰漏，请轻拍指正，谢啦~</p>
-</blockquote>
-<a id="more"></a>
-
-<p><a href="https://www.douban.com/people/qsxiao/">萧秋水</a>是一位立足于知识管理，从事咨询的自由职业者。<a href="https://book.douban.com/subject/27135370/">《进阶》</a>这本书的精华用一句话来说，就是封面上写道的</p>
-<blockquote>
-<p>不断升级的秘诀： 掌控时间，调节情绪，完善知识体系，完成蜕变。</p>
-</blockquote>
-<p>整本书从围绕秘诀，从解决问题的能力、对待个人生活的态度、学习方法、人际关系、接受适应能力这五个方面入手。通过分享自己感悟的方式，来谈自己的想法，从而启发读者的思考。书里的每篇文章，并没有循规蹈矩地论点123，就像一个朋友在谈她的生活、看法，然后自己在倾听中得到自己结论和启发。</p>
-<p>作为一本讲道理的书，行文的随性给了读者一种慢下来的感觉。本书随性到没有序和拔，建设性意见散落在文章各处。各个章节虽然各有侧重，但却是相辅相成，不可分离。整本书看似散落，其实有着逻辑主线，层层递进时，又不失各篇文章的独立性。</p>
-<p>成长首先是要不焦虑，拿出勇气，明确目标。这些都需要独立思考，和以自身实力为根基的自信。而做到这些，需要关注自己，考虑他人意见，但不盲从。</p>
-<p>接下来，成长是为了得到更好的生活。那么就不应该为了未来的生活而放弃现在。珍惜好当下，未来会变得更加美好。而这一切生活，都是自己的，所以过好自己想要的生活，就不要被他人左右。积累的能力是独立的强大后盾。而且好的心情也会带来好运。</p>
-<p>那么就开始学习吧。学习知识的方法，书中提出3个核心：</p>
-<ul>
-<li>适合自己的，才是最好的</li>
-<li>认清学习的主体</li>
-<li>合理用人，别把人往死里用</li>
-</ul>
-<p>当然学到知识，还有另一种途径，那就是自己思考和总结，平时多思考解决问题的办法，重要的事情要有预案。</p>
-<p>至于怎么才算真正学到了呢，那就是必须用输出成果来验证。不功利，多付出，多考虑带给他人的价值。</p>
-<p>对于知识的输出和应用，萧秋水给出了精辟的类比：</p>
-<blockquote>
-<p>输出，就是看到了一个菜谱，自己抄了一遍，或者分享给他人。<br>应用，就是照着菜谱做了一道菜。<br>知识不是一道菜，不是别人端上来，吃了就饱了。</p>
-</blockquote>
-<p>学习篇的最后，书中介绍了筛选信息的方法：较强目的性、了解局部、清醒觉知（即专注目标）</p>
-<br>
-
-<p>最后两章介绍了时间管理。本质上来说，时间的流逝是客观存在、不可控制的，所以能够管理的其实是时间的投入，也就是精力。时间管理用一个词来总结就是“专注”，用一句话总结就是：减少不必要的投入，避免把时间浪费在无意义的人和事。</p>
-<p>重要的是，清醒意识到 “时间精力有限”</p>
-<p>对外：给人际关系做减法</p>
-<ul>
-<li>由情绪化走向理性化</li>
-<li>并不需要时时顾及他人感受</li>
-<li>对于某些关系，需要做切割</li>
-<li>没事别乱指导别人的人生（不要瞎操心）</li>
-<li>站在成长的角度，不见得非要合群</li>
-</ul>
-<p>对内：学会放眼现在和未来</p>
-<ul>
-<li>我们没有那么多时间陷溺在过去</li>
-<li>对于无能为力的事，“大不了”就好</li>
-<li>真正的成长始于学会放手</li>
-<li>不要为了未来，总是牺牲现在</li>
-</ul>
-<p>其中这几句写的很好，值得细细品味：</p>
-<ul>
-<li>关于人脉管理：</li>
-</ul>
-<blockquote>
-<p>人脉管理的核心，是自己的能力，如果连这个能力都不保证，就算看上去拥有很多人脉，也可能是虚假的。<br>人脉不是不重要，但要选择。优秀的人会懂得尊重你的时间和习惯，相处中不会有太多麻烦。</p>
-</blockquote>
-<ul>
-<li>关于情绪管理：</li>
-</ul>
-<blockquote>
-<p>引发情绪失控的，普遍都是“自己觉得是大事，别人看来是小事”<br>人经历的事多了，渐渐就会懂得，很多事都是小事，不值得动用情绪。很多事无能为力，也不值得动用情绪。<br>情绪管理就是：站得高了，见得多了，也就容易忽略琐屑小事，抓大，放小。</p>
-</blockquote>
-<ul>
-<li>关于沟通：</li>
-</ul>
-<blockquote>
-<p>沟通，往往是基于需要，往往是在感觉到不满、愤怒的时候。此时往往会有情绪，所以注意，口吻不要含有挖苦、讽刺、指责，而要采取理性、克制的态度。要冷静，要清楚和明确地描述自己为什么不开心，然后一起寻找解决方案。</p>
-</blockquote>
-<blockquote>
-<p>真诚不见得是好事。很多人是以真诚为名，行伤害之实。</p>
-</blockquote>
-<blockquote>
-<p>如果不愿意赞美，至少可以不说。<br>说了，别人也有不听、不照做的权利。</p>
-</blockquote>
-<blockquote>
-<p>弄不清楚该不该说话、怎么说话的时候，不说也许更好。</p>
-</blockquote>
-<ul>
-<li>关于相处：</li>
-</ul>
-<blockquote>
-<p>成年后尤其是工作后，和家庭保持一定的距离。<br>爱父母家人，但不要被操纵。不啃老，用自己的能力赚钱，坚定自我的信念，明白想要的生活。可以咨询父母的意见，但不接受不符合自己目标和三观的指点。对婆家也是如此。</p>
-</blockquote>
-<blockquote>
-<p>和爱人之间也是。如果爱人不喜欢逛街，不要勉强，一如爱人喜欢看球，不用勉强相陪。各自有各自的喜好，分开去做。也有共同的喜好，一起去做，共同交流。</p>
-</blockquote>
-<p>看过赛车动画《头文字D》的人都知道，把车开快，最重要的是学会踩刹车。</p>
-<p>书中最后一章也做了类似的解读，作为书评结语甚好：</p>
-<blockquote>
-<p>超越自己，并非指全力以赴地拼搏，不管不顾地燃烧自己，而是奋斗有度、享受及时。克服自己对“成功”的渴望，不为遥远的未来的安逸而牺牲当下，好好爱惜自己，尽情体验更丰富盛大的生活，深入生命的肌理。</p>
-</blockquote>
-<hr>
-<p>最后摘录书中我喜欢的一些句子：</p>
-<blockquote>
-<p>活在世间，我们最应守护的人，应当是自我。拥有了这个能力，才可以兼济他人。失去自我固然可以成全他人，但失去自我的人，其实并不能称为“独立的”人，只是一个附庸罢了。</p>
-</blockquote>
-<blockquote>
-<p>一个强大的人。并不会因为守护自我而失去别人的保护。在愿意保护他（她）的人心中，他（她）是值得的，一味示弱反而存在危险。</p>
-</blockquote>
-<blockquote>
-<p>不管是诗与远方，还是眼前的生活，如果愿意把我好每一个瞬间，如果多谢创意、多些主动制造的快乐，一切就会变得不一样。</p>
-</blockquote>
-<blockquote>
-<p>现代社会的生存法则，需要强壮、强大，需要对坏人恶事的深入了解，有时，需要适度的强硬。</p>
-</blockquote>
-<blockquote>
-<p>很多人之所以内心不够强大，是因为太急于求成。真正强大的内心，首先要懂得区分青红皂白、是非曲直，有自己的独立思考、独立人格，不附庸于任何的人事物，宁愿膝盖被打折，也不会主动跪下去。他们不会盲从别人的意见，也不接受指导人生的各种提议。</p>
-</blockquote>
-<blockquote>
-<p>去爱人们，去付出，不要只是索取，也不要拥有了爱而不懂感恩。</p>
-</blockquote>
-<blockquote>
-<p>减少不必要的形式上的学习，专注于吸收和转化，会体现在行动上。</p>
-</blockquote>
-<blockquote>
-<p>强大的人，不需要（测试），因为并不需要所有人的认可作为证明，有些人就算不是天天联络也不会失去，有些人，沟通多了、了解多了反而产生裂痕。</p>
-</blockquote>
-<blockquote>
-<p>唯有独立（经济独立、生活独立、精神独立）的人才懂得制造快乐、拥有自内而外的幸福。<br>唯有自己快乐的人，才会带给他人快乐，才会懂得照顾自己，也兼济他人。</p>
-</blockquote>
-<blockquote>
-<p>世界可以慌忙，我们却要不断探索出自己的节奏。不要被人潮裹挟着前进，不要忽略了自己内心的声音，不要淹没了快乐，不要让自己的幸福，由外界定义。</p>
-</blockquote>
-<blockquote>
-<p>最好的解决方法，应该是自己给出。不靠外界靠自己，也许会有损失，但相比要做成的事，成本不是最重要的，目标才是。</p>
-</blockquote>
-<blockquote>
-<p>接受所有的丧失，甚至是主动的离弃，因为，要放手，应该在合适的时刻，不是到了非离不可。</p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>读书</category>
-      </categories>
-      <tags>
-        <tag>萧秋水</tag>
-        <tag>成长</tag>
       </tags>
   </entry>
   <entry>
@@ -852,6 +714,77 @@
       </tags>
   </entry>
   <entry>
+    <title>微信小程序 wepy 框架</title>
+    <url>/art/2018/20180222-wechat-app-wepy/</url>
+    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20180222.jpg"></p>
+<blockquote>
+<p>微信小程序踩坑记<br>考虑到业务的复杂性需要 redux 状态管理，以及原有 vue 项目的可移植性，选用 wepy 来开发小程序</p>
+</blockquote>
+<a id="more"></a>
+
+
+<h2 id="1-相关资料"><a href="#1-相关资料" class="headerlink" title="1. 相关资料"></a>1. 相关资料</h2><p>网上有很多现成的资料，可以直接参考，本文不再赘述<br>由于官方文档不够详尽，后文列举一些文档中没有的常见功能及排坑</p>
+<p><a href="https://mp.weixin.qq.com/debug/wxadoc/dev/component/">小程序文档</a><br><a href="https://github.com/Tencent/wepy">wepy github</a><br><a href="https://tencent.github.io/wepy/document.html">wepy 文档</a><br><a href="https://segmentfault.com/a/1190000007580866">wepy 特性介绍</a><br><a href="https://www.npmjs.com/package/wepy-redux">wepy-redux</a><br><a href="http://www.ruanyifeng.com/blog/2016/09/redux_tutorial_part_one_basic_usages.html">redux 入门</a><br><a href="https://github.com/Tencent/weui">weui</a><br><a href="https://www.liaoxuefeng.com/wiki/001434446689867b27157e896e74d51a89c25cc8b43bdb3000/0014345008539155e93fc16046d4bb7854943814c4f9dc2000">Promise</a><br><a href="https://segmentfault.com/a/1190000007535316">async/await</a><br><a href="https://zhuanlan.zhihu.com/p/24860332">小程序部分坑</a><br><a href="https://juejin.im/post/5a4f5280f265da3e2b16393c">微信小程序开发之webview组件内网页实现微信原生支付</a><br><a href="https://www.jianshu.com/p/c9a196d0455e">微信小程序与内嵌网页交互实现支付功能</a></p>
+<p>todo<br><a href="https://www.jianshu.com/p/78dfb38ac3d7?winzoom=1">await 错误捕获</a><br><a href="http://www.wxapp-union.com/portal.php?mod=view&aid=3362">小程序 webview 交互</a></p>
+<h2 id="2-快速开始"><a href="#2-快速开始" class="headerlink" title="2. 快速开始"></a>2. 快速开始</h2><ul>
+<li>安装 node 最新稳定版</li>
+<li>npm install wepy-cli -g</li>
+<li>wepy init standard myproject 创建标准项目</li>
+<li>cd myproject 进入项目目录</li>
+<li>wepy upgrade 更新依赖</li>
+<li>npm install 安装依赖</li>
+<li>wepy build -w 实时编译</li>
+<li>运行微信开发者工具，并且设置：<br>不勾选 “ES6 转 ES5”<br>不勾选 “上传代码自动样式补全”<br>不勾选 “代码上传时自动压缩”<br>勾选 “不校验安全域名、web-view 域名、TLS 版本以及 HTTPS 证书”</li>
+</ul>
+<h3 id="2-1-引入-weui"><a href="#2-1-引入-weui" class="headerlink" title="2.1 引入 weui"></a>2.1 引入 weui</h3><p>使用 wepy 创建 weui 项目模板</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">wepy init wepyjs&#x2F;wepy-wechat-demo myproject</span><br></pre></td></tr></table></figure>
+<p>将 style 文件夹拷贝到自己的项目，然后在 app.wpy 的 style 标签里添加</p>
+<figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="keyword">@import</span> <span class="string">&#x27;./style/weui.less&#x27;</span>;</span><br></pre></td></tr></table></figure>
+<p>如需部分引入，修改 weui.less 注释掉不需要的组件即可</p>
+<h3 id="2-2-引入第三方组件"><a href="#2-2-引入第三方组件" class="headerlink" title="2.2 引入第三方组件"></a>2.2 引入第三方组件</h3><figure class="highlight html"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">template</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">toast</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">template</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="javascript"><span class="keyword">import</span> wepy <span class="keyword">from</span> <span class="string">&#x27;wepy&#x27;</span></span></span><br><span class="line"><span class="javascript"><span class="keyword">import</span> Toast <span class="keyword">from</span> <span class="string">&#x27;wepy-com-toast&#x27;</span></span></span><br><span class="line"></span><br><span class="line"><span class="javascript"><span class="keyword">export</span> <span class="keyword">default</span> <span class="class"><span class="keyword">class</span> <span class="title">Index</span> <span class="keyword">extends</span> <span class="title">wepy</span>.<span class="title">page</span> </span>&#123;</span></span><br><span class="line">  components = &#123;</span><br><span class="line">    toast: Toast</span><br><span class="line">  &#125;</span><br><span class="line">  methods = &#123;</span><br><span class="line"><span class="javascript">    <span class="function"><span class="title">go</span>(<span class="params"></span>)</span> &#123;</span></span><br><span class="line"><span class="javascript">      <span class="keyword">let</span> promise = <span class="built_in">this</span>.$invoke(<span class="string">&#x27;toast&#x27;</span>, <span class="string">&#x27;show&#x27;</span>, &#123;</span></span><br><span class="line"><span class="javascript">        title: <span class="string">&#x27;自定义标题&#x27;</span>,</span></span><br><span class="line"><span class="javascript">        img: <span class="string">&#x27;https://raw.githubusercontent.com/kiinlam/wetoast/master/images/star.png&#x27;</span></span></span><br><span class="line">      &#125;)</span><br><span class="line"></span><br><span class="line"><span class="javascript">      promise.then(<span class="function">(<span class="params">d</span>) =&gt;</span> &#123;</span></span><br><span class="line"><span class="javascript">        <span class="built_in">console</span>.log(<span class="string">&#x27;toast done&#x27;</span>)</span></span><br><span class="line">      &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h2 id="3-wepy-语法"><a href="#3-wepy-语法" class="headerlink" title="3. wepy 语法"></a>3. wepy 语法</h2><h3 id="3-1-组件通讯"><a href="#3-1-组件通讯" class="headerlink" title="3.1 组件通讯"></a>3.1 组件通讯</h3><p>组件命名 驼峰式 childCom</p>
+<h4 id="3-1-1-父子组件通讯-props-方式"><a href="#3-1-1-父子组件通讯-props-方式" class="headerlink" title="3.1.1 父子组件通讯 props 方式"></a>3.1.1 父子组件通讯 props 方式</h4><figure class="highlight html"><table><tr><td class="code"><pre><span class="line">// parent.wpy</span><br><span class="line"><span class="tag">&lt;<span class="name">child</span> <span class="attr">:title</span>=<span class="string">&quot;parentTitle&quot;</span> <span class="attr">:syncTitle.sync</span>=<span class="string">&quot;parentTitle&quot;</span> <span class="attr">:twoWayTitle</span>=<span class="string">&quot;parentTitle&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">child</span>&gt;</span></span><br><span class="line"></span><br><span class="line">data = &#123;</span><br><span class="line">    parentTitle: &#x27;p-title&#x27;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">// child.wpy</span><br><span class="line"></span><br><span class="line">props = &#123;</span><br><span class="line">    // 静态传值</span><br><span class="line">    title: String,</span><br><span class="line"></span><br><span class="line">    // 父向子单向动态传值</span><br><span class="line">    syncTitle: &#123;</span><br><span class="line">        type: String,</span><br><span class="line">        default: &#x27;null&#x27;</span><br><span class="line">    &#125;,</span><br><span class="line"></span><br><span class="line">    // 父子 props 双向绑定</span><br><span class="line">    twoWayTitle: &#123;</span><br><span class="line">        type: Number,</span><br><span class="line">        default: &#x27;nothing&#x27;,</span><br><span class="line">        twoWay: true</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>父组件在变更传递给子组件 props 后要执行 <code>this.$apply()</code> 方法才能更新</p>
+<p>注意要写成成对的 <code>&lt;child&gt;&lt;/child&gt;</code></p>
+<h4 id="3-1-2-父子组件通讯-事件传递方式"><a href="#3-1-2-父子组件通讯-事件传递方式" class="headerlink" title="3.1.2 父子组件通讯 事件传递方式"></a>3.1.2 父子组件通讯 事件传递方式</h4><p>父组件可以使用 invoke 来给特定的子组件发事件，这个组件必须在此模块里注册过</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="built_in">this</span>.$invoke(<span class="string">&#x27;com&#x27;</span>,<span class="string">&#x27;myevent&#x27;</span>,<span class="string">&#x27;myparam&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<p>注意目前wepy 1.7.0版本，和官方文档不同的是，event 里的事件不能被 invoke 触发<br>（但可以被 emit boardcast 触发），所以需要类似 onLoad 的写法，直接写在 class 里。</p>
+<p>wepy中的methods仅可用于页面事件绑定，其他自定义方法都要放在外层</p>
+<h3 id="3-2-页面交互"><a href="#3-2-页面交互" class="headerlink" title="3.2 页面交互"></a>3.2 页面交互</h3><p>页面间可以用 url 的 qruey 参数的方式来传参<br>onLoad 事件里有 options 参数，是包含当前页面路径的 query</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="comment">// source page</span></span><br><span class="line">wepy.navigateTo(&#123;</span><br><span class="line">  url: <span class="string">&#x27;test?a=123&amp;b=456&#x27;</span></span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="comment">// target page</span></span><br><span class="line"><span class="function"><span class="title">onLoad</span>(<span class="params">options</span>)</span> &#123;</span><br><span class="line">   <span class="built_in">console</span>.log(options.a) <span class="comment">// 123</span></span><br><span class="line">   <span class="built_in">console</span>.log(options.b) <span class="comment">// 456</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意，注册在 app.wpy 的 tabBar 里的目标页面，只能用 switchTab 来跳转</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line">wepy.switchTab(&#123;</span><br><span class="line">  url: <span class="string">&#x27;test?a=123&amp;b=456&#x27;</span></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>web-view 页面可以通过调用微信 jssdk 的 wx.miniProgram.xxx 系列方法，来控制跳转到小程序页面，同样可以传 query 参数</p>
+<h3 id="3-3-wepy-请求"><a href="#3-3-wepy-请求" class="headerlink" title="3.3 wepy 请求"></a>3.3 wepy 请求</h3><p>可以直接按原生小程序的语法<br>或者按官方文档的方式 使用Promise的 then 方式回调，还需要配置<br><a href="https://github.com/Tencent/wepy/wiki/wepy%E9%A1%B9%E7%9B%AE%E4%B8%AD%E4%BD%BF%E7%94%A8async-await">wepy项目中使用async await</a></p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line">wepy.request(url).then(<span class="function">(<span class="params">d</span>) =&gt;</span> <span class="built_in">console</span>.log(d))</span><br></pre></td></tr></table></figure>
+<p>二者混合</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line">wepy.request(&#123;</span><br><span class="line">  url: url,</span><br><span class="line">  data: &#123;&#125;,</span><br><span class="line">  method: <span class="string">&#x27;GET&#x27;</span> <span class="comment">// OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, CONNECT</span></span><br><span class="line">  <span class="comment">// header: &#123;&#125;, // 设置请求的 header</span></span><br><span class="line">&#125;).then(<span class="function"><span class="params">d</span> =&gt;</span> <span class="built_in">console</span>.log(d))</span><br></pre></td></tr></table></figure>
+<p>使用 async/await 方式</p>
+<h4 id="3-4-async-await-错误捕获"><a href="#3-4-async-await-错误捕获" class="headerlink" title="3.4 async/await 错误捕获"></a>3.4 async/await 错误捕获</h4><p>使用 try…catch 语法</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line">boom (s) &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">Promise</span>.reject(<span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">&#x27;promise rejected&#x27;</span>))</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">async</span> <span class="function"><span class="title">onLaunch</span>(<span class="params"></span>)</span> &#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">await</span> <span class="built_in">this</span>.boom()</span><br><span class="line">  &#125; <span class="keyword">catch</span> (err) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">&#x27;CATCH&#x27;</span>, err)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="4-css"><a href="#4-css" class="headerlink" title="4. css"></a>4. css</h2><h3 id="4-1-css-预编译语言"><a href="#4-1-css-预编译语言" class="headerlink" title="4.1 css 预编译语言"></a>4.1 css 预编译语言</h3><p>默认为 less，还可以使用 css、sass、scss、stylus<br>只需要 npm 安装对应包，并且在 style 标签声明，例如</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line">npm install wepy-compiler-sass --save-dev</span><br></pre></td></tr></table></figure>
+<figure class="highlight html"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">style</span> <span class="attr">lang</span>=<span class="string">&quot;scss&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">style</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>注意 wepy 和普通引用不同的是，scss 的 function 以及 $ 变量，必须在使用它的文件 style 中引入<br>全局样式中声明是无效的，可以写成单独的 scss 文件，通过 import 引入。</p>
+<p>另外 style 的样式会影响到子组件，可以类似 vue 使用 scope 关键字来去除影响</p>
+<p>用到多种编译语言时，可以出现多个不同的 style 标签。</p>
+<figure class="highlight html"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">sytle</span> <span class="attr">lang</span>=<span class="string">&quot;scss&quot;</span> <span class="attr">scoped</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">style</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">sytle</span> <span class="attr">lang</span>=<span class="string">&quot;scss&quot;</span>&gt;</span></span><br><span class="line">  @import &#x27;../style/common.scss&#x27;;</span><br><span class="line"><span class="tag">&lt;/<span class="name">style</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">style</span> <span class="attr">lang</span>=<span class="string">&quot;less&quot;</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">style</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>最后请注意，wepy css 编译报错后，需要重启微信开发者工具。</p>
+<h2 id="5-webview"><a href="#5-webview" class="headerlink" title="5. webview"></a>5. webview</h2><p>todo 需要验证</p>
+<h3 id="5-1-在内嵌页里判断当前是否是小程序"><a href="#5-1-在内嵌页里判断当前是否是小程序" class="headerlink" title="5.1 在内嵌页里判断当前是否是小程序"></a>5.1 在内嵌页里判断当前是否是小程序</h3><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="built_in">window</span>.wx.ready(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    isWxMini = <span class="built_in">window</span>.__wxjs_environment === <span class="string">&#x27;miniprogram&#x27;</span></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<h3 id="未完待续"><a href="#未完待续" class="headerlink" title="未完待续"></a>未完待续</h3><blockquote>
+<p>图片来源：<a href="https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=59474391">https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=59474391</a></p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>技术</category>
+      </categories>
+      <tags>
+        <tag>wepy</tag>
+        <tag>小程序</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>php 学习笔记</title>
     <url>/art/2018/20180124-php-primer-note/</url>
     <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20180124.jpg"></p>
@@ -924,77 +857,6 @@
       <tags>
         <tag>php</tag>
         <tag>note</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>微信小程序 wepy 框架</title>
-    <url>/art/2018/20180222-wechat-app-wepy/</url>
-    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20180222.jpg"></p>
-<blockquote>
-<p>微信小程序踩坑记<br>考虑到业务的复杂性需要 redux 状态管理，以及原有 vue 项目的可移植性，选用 wepy 来开发小程序</p>
-</blockquote>
-<a id="more"></a>
-
-
-<h2 id="1-相关资料"><a href="#1-相关资料" class="headerlink" title="1. 相关资料"></a>1. 相关资料</h2><p>网上有很多现成的资料，可以直接参考，本文不再赘述<br>由于官方文档不够详尽，后文列举一些文档中没有的常见功能及排坑</p>
-<p><a href="https://mp.weixin.qq.com/debug/wxadoc/dev/component/">小程序文档</a><br><a href="https://github.com/Tencent/wepy">wepy github</a><br><a href="https://tencent.github.io/wepy/document.html">wepy 文档</a><br><a href="https://segmentfault.com/a/1190000007580866">wepy 特性介绍</a><br><a href="https://www.npmjs.com/package/wepy-redux">wepy-redux</a><br><a href="http://www.ruanyifeng.com/blog/2016/09/redux_tutorial_part_one_basic_usages.html">redux 入门</a><br><a href="https://github.com/Tencent/weui">weui</a><br><a href="https://www.liaoxuefeng.com/wiki/001434446689867b27157e896e74d51a89c25cc8b43bdb3000/0014345008539155e93fc16046d4bb7854943814c4f9dc2000">Promise</a><br><a href="https://segmentfault.com/a/1190000007535316">async/await</a><br><a href="https://zhuanlan.zhihu.com/p/24860332">小程序部分坑</a><br><a href="https://juejin.im/post/5a4f5280f265da3e2b16393c">微信小程序开发之webview组件内网页实现微信原生支付</a><br><a href="https://www.jianshu.com/p/c9a196d0455e">微信小程序与内嵌网页交互实现支付功能</a></p>
-<p>todo<br><a href="https://www.jianshu.com/p/78dfb38ac3d7?winzoom=1">await 错误捕获</a><br><a href="http://www.wxapp-union.com/portal.php?mod=view&aid=3362">小程序 webview 交互</a></p>
-<h2 id="2-快速开始"><a href="#2-快速开始" class="headerlink" title="2. 快速开始"></a>2. 快速开始</h2><ul>
-<li>安装 node 最新稳定版</li>
-<li>npm install wepy-cli -g</li>
-<li>wepy init standard myproject 创建标准项目</li>
-<li>cd myproject 进入项目目录</li>
-<li>wepy upgrade 更新依赖</li>
-<li>npm install 安装依赖</li>
-<li>wepy build -w 实时编译</li>
-<li>运行微信开发者工具，并且设置：<br>不勾选 “ES6 转 ES5”<br>不勾选 “上传代码自动样式补全”<br>不勾选 “代码上传时自动压缩”<br>勾选 “不校验安全域名、web-view 域名、TLS 版本以及 HTTPS 证书”</li>
-</ul>
-<h3 id="2-1-引入-weui"><a href="#2-1-引入-weui" class="headerlink" title="2.1 引入 weui"></a>2.1 引入 weui</h3><p>使用 wepy 创建 weui 项目模板</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">wepy init wepyjs&#x2F;wepy-wechat-demo myproject</span><br></pre></td></tr></table></figure>
-<p>将 style 文件夹拷贝到自己的项目，然后在 app.wpy 的 style 标签里添加</p>
-<figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="keyword">@import</span> <span class="string">&#x27;./style/weui.less&#x27;</span>;</span><br></pre></td></tr></table></figure>
-<p>如需部分引入，修改 weui.less 注释掉不需要的组件即可</p>
-<h3 id="2-2-引入第三方组件"><a href="#2-2-引入第三方组件" class="headerlink" title="2.2 引入第三方组件"></a>2.2 引入第三方组件</h3><figure class="highlight html"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">template</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">toast</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">template</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="javascript"><span class="keyword">import</span> wepy <span class="keyword">from</span> <span class="string">&#x27;wepy&#x27;</span></span></span><br><span class="line"><span class="javascript"><span class="keyword">import</span> Toast <span class="keyword">from</span> <span class="string">&#x27;wepy-com-toast&#x27;</span></span></span><br><span class="line"></span><br><span class="line"><span class="javascript"><span class="keyword">export</span> <span class="keyword">default</span> <span class="class"><span class="keyword">class</span> <span class="title">Index</span> <span class="keyword">extends</span> <span class="title">wepy</span>.<span class="title">page</span> </span>&#123;</span></span><br><span class="line">  components = &#123;</span><br><span class="line">    toast: Toast</span><br><span class="line">  &#125;</span><br><span class="line">  methods = &#123;</span><br><span class="line"><span class="javascript">    <span class="function"><span class="title">go</span>(<span class="params"></span>)</span> &#123;</span></span><br><span class="line"><span class="javascript">      <span class="keyword">let</span> promise = <span class="built_in">this</span>.$invoke(<span class="string">&#x27;toast&#x27;</span>, <span class="string">&#x27;show&#x27;</span>, &#123;</span></span><br><span class="line"><span class="javascript">        title: <span class="string">&#x27;自定义标题&#x27;</span>,</span></span><br><span class="line"><span class="javascript">        img: <span class="string">&#x27;https://raw.githubusercontent.com/kiinlam/wetoast/master/images/star.png&#x27;</span></span></span><br><span class="line">      &#125;)</span><br><span class="line"></span><br><span class="line"><span class="javascript">      promise.then(<span class="function">(<span class="params">d</span>) =&gt;</span> &#123;</span></span><br><span class="line"><span class="javascript">        <span class="built_in">console</span>.log(<span class="string">&#x27;toast done&#x27;</span>)</span></span><br><span class="line">      &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<h2 id="3-wepy-语法"><a href="#3-wepy-语法" class="headerlink" title="3. wepy 语法"></a>3. wepy 语法</h2><h3 id="3-1-组件通讯"><a href="#3-1-组件通讯" class="headerlink" title="3.1 组件通讯"></a>3.1 组件通讯</h3><p>组件命名 驼峰式 childCom</p>
-<h4 id="3-1-1-父子组件通讯-props-方式"><a href="#3-1-1-父子组件通讯-props-方式" class="headerlink" title="3.1.1 父子组件通讯 props 方式"></a>3.1.1 父子组件通讯 props 方式</h4><figure class="highlight html"><table><tr><td class="code"><pre><span class="line">// parent.wpy</span><br><span class="line"><span class="tag">&lt;<span class="name">child</span> <span class="attr">:title</span>=<span class="string">&quot;parentTitle&quot;</span> <span class="attr">:syncTitle.sync</span>=<span class="string">&quot;parentTitle&quot;</span> <span class="attr">:twoWayTitle</span>=<span class="string">&quot;parentTitle&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">child</span>&gt;</span></span><br><span class="line"></span><br><span class="line">data = &#123;</span><br><span class="line">    parentTitle: &#x27;p-title&#x27;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">// child.wpy</span><br><span class="line"></span><br><span class="line">props = &#123;</span><br><span class="line">    // 静态传值</span><br><span class="line">    title: String,</span><br><span class="line"></span><br><span class="line">    // 父向子单向动态传值</span><br><span class="line">    syncTitle: &#123;</span><br><span class="line">        type: String,</span><br><span class="line">        default: &#x27;null&#x27;</span><br><span class="line">    &#125;,</span><br><span class="line"></span><br><span class="line">    // 父子 props 双向绑定</span><br><span class="line">    twoWayTitle: &#123;</span><br><span class="line">        type: Number,</span><br><span class="line">        default: &#x27;nothing&#x27;,</span><br><span class="line">        twoWay: true</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>父组件在变更传递给子组件 props 后要执行 <code>this.$apply()</code> 方法才能更新</p>
-<p>注意要写成成对的 <code>&lt;child&gt;&lt;/child&gt;</code></p>
-<h4 id="3-1-2-父子组件通讯-事件传递方式"><a href="#3-1-2-父子组件通讯-事件传递方式" class="headerlink" title="3.1.2 父子组件通讯 事件传递方式"></a>3.1.2 父子组件通讯 事件传递方式</h4><p>父组件可以使用 invoke 来给特定的子组件发事件，这个组件必须在此模块里注册过</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="built_in">this</span>.$invoke(<span class="string">&#x27;com&#x27;</span>,<span class="string">&#x27;myevent&#x27;</span>,<span class="string">&#x27;myparam&#x27;</span>)</span><br></pre></td></tr></table></figure>
-<p>注意目前wepy 1.7.0版本，和官方文档不同的是，event 里的事件不能被 invoke 触发<br>（但可以被 emit boardcast 触发），所以需要类似 onLoad 的写法，直接写在 class 里。</p>
-<p>wepy中的methods仅可用于页面事件绑定，其他自定义方法都要放在外层</p>
-<h3 id="3-2-页面交互"><a href="#3-2-页面交互" class="headerlink" title="3.2 页面交互"></a>3.2 页面交互</h3><p>页面间可以用 url 的 qruey 参数的方式来传参<br>onLoad 事件里有 options 参数，是包含当前页面路径的 query</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="comment">// source page</span></span><br><span class="line">wepy.navigateTo(&#123;</span><br><span class="line">  url: <span class="string">&#x27;test?a=123&amp;b=456&#x27;</span></span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="comment">// target page</span></span><br><span class="line"><span class="function"><span class="title">onLoad</span>(<span class="params">options</span>)</span> &#123;</span><br><span class="line">   <span class="built_in">console</span>.log(options.a) <span class="comment">// 123</span></span><br><span class="line">   <span class="built_in">console</span>.log(options.b) <span class="comment">// 456</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>注意，注册在 app.wpy 的 tabBar 里的目标页面，只能用 switchTab 来跳转</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line">wepy.switchTab(&#123;</span><br><span class="line">  url: <span class="string">&#x27;test?a=123&amp;b=456&#x27;</span></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
-<p>web-view 页面可以通过调用微信 jssdk 的 wx.miniProgram.xxx 系列方法，来控制跳转到小程序页面，同样可以传 query 参数</p>
-<h3 id="3-3-wepy-请求"><a href="#3-3-wepy-请求" class="headerlink" title="3.3 wepy 请求"></a>3.3 wepy 请求</h3><p>可以直接按原生小程序的语法<br>或者按官方文档的方式 使用Promise的 then 方式回调，还需要配置<br><a href="https://github.com/Tencent/wepy/wiki/wepy%E9%A1%B9%E7%9B%AE%E4%B8%AD%E4%BD%BF%E7%94%A8async-await">wepy项目中使用async await</a></p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line">wepy.request(url).then(<span class="function">(<span class="params">d</span>) =&gt;</span> <span class="built_in">console</span>.log(d))</span><br></pre></td></tr></table></figure>
-<p>二者混合</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line">wepy.request(&#123;</span><br><span class="line">  url: url,</span><br><span class="line">  data: &#123;&#125;,</span><br><span class="line">  method: <span class="string">&#x27;GET&#x27;</span> <span class="comment">// OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, CONNECT</span></span><br><span class="line">  <span class="comment">// header: &#123;&#125;, // 设置请求的 header</span></span><br><span class="line">&#125;).then(<span class="function"><span class="params">d</span> =&gt;</span> <span class="built_in">console</span>.log(d))</span><br></pre></td></tr></table></figure>
-<p>使用 async/await 方式</p>
-<h4 id="3-4-async-await-错误捕获"><a href="#3-4-async-await-错误捕获" class="headerlink" title="3.4 async/await 错误捕获"></a>3.4 async/await 错误捕获</h4><p>使用 try…catch 语法</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line">boom (s) &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">Promise</span>.reject(<span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">&#x27;promise rejected&#x27;</span>))</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">async</span> <span class="function"><span class="title">onLaunch</span>(<span class="params"></span>)</span> &#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">await</span> <span class="built_in">this</span>.boom()</span><br><span class="line">  &#125; <span class="keyword">catch</span> (err) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">&#x27;CATCH&#x27;</span>, err)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="4-css"><a href="#4-css" class="headerlink" title="4. css"></a>4. css</h2><h3 id="4-1-css-预编译语言"><a href="#4-1-css-预编译语言" class="headerlink" title="4.1 css 预编译语言"></a>4.1 css 预编译语言</h3><p>默认为 less，还可以使用 css、sass、scss、stylus<br>只需要 npm 安装对应包，并且在 style 标签声明，例如</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line">npm install wepy-compiler-sass --save-dev</span><br></pre></td></tr></table></figure>
-<figure class="highlight html"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">style</span> <span class="attr">lang</span>=<span class="string">&quot;scss&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">style</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<p>注意 wepy 和普通引用不同的是，scss 的 function 以及 $ 变量，必须在使用它的文件 style 中引入<br>全局样式中声明是无效的，可以写成单独的 scss 文件，通过 import 引入。</p>
-<p>另外 style 的样式会影响到子组件，可以类似 vue 使用 scope 关键字来去除影响</p>
-<p>用到多种编译语言时，可以出现多个不同的 style 标签。</p>
-<figure class="highlight html"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">sytle</span> <span class="attr">lang</span>=<span class="string">&quot;scss&quot;</span> <span class="attr">scoped</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">style</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">sytle</span> <span class="attr">lang</span>=<span class="string">&quot;scss&quot;</span>&gt;</span></span><br><span class="line">  @import &#x27;../style/common.scss&#x27;;</span><br><span class="line"><span class="tag">&lt;/<span class="name">style</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">style</span> <span class="attr">lang</span>=<span class="string">&quot;less&quot;</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">style</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<p>最后请注意，wepy css 编译报错后，需要重启微信开发者工具。</p>
-<h2 id="5-webview"><a href="#5-webview" class="headerlink" title="5. webview"></a>5. webview</h2><p>todo 需要验证</p>
-<h3 id="5-1-在内嵌页里判断当前是否是小程序"><a href="#5-1-在内嵌页里判断当前是否是小程序" class="headerlink" title="5.1 在内嵌页里判断当前是否是小程序"></a>5.1 在内嵌页里判断当前是否是小程序</h3><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="built_in">window</span>.wx.ready(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    isWxMini = <span class="built_in">window</span>.__wxjs_environment === <span class="string">&#x27;miniprogram&#x27;</span></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
-<h3 id="未完待续"><a href="#未完待续" class="headerlink" title="未完待续"></a>未完待续</h3><blockquote>
-<p>图片来源：<a href="https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=59474391">https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=59474391</a></p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>技术</category>
-      </categories>
-      <tags>
-        <tag>wepy</tag>
-        <tag>小程序</tag>
       </tags>
   </entry>
   <entry>
@@ -1161,6 +1023,144 @@
       </categories>
       <tags>
         <tag>lint</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>萧秋水《进阶》：关于成长的思考</title>
+    <url>/art/2017/20171210-book-%E8%90%A7%E7%A7%8B%E6%B0%B4-%E8%BF%9B%E9%98%B6/</url>
+    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20171210.png"></p>
+<blockquote>
+<p>前不久看到 <code>秋叶大叔</code> 公众号推送，入手了这本标题有点鸡汤，但并不鸡汤的书<br>作为读完书的成果，来写我的第一篇书评，如有纰漏，请轻拍指正，谢啦~</p>
+</blockquote>
+<a id="more"></a>
+
+<p><a href="https://www.douban.com/people/qsxiao/">萧秋水</a>是一位立足于知识管理，从事咨询的自由职业者。<a href="https://book.douban.com/subject/27135370/">《进阶》</a>这本书的精华用一句话来说，就是封面上写道的</p>
+<blockquote>
+<p>不断升级的秘诀： 掌控时间，调节情绪，完善知识体系，完成蜕变。</p>
+</blockquote>
+<p>整本书从围绕秘诀，从解决问题的能力、对待个人生活的态度、学习方法、人际关系、接受适应能力这五个方面入手。通过分享自己感悟的方式，来谈自己的想法，从而启发读者的思考。书里的每篇文章，并没有循规蹈矩地论点123，就像一个朋友在谈她的生活、看法，然后自己在倾听中得到自己结论和启发。</p>
+<p>作为一本讲道理的书，行文的随性给了读者一种慢下来的感觉。本书随性到没有序和拔，建设性意见散落在文章各处。各个章节虽然各有侧重，但却是相辅相成，不可分离。整本书看似散落，其实有着逻辑主线，层层递进时，又不失各篇文章的独立性。</p>
+<p>成长首先是要不焦虑，拿出勇气，明确目标。这些都需要独立思考，和以自身实力为根基的自信。而做到这些，需要关注自己，考虑他人意见，但不盲从。</p>
+<p>接下来，成长是为了得到更好的生活。那么就不应该为了未来的生活而放弃现在。珍惜好当下，未来会变得更加美好。而这一切生活，都是自己的，所以过好自己想要的生活，就不要被他人左右。积累的能力是独立的强大后盾。而且好的心情也会带来好运。</p>
+<p>那么就开始学习吧。学习知识的方法，书中提出3个核心：</p>
+<ul>
+<li>适合自己的，才是最好的</li>
+<li>认清学习的主体</li>
+<li>合理用人，别把人往死里用</li>
+</ul>
+<p>当然学到知识，还有另一种途径，那就是自己思考和总结，平时多思考解决问题的办法，重要的事情要有预案。</p>
+<p>至于怎么才算真正学到了呢，那就是必须用输出成果来验证。不功利，多付出，多考虑带给他人的价值。</p>
+<p>对于知识的输出和应用，萧秋水给出了精辟的类比：</p>
+<blockquote>
+<p>输出，就是看到了一个菜谱，自己抄了一遍，或者分享给他人。<br>应用，就是照着菜谱做了一道菜。<br>知识不是一道菜，不是别人端上来，吃了就饱了。</p>
+</blockquote>
+<p>学习篇的最后，书中介绍了筛选信息的方法：较强目的性、了解局部、清醒觉知（即专注目标）</p>
+<br>
+
+<p>最后两章介绍了时间管理。本质上来说，时间的流逝是客观存在、不可控制的，所以能够管理的其实是时间的投入，也就是精力。时间管理用一个词来总结就是“专注”，用一句话总结就是：减少不必要的投入，避免把时间浪费在无意义的人和事。</p>
+<p>重要的是，清醒意识到 “时间精力有限”</p>
+<p>对外：给人际关系做减法</p>
+<ul>
+<li>由情绪化走向理性化</li>
+<li>并不需要时时顾及他人感受</li>
+<li>对于某些关系，需要做切割</li>
+<li>没事别乱指导别人的人生（不要瞎操心）</li>
+<li>站在成长的角度，不见得非要合群</li>
+</ul>
+<p>对内：学会放眼现在和未来</p>
+<ul>
+<li>我们没有那么多时间陷溺在过去</li>
+<li>对于无能为力的事，“大不了”就好</li>
+<li>真正的成长始于学会放手</li>
+<li>不要为了未来，总是牺牲现在</li>
+</ul>
+<p>其中这几句写的很好，值得细细品味：</p>
+<ul>
+<li>关于人脉管理：</li>
+</ul>
+<blockquote>
+<p>人脉管理的核心，是自己的能力，如果连这个能力都不保证，就算看上去拥有很多人脉，也可能是虚假的。<br>人脉不是不重要，但要选择。优秀的人会懂得尊重你的时间和习惯，相处中不会有太多麻烦。</p>
+</blockquote>
+<ul>
+<li>关于情绪管理：</li>
+</ul>
+<blockquote>
+<p>引发情绪失控的，普遍都是“自己觉得是大事，别人看来是小事”<br>人经历的事多了，渐渐就会懂得，很多事都是小事，不值得动用情绪。很多事无能为力，也不值得动用情绪。<br>情绪管理就是：站得高了，见得多了，也就容易忽略琐屑小事，抓大，放小。</p>
+</blockquote>
+<ul>
+<li>关于沟通：</li>
+</ul>
+<blockquote>
+<p>沟通，往往是基于需要，往往是在感觉到不满、愤怒的时候。此时往往会有情绪，所以注意，口吻不要含有挖苦、讽刺、指责，而要采取理性、克制的态度。要冷静，要清楚和明确地描述自己为什么不开心，然后一起寻找解决方案。</p>
+</blockquote>
+<blockquote>
+<p>真诚不见得是好事。很多人是以真诚为名，行伤害之实。</p>
+</blockquote>
+<blockquote>
+<p>如果不愿意赞美，至少可以不说。<br>说了，别人也有不听、不照做的权利。</p>
+</blockquote>
+<blockquote>
+<p>弄不清楚该不该说话、怎么说话的时候，不说也许更好。</p>
+</blockquote>
+<ul>
+<li>关于相处：</li>
+</ul>
+<blockquote>
+<p>成年后尤其是工作后，和家庭保持一定的距离。<br>爱父母家人，但不要被操纵。不啃老，用自己的能力赚钱，坚定自我的信念，明白想要的生活。可以咨询父母的意见，但不接受不符合自己目标和三观的指点。对婆家也是如此。</p>
+</blockquote>
+<blockquote>
+<p>和爱人之间也是。如果爱人不喜欢逛街，不要勉强，一如爱人喜欢看球，不用勉强相陪。各自有各自的喜好，分开去做。也有共同的喜好，一起去做，共同交流。</p>
+</blockquote>
+<p>看过赛车动画《头文字D》的人都知道，把车开快，最重要的是学会踩刹车。</p>
+<p>书中最后一章也做了类似的解读，作为书评结语甚好：</p>
+<blockquote>
+<p>超越自己，并非指全力以赴地拼搏，不管不顾地燃烧自己，而是奋斗有度、享受及时。克服自己对“成功”的渴望，不为遥远的未来的安逸而牺牲当下，好好爱惜自己，尽情体验更丰富盛大的生活，深入生命的肌理。</p>
+</blockquote>
+<hr>
+<p>最后摘录书中我喜欢的一些句子：</p>
+<blockquote>
+<p>活在世间，我们最应守护的人，应当是自我。拥有了这个能力，才可以兼济他人。失去自我固然可以成全他人，但失去自我的人，其实并不能称为“独立的”人，只是一个附庸罢了。</p>
+</blockquote>
+<blockquote>
+<p>一个强大的人。并不会因为守护自我而失去别人的保护。在愿意保护他（她）的人心中，他（她）是值得的，一味示弱反而存在危险。</p>
+</blockquote>
+<blockquote>
+<p>不管是诗与远方，还是眼前的生活，如果愿意把我好每一个瞬间，如果多谢创意、多些主动制造的快乐，一切就会变得不一样。</p>
+</blockquote>
+<blockquote>
+<p>现代社会的生存法则，需要强壮、强大，需要对坏人恶事的深入了解，有时，需要适度的强硬。</p>
+</blockquote>
+<blockquote>
+<p>很多人之所以内心不够强大，是因为太急于求成。真正强大的内心，首先要懂得区分青红皂白、是非曲直，有自己的独立思考、独立人格，不附庸于任何的人事物，宁愿膝盖被打折，也不会主动跪下去。他们不会盲从别人的意见，也不接受指导人生的各种提议。</p>
+</blockquote>
+<blockquote>
+<p>去爱人们，去付出，不要只是索取，也不要拥有了爱而不懂感恩。</p>
+</blockquote>
+<blockquote>
+<p>减少不必要的形式上的学习，专注于吸收和转化，会体现在行动上。</p>
+</blockquote>
+<blockquote>
+<p>强大的人，不需要（测试），因为并不需要所有人的认可作为证明，有些人就算不是天天联络也不会失去，有些人，沟通多了、了解多了反而产生裂痕。</p>
+</blockquote>
+<blockquote>
+<p>唯有独立（经济独立、生活独立、精神独立）的人才懂得制造快乐、拥有自内而外的幸福。<br>唯有自己快乐的人，才会带给他人快乐，才会懂得照顾自己，也兼济他人。</p>
+</blockquote>
+<blockquote>
+<p>世界可以慌忙，我们却要不断探索出自己的节奏。不要被人潮裹挟着前进，不要忽略了自己内心的声音，不要淹没了快乐，不要让自己的幸福，由外界定义。</p>
+</blockquote>
+<blockquote>
+<p>最好的解决方法，应该是自己给出。不靠外界靠自己，也许会有损失，但相比要做成的事，成本不是最重要的，目标才是。</p>
+</blockquote>
+<blockquote>
+<p>接受所有的丧失，甚至是主动的离弃，因为，要放手，应该在合适的时刻，不是到了非离不可。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>读书</category>
+      </categories>
+      <tags>
+        <tag>萧秋水</tag>
+        <tag>成长</tag>
       </tags>
   </entry>
   <entry>
@@ -1370,196 +1370,6 @@
       <categories>
         <category>读书</category>
       </categories>
-  </entry>
-  <entry>
-    <title>Hexo 博客搭建、进阶配置指南</title>
-    <url>/art/2017/20171008-build-a-blog-with-hexo-on-github/</url>
-    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20171008.jpg"></p>
-<blockquote>
-<p>作为一个 web 程序员，当然也想有自己的自留地<br>于是就研究起了搭建博客，来记录自己的成长<br>了解之后，发现 github + hexo 是个门槛很低的，效果很好的方式<br>hexo 基于 markdown，意味着不需要关心文章排版，也不需要学习编程<br>github 提供了免费空间、域名以及代码管理的工具，解决了服务器问题</p>
-</blockquote>
-<a id="more"></a>
-
-<blockquote>
-<p>2018-12-03 更新 章节 6.13 设置 RSS 订阅源</p>
-</blockquote>
-<h2 id="1-准备工作"><a href="#1-准备工作" class="headerlink" title="1. 准备工作"></a>1. 准备工作</h2><h3 id="1-1-安装-chrome-浏览器，百度下载即可"><a href="#1-1-安装-chrome-浏览器，百度下载即可" class="headerlink" title="1.1 安装 chrome 浏览器，百度下载即可"></a>1.1 安装 chrome 浏览器，百度下载即可</h3><p><img data-src="https://xiawei.cc/images/20171008-download-chrome.png"></p>
-<h3 id="1-2-注册一个-Github-账号"><a href="#1-2-注册一个-Github-账号" class="headerlink" title="1.2 注册一个 Github 账号"></a>1.2 注册一个 <a href="https://github.com/join?source=header-home">Github</a> 账号</h3><p>如果看不懂英语，可以点这个小按钮来全文翻译（失败的话可以多试几次，或使用其他翻译软件）</p>
-<p><img data-src="https://xiawei.cc/images/20171008-chrome-translate.png"></p>
-<h3 id="1-3-创建一个Repo"><a href="#1-3-创建一个Repo" class="headerlink" title="1.3 创建一个Repo"></a>1.3 创建一个Repo</h3><p>登录 Github（初次注册后会自动登录），点击右上角”+”，再点第一行 “新存储库”(New repository)</p>
-<p>第一次要求验证邮箱，邮箱里会收到 Github 发来的邮件，点那个最长的链接就ok</p>
-<p>存储库名称格式为 yourname.github.io。比如，我个人的 Github 账户用户名是 xiaweiss，所以，我的这个 Repo 的名称就是 xiaweiss.github.io</p>
-<h3 id="1-4-本地安装好-git-和-npm"><a href="#1-4-本地安装好-git-和-npm" class="headerlink" title="1.4 本地安装好 git 和 npm"></a>1.4 本地安装好 git 和 npm</h3><p>下载自己系统对应的安装包，安装<br>windows 下载第一行的 msi 类型即可，位数按系统的位数即可，一般选64-bit</p>
-<p><a href="https://git-scm.com/downloads">git下载地址</a> | <a href="https://nodejs.org/en/download">node下载地址</a></p>
-<p>安装过程中，不用选择，一直点 next下一步即可<br>安装好之后，运行其他系统运行 terminal 命令行工具<br>windows 系统，在桌面或任意文件夹内，右击，运行 git bush here</p>
-<p><img data-src="https://xiawei.cc/images/20171008-git-bush-here.png"></p>
-<p>(下文的命令行中的命令，每行代表一个命令，行末必须按回车键Enter)</p>
-<p>在命令行中输入</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git --version 回车键Enter</span><br><span class="line">npm --version 回车键Enter</span><br></pre></td></tr></table></figure>
-<p>如果看到版本号，则成功。否则重新安装</p>
-<h3 id="1-5-安装好-Atom"><a href="#1-5-安装好-Atom" class="headerlink" title="1.5 安装好 Atom"></a>1.5 安装好 Atom</h3><p>进入 <a href="https://atom.io/">atom编辑器 官网</a>，下载安装它</p>
-<p>启动 Atom 之后, 点击 Packages 安装插件</p>
-<p>请搜索并安装以下 markdown 插件</p>
-<p>markdown-writer<br>tool-bar<br>tool-bar-markdown-writer<br>markdown-scroll-sync<br>markdown-pdf</p>
-<p>或者也可以使用其他你喜欢的 markdown 文件编辑工具</p>
-<h2 id="2-本地搭建站点"><a href="#2-本地搭建站点" class="headerlink" title="2. 本地搭建站点"></a>2. 本地搭建站点</h2><h3 id="2-1-安装-hexo"><a href="#2-1-安装-hexo" class="headerlink" title="2.1 安装 hexo"></a>2.1 安装 hexo</h3><p>在命令行中继续输入</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">npm config set registry https:&#x2F;&#x2F;registry.npm.taobao.org</span><br><span class="line">npm install hexo -g</span><br><span class="line">npm install hexo-cli -g</span><br></pre></td></tr></table></figure>
-<h3 id="2-2-初始化你的本地站点"><a href="#2-2-初始化你的本地站点" class="headerlink" title="2.2 初始化你的本地站点"></a>2.2 初始化你的本地站点</h3><p>去 Github 把你的 Repo 的 git 地址拷贝出来。<br>我的是 <a href="https://github.com/xiaweiss/xiaweiss.github.io.git">https://github.com/xiaweiss/xiaweiss.github.io.git</a><br>你的是 <a href="https://github.com/yourname/yourname.github.io.git">https://github.com/yourname/yourname.github.io.git</a> （其中，yourname 应该换乘你的 Github 用户名）</p>
-<p>然后在 Terminal 面板里输入</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd ~&#x2F;Public  (windows中 cd &#x2F;d)</span><br><span class="line">hexo init yourname.github.io</span><br><span class="line">cd yourname.github.io</span><br><span class="line">npm install hexo-deployer-git --save</span><br><span class="line">hexo generate</span><br><span class="line">hexo server</span><br></pre></td></tr></table></figure>
-<p>这些完成之后，你就可以打开浏览器，在地址栏里输入： <code>localhost:4000</code>，在本地先看看网站是什么样子了。</p>
-<h2 id="3-本地站点发布到-Github-上"><a href="#3-本地站点发布到-Github-上" class="headerlink" title="3. 本地站点发布到 Github 上"></a>3. 本地站点发布到 Github 上</h2><h3 id="3-1-修改-hexo-配置文件"><a href="#3-1-修改-hexo-配置文件" class="headerlink" title="3.1 修改 hexo 配置文件"></a>3.1 修改 hexo 配置文件</h3><p>关闭命令行，重新打开一个命令行</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">atom . （注意符号点前面有空格）</span><br></pre></td></tr></table></figure>
-<p>在 Atom 的左侧面板中，选择 _config.yml 文件，找到 deploy 那一部分（末尾的79行）</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">deploy:</span><br><span class="line">  type:</span><br><span class="line">  (空行)</span><br></pre></td></tr></table></figure>
-<p>改成：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: https:&#x2F;&#x2F;github.com&#x2F;yourname&#x2F;yourname.github.io.git</span><br></pre></td></tr></table></figure>
-<p>Ctrl+S 保存</p>
-<h3 id="3-2-github-生成一个ssh-key配置"><a href="#3-2-github-生成一个ssh-key配置" class="headerlink" title="3.2 github 生成一个ssh-key配置"></a>3.2 github 生成一个ssh-key配置</h3><p><a href="https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/">https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/</a><br>打开命令行</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git config --global user.name &quot;yourname&quot;</span><br><span class="line">git config --global user.email &quot;your_email@example.com&quot;</span><br><span class="line">ssh-keygen -t rsa -b 4096 -C &quot;your_email@example.com&quot; (替换为你的GitHub电子邮件地址)</span><br></pre></td></tr></table></figure>
-<p>接着会出现几次提示，如下图箭头处，直接按回车Enter键即可<br><img data-src="https://xiawei.cc/images/20171008-create-ssh-key.png"></p>
-<h3 id="3-3-将ssh-key添加到-Github"><a href="#3-3-将ssh-key添加到-Github" class="headerlink" title="3.3 将ssh-key添加到 Github"></a>3.3 将ssh-key添加到 Github</h3><p>打开Github，点击右上角的头像，再点设置</p>
-<p><img data-src="https://xiawei.cc/images/20171008-github-setting.png"></p>
-<p>命令行中继续输入</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cat ~&#x2F;.ssh&#x2F;id_rsa.pub</span><br></pre></td></tr></table></figure>
-<p>然后可以看到一堆编码，见下图，把红框里的部分复制了。<br><img data-src="https://xiawei.cc/images/20171008-copy-ssh-key.png"></p>
-<p>在用户设置侧栏中，单击 SSH and GPG Keys(SSH和GPG密钥)，然后单击右上角绿色的 New SSH key(新的SSH密钥)</p>
-<p>然后可以看到这个界面，Title标题随意填。key密钥里，把刚刚复制好的编码粘贴进去，然后点下面 Add SSH key<br><img data-src="https://xiawei.cc/images/20171008-github-paste-ssh-keys.png"></p>
-<p>出现这个界面，表示成功了<br><img data-src="https://xiawei.cc/images/20171008-github-add-ssh-key-ok.png"></p>
-<p>最后一步，命令行中输入，就可以发布到 Github 了</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
-<p>打开 <a href="https://yourname.github.io/">https://yourname.github.io</a> 就可以看到博客了</p>
-<h2 id="4-日常使用"><a href="#4-日常使用" class="headerlink" title="4. 日常使用"></a>4. 日常使用</h2><p>打开命令行</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">atom .</span><br></pre></td></tr></table></figure>
-<p>即可启动编辑器，并且打开项目目录</p>
-<p><img data-src="https://xiawei.cc/images/20171008-atom-md-view.png"></p>
-<p>使用 md 后缀的 markdown 格式，来写文章。语法请参考 <a href="http://www.jianshu.com/p/q81RER">《献给写作者的 Markdown 新手指南》</a></p>
-<p>使用 atom 编辑器来 编辑md文件,打开md文件时 ctrl+shift+m 即可看到预览区域</p>
-<p>_draft 文件夹用来存没写完的草稿<br>_posts 文件夹用来存要发布出去的文章<br>_images 文件夹用来存文章中的图片</p>
-<p>以上文件夹下，直接放文章，不要放子文件夹<br>文件名命名格式推荐 20171008-file-name.md<br>文件名不要使用中文，中文不利于检索文件名</p>
-<p>文章顶部 按模板的语法</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: 标题</span><br><span class="line">date: 2017-10-08</span><br><span class="line">tags: 标签</span><br><span class="line">category: 分类</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
-<p>其中 date 是发布日期注意不要使用模板的 <code>&#123; date &#125;</code>写法，这种写法一旦标题改变或者数据文件 db.json 或 /public 丢失，发布日期会改变</p>
-<p>多个标签或分类时，这样写</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">tags:</span><br><span class="line">- 标签1</span><br><span class="line">- 标签2</span><br></pre></td></tr></table></figure>
-<p>图片 可以用 <code>![](/images/20171008-image-name.png)</code>语法来引入</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;!--more--&gt; 表示预览区的分界线，主页面只会显示它之前的内容。</span><br></pre></td></tr></table></figure>
-
-<p>写完文章后，本地网站查看效果</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">hexo g</span><br><span class="line">hexo s</span><br></pre></td></tr></table></figure>
-<p>发布到 Github</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">hexo g</span><br><span class="line">hexo s</span><br></pre></td></tr></table></figure>
-<h2 id="5-备份本地代码-和-数据"><a href="#5-备份本地代码-和-数据" class="headerlink" title="5. 备份本地代码 和 数据"></a>5. 备份本地代码 和 数据</h2><h3 id="5-1-坚果云备份"><a href="#5-1-坚果云备份" class="headerlink" title="5.1 坚果云备份"></a>5.1 坚果云备份</h3><p>由于Github是开源的，备份到Github，别人容易下载拿走，考虑到私密性，推荐使用 <a href="https://www.jianguoyun.com/">坚果云</a> 来自动备份</p>
-<p>找到 yourname.github.io 文件夹右击，选择<code>坚果云</code>，选择<code>同步到个人空间</code>，即可</p>
-<p><img data-src="https://xiawei.cc/images/20171008-netstore.png"></p>
-<h3 id="5-2-Github-备份"><a href="#5-2-Github-备份" class="headerlink" title="5.2 Github 备份"></a>5.2 Github 备份</h3><p>如果为了不引入其他工具，也可以使用 Github 来备份：</p>
-<p>打开命令行</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">git init</span><br><span class="line">git checkout -b source</span><br><span class="line">git add . (注意点前面有空格)</span><br><span class="line">git commit -m &quot;init&quot;</span><br><span class="line">git remote add origin  https:&#x2F;&#x2F;github.com&#x2F;yourname&#x2F;yourname.github.io.git</span><br><span class="line">git push -u origin source</span><br></pre></td></tr></table></figure>
-<p>每次备份操作，打开命令行：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">git add .</span><br><span class="line">git commit -m &quot;本次备份的提示语&quot;</span><br><span class="line">git push</span><br></pre></td></tr></table></figure>
-<p>误删本地文件夹，从备份的代码恢复整个 yourname.github.io 文件夹：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d</span><br><span class="line">git clone https:&#x2F;&#x2F;github.com&#x2F;yourname&#x2F;yourname.github.io.git</span><br><span class="line">git checkout source</span><br><span class="line">npm install</span><br></pre></td></tr></table></figure>
-<p>如果是在新的电脑恢复 整个 yourname.github.io 文件夹，<br>需要先重复步骤1 ~ 步骤2，并且其中以下步骤直接跳过，然后再执行上面命令<br>1.2 注册一个 Github 账号<br>1.3 创建一个Repo<br>2.2 初始化你的本地站点</p>
-<h2 id="6-进阶优化配置"><a href="#6-进阶优化配置" class="headerlink" title="6. 进阶优化配置"></a>6. 进阶优化配置</h2><p>以下部分非新手向，只写要点，按需食用</p>
-<h3 id="6-1-版本控制"><a href="#6-1-版本控制" class="headerlink" title="6.1 版本控制"></a>6.1 版本控制</h3><p>使用 git 来控制版本<br>为方便切换分支，<br>master分支添加 .gitignore 文件<br>master分支、source分支内容统一为</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">.DS_Store</span><br><span class="line">*.log</span><br><span class="line">node_modules&#x2F;</span><br><span class="line">public&#x2F;</span><br><span class="line">.deploy*&#x2F;</span><br><span class="line">.idea&#x2F;</span><br></pre></td></tr></table></figure>
-<h3 id="6-2-主题更换"><a href="#6-2-主题更换" class="headerlink" title="6.2 主题更换"></a>6.2 主题更换</h3><p>使用 <a href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> 主题为例，<a href="http://theme-next.iissnan.com/">详细中文文档</a></p>
-<p>注意当一个repo包含其他repo时，使用命令  <code>git submodule add</code> 来安装并且分开管理，而不是 <code>git clone</code>，</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git submodule add https:&#x2F;&#x2F;github.com&#x2F;iissnan&#x2F;hexo-theme-next themes&#x2F;next</span><br></pre></td></tr></table></figure>
-<p>至于主题配置文件，可以保存一份副本到 themes 文件夹里提交到自己的仓库</p>
-<p>注意切换主题后，如果显示不正常，运行 <code>hexo clean</code> 来清理数据<br>特别注意<code>hexo clean</code>同时会清除掉历史文章的发布日期，慎用！</p>
-<p>clone 含有子repo 的项目后，子 repo 目录内没有内容，还需要执行下面两个命令来 clone 子repo</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git submodule init</span><br><span class="line">git submodule update</span><br></pre></td></tr></table></figure>
-<h3 id="6-3-文章末尾添加评论区"><a href="#6-3-文章末尾添加评论区" class="headerlink" title="6.3 文章末尾添加评论区"></a>6.3 文章末尾添加评论区</h3><p>目前由于国内审核机制，国内服务说不定哪天就关闭了。所以推荐国外的服务，比较稳定。使用国外的服务，需要代理上网访问国外，没有的用户则不显示评论区。</p>
-<p><a href="http://www.jianshu.com/p/d68de067ea74">添加Disqus评论</a></p>
-<h3 id="6-4-目录序号"><a href="#6-4-目录序号" class="headerlink" title="6.4 目录序号"></a>6.4 目录序号</h3><p>主题会自动给文章的标题和子标题生成目录，并且加上序号<br>如果要自己写序号，不需要主题自带序号，修改主题配置文件 _config.yml 里的 toc 后面的 member 配置为</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">156行 number: false</span><br></pre></td></tr></table></figure>
-<h3 id="6-5-图片引用"><a href="#6-5-图片引用" class="headerlink" title="6.5 图片引用"></a>6.5 图片引用</h3><p>推荐不使用图床，直接把统一图片存在本地文件夹</p>
-<p>目前不支持 atom markdown预览 和 本地网站里同时正常预览图片</p>
-<p>建议编辑时使用 <code>![](../images/xxx.png)</code></p>
-<p>发布时用atom ctrl+f 统一把 <code>../</code> 替换为 <code>/</code> 即可</p>
-<h3 id="6-6-统计"><a href="#6-6-统计" class="headerlink" title="6.6 统计"></a>6.6 统计</h3><p>阅读量统计可以使用 LeanCloud 计数，注意主题配置文件里有两处 LeanCloud，要配置<code>leancloud_visitors</code></p>
-<p>或者直接使用 不蒜子统计 即可，可同时实现阅读量统计、PV、UV功能。</p>
-<p>个人建议，LeanCloud统计阅读量，不蒜子统计PV、UV</p>
-<p><a href="https://notes.wanghao.work/2015-10-21-%E4%B8%BANexT%E4%B8%BB%E9%A2%98%E6%B7%BB%E5%8A%A0%E6%96%87%E7%AB%A0%E9%98%85%E8%AF%BB%E9%87%8F%E7%BB%9F%E8%AE%A1%E5%8A%9F%E8%83%BD.html">LeanCloud 配置</a><br><a href="http://theme-next.iissnan.com/third-party-services.html#analytics-busuanzi">不蒜子配置</a></p>
-<h3 id="6-7-修改样式"><a href="#6-7-修改样式" class="headerlink" title="6.7 修改样式"></a>6.7 修改样式</h3><p>next 主题使用 <a href="http://stylus-lang.com/">stylus</a> 预编译样式语言</p>
-<p>可以在 <code>themes\next\source\css\_custom\custom.styl</code> 文件里写自己的 stylus 样式</p>
-<p>例如：首行缩进，添加如下代码：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">p</span><br><span class="line">  text-indent 2em</span><br></pre></td></tr></table></figure>
-<h3 id="6-8-显示更新日期"><a href="#6-8-显示更新日期" class="headerlink" title="6.8 显示更新日期"></a>6.8 显示更新日期</h3><p>修改主题配置文件 _config.yml，找到 updated_at,修改为</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">updated_at: true</span><br></pre></td></tr></table></figure>
-<p>然后就会显示更新的日期了</p>
-<p>如果需要手动设置，可以在文章的标签里加入 <code>updated</code>，如下</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: 使用 Hexo 为自己在 Github 上建一个静态 Blog博客 站点</span><br><span class="line">date: 2017-10-08</span><br><span class="line">updated: 2017-11-11</span><br><span class="line">file-title: &#123;&#123; title &#125;&#125;</span><br><span class="line">tags: Hexo</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
-<h3 id="6-9-底部添加备案信息、或者其他文字"><a href="#6-9-底部添加备案信息、或者其他文字" class="headerlink" title="6.9 底部添加备案信息、或者其他文字"></a>6.9 底部添加备案信息、或者其他文字</h3><p>在主题配置文件里找到 custom_text 这行，修改一下即可</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#custom_text: Hosted by &lt;a target&#x3D;&quot;_blank&quot; href&#x3D;&quot;https:&#x2F;&#x2F;pages.github.com&quot;&gt;GitHub Pages&lt;&#x2F;a&gt;</span><br><span class="line">custom_text: Xiaweiss.com 京ICP备17057895号</span><br></pre></td></tr></table></figure>
-<p>或者在主题配置文件里找到 copyright: 这行,修改为</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># If not defined, will be used &#96;author&#96; from Hexo main config.</span><br><span class="line">copyright: &lt;a href&#x3D;&quot;http:&#x2F;&#x2F;xiaweiss.com&quot;&gt;Xiaweiss.com&lt;&#x2F;a&gt; 京ICP备17057895号</span><br></pre></td></tr></table></figure>
-<h3 id="6-10-设置搜索服务"><a href="#6-10-设置搜索服务" class="headerlink" title="6.10 设置搜索服务"></a>6.10 设置搜索服务</h3><p>使用免费的 local search<br>npm 安装包</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">npm install hexo-generator-searchdb --save</span><br></pre></td></tr></table></figure>
-<p>next 主题配置文件里，修改配置文件<br>top_n_per_article 指正文的搜索结果，显示几条。 -1 代表全部显示</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">local_search:</span><br><span class="line">  enable: true</span><br><span class="line">  # if auto, trigger search by changing input</span><br><span class="line">  # if manual, trigger search by pressing enter key or search button</span><br><span class="line">  trigger: auto</span><br><span class="line">  # show top n results per article, show all results by setting to -1</span><br><span class="line">  top_n_per_article: 3</span><br></pre></td></tr></table></figure>
-<h3 id="6-11-添加分类、标签页"><a href="#6-11-添加分类、标签页" class="headerlink" title="6.11 添加分类、标签页"></a>6.11 添加分类、标签页</h3><p>可以按官方文档设置<br><a href="https://github.com/iissnan/hexo-theme-next/wiki/%E5%88%9B%E5%BB%BA%E5%88%86%E7%B1%BB%E9%A1%B5%E9%9D%A2">创建分类页面</a><br><a href="https://github.com/iissnan/hexo-theme-next/wiki/%E5%88%9B%E5%BB%BA%E6%A0%87%E7%AD%BE%E4%BA%91%E9%A1%B5%E9%9D%A2">创建标签云页面</a></p>
-<p>但以上设置会导致多出2个文件夹，而且以后不会在里面放其他文件，所以我个人推荐这样设置<br>在 source 目录下:<br>新建 文件 categories.md：里面写</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: 分类</span><br><span class="line">type: &quot;categories&quot;</span><br><span class="line">comments: false</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
-<p>新建 文件 tags.md：里面写</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: 标签</span><br><span class="line">type: &quot;tags&quot;</span><br><span class="line">comments: false</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
-<p>然后修改主题配置文件，menu设置里的 categories、tags</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">menu:</span><br><span class="line">  home: &#x2F; || home</span><br><span class="line">  categories: &#x2F;categories.html || th</span><br><span class="line">  tags: &#x2F;tags.html || tags</span><br></pre></td></tr></table></figure>
-<h3 id="6-12-设置滚动"><a href="#6-12-设置滚动" class="headerlink" title="6.12 设置滚动"></a>6.12 设置滚动</h3><p>主题配置文件里</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">scroll_to_more: true</span><br></pre></td></tr></table></figure>
-<p>表示从主页进去文章后，直接自动滚动到文章中 more 标签的位置，可以看到网址里多了#more<br>如果需要去掉，设置为false即可</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">save_scroll: false</span><br></pre></td></tr></table></figure>
-<p>表示在本地存储阅读的进度（滚动到的位置），刷新或再次打开页面时，可以接着读。<br>建议打开这个功能，设置为true即可</p>
-<h3 id="6-13-设置-RSS-订阅源"><a href="#6-13-设置-RSS-订阅源" class="headerlink" title="6.13 设置 RSS 订阅源"></a>6.13 设置 RSS 订阅源</h3><p>安装依赖</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">npm install hexo-generator-feed</span><br></pre></td></tr></table></figure>
-<p>项目配置文件里添加配置</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># RSS</span><br><span class="line">feed:</span><br><span class="line">  type: atom</span><br><span class="line">  path: atom.xml</span><br><span class="line">  limit: false</span><br><span class="line">  hub:</span><br><span class="line">  order_by: -updated</span><br></pre></td></tr></table></figure>
-<p>主题配置文件里找到 rss 配置，设置为</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">rss: &#x2F;atom.xml</span><br></pre></td></tr></table></figure>
-<p>rss 阅读器推荐使用 <a href="https://www.inoreader.com/">inoreader</a></p>
-<h2 id="7-界面美化"><a href="#7-界面美化" class="headerlink" title="7. 界面美化"></a>7. 界面美化</h2><h3 id="7-1-右下角-live2d-小人"><a href="#7-1-右下角-live2d-小人" class="headerlink" title="7.1 右下角 live2d 小人"></a>7.1 右下角 live2d 小人</h3><p>中文文档 <a href="https://github.com/EYHN/hexo-helper-live2d/blob/master/README.zh-CN.md">EYHN/hexo-helper-live2d</a></p>
-<p>下面是我目前旧版2.1.5的使用方式，最新版请参考hexo-helper-live2d 中文文档</p>
-<p>旧版配置方式：</p>
-<p>安装</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd yourname.github.io</span><br><span class="line">npm install hexo-helper-live2d@2.1.5</span><br></pre></td></tr></table></figure>
-<p>在 yourname.github.io 的 hexo 配置文件 <code>_config.yml</code> 里添加配置项</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># Live2D</span><br><span class="line">## https:&#x2F;&#x2F;github.com&#x2F;EYHN&#x2F;hexo-helper-live2d</span><br><span class="line">live2d:</span><br><span class="line">  model: koharu # 模型名称 默认值: z16</span><br><span class="line">  width: 150 # 宽度 默认值: 150</span><br><span class="line">  height: 300 # 高度 默认值: 300</span><br><span class="line">  scaling: 1 # 分辨率缩放倍率 默认值: 2</span><br><span class="line">  opacityDefault: 1 # 初始的透明度 默认值: 1</span><br><span class="line">  #opacityHover: 1 # 鼠标悬浮时的透明度 默认值: 1</span><br><span class="line">  mobileShow: true # 是否在移动设备上显示 默认值: true</span><br><span class="line">  mobileScaling: 0.5 # 移动设备缩放倍率 默认值: 0.5</span><br><span class="line">  position: right # 模型左右侧放置位置 默认值: right</span><br><span class="line">  horizontalOffset: 0 # 元素的水平偏移 默认值: 0</span><br><span class="line">  verticalOffset: -20 # 元素的底部偏移 默认值: -20</span><br><span class="line">  className: live2d # 元素的类名 默认值: live2d</span><br><span class="line">  id: live2dcanvas # 元素的id 默认值: live2dcanvas</span><br></pre></td></tr></table></figure>
-<p>我自己使用的是 koharu，如果需要其他的，改为相应的名字即可<br>旧版所有小人请看作者大大博客 <a href="https://huaji8.top/post/live2d-plugin-2.0/">hexo live2d插件 2.0 !</a></p>
-<p>接下来，在 <code>next/layout/_layout.swig</code> 文件里，找到 <code>&lt;/body&gt;</code>,在它前面的行添加代码<br>像这样：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123;&#123; live2d() &#125;&#125;</span><br><span class="line">&lt;&#x2F;body&gt;</span><br></pre></td></tr></table></figure>
-<h3 id="7-2-配置网站顶部背景颜色、二级标题字色"><a href="#7-2-配置网站顶部背景颜色、二级标题字色" class="headerlink" title="7.2 配置网站顶部背景颜色、二级标题字色"></a>7.2 配置网站顶部背景颜色、二级标题字色</h3><p>参照 6.1，添加配置</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">.headband</span><br><span class="line">  background: #0095EE;</span><br><span class="line">.site-meta</span><br><span class="line">  background: #0095EE;</span><br><span class="line">.site-subtitle</span><br><span class="line">  color: white;</span><br></pre></td></tr></table></figure>
-<h3 id="7-3-其他"><a href="#7-3-其他" class="headerlink" title="7.3 其他"></a>7.3 其他</h3><p>界面的优化需要掌握一定的 css 知识，这里不再赘述<br>可以参考 <a href="https://qianling.pw/hexo-optimization/">千灵《Hexo 优化汇总》</a><br>以及我博客源码里 themes 文件夹下文件的的相关注释</p>
-<p>概括来说</p>
-<ol>
-<li>修改预设好的值，在 <code>next/source/css/_variables/custom.styl</code> 添加变量即可</li>
-</ol>
-<p>例如 <code>base.styl</code> 可以看到代码 <code>$blue = #0684bd</code><br>要把所有预设好的蓝色改为白色，<code>custom.styl</code> 里添加 <code>$red = #fff</code> 即可</p>
-<ol start="2">
-<li><p>添加或修改 样式，可以在 <code>next/source/css/_custom/custom.styl</code> 写入 css</p>
-</li>
-<li><p>修改首页，添加 js，修改文字符号等，修改 <code>next/layout/_layout.swig</code> 即可<br>文章页请修改 <code>next/layout/_macro/post.swig</code></p>
-</li>
-</ol>
-<h2 id="8-高级设定"><a href="#8-高级设定" class="headerlink" title="8.高级设定"></a>8.高级设定</h2><h3 id="8-1-next-主题版本更新或回滚"><a href="#8-1-next-主题版本更新或回滚" class="headerlink" title="8.1 next 主题版本更新或回滚"></a>8.1 next 主题版本更新或回滚</h3><p>进入 next 目录</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd themes&#x2F;next</span><br><span class="line">git fetch</span><br><span class="line">git tag</span><br></pre></td></tr></table></figure>
-<p>即可看到当前可用版本列表，使用下面命令即可切换到指定版本，如</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git checkout v5.1.4</span><br></pre></td></tr></table></figure>
-<p>切换过程中会有文件冲突<br>可以切换前执行 git stash，切换后执行 git stash pop，然后修改文件即可</p>
-<p>或者使用软链接的方式，把修改的文件放在 next 文件夹外时，只需要修改文件，重新软链接即可</p>
-<p>感谢阅读，最后附上<a href="https://github.com/xiaweiss/xiaweiss-site">博客源码</a></p>
-<p>参考资料：<br><a href="http://lixiaolai.com/2016/06/22/makecs-build-a-blog-with-hexo-on-github/">李笑来《使用 Hexo 为自己在 Github 上建一个静态 Blog 站点》</a><br><a href="https://qianling.pw/hexo-optimization/">千灵《Hexo 优化汇总》</a><br><a href="https://hexo.io/zh-cn/docs/">Hexo 官方文档</a><br><a href="http://theme-next.iissnan.com/">NexT 主题文档</a></p>
-<blockquote>
-<p>图片来源：<a href="https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=40872946">https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=40872946</a></p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>技术</category>
-      </categories>
-      <tags>
-        <tag>hexo</tag>
-      </tags>
   </entry>
   <entry>
     <title>Vue 入门指南</title>
@@ -2486,6 +2296,196 @@
       </categories>
       <tags>
         <tag>svg</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Hexo 博客搭建、进阶配置指南</title>
+    <url>/art/2017/20171008-build-a-blog-with-hexo-on-github/</url>
+    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20171008.jpg"></p>
+<blockquote>
+<p>作为一个 web 程序员，当然也想有自己的自留地<br>于是就研究起了搭建博客，来记录自己的成长<br>了解之后，发现 github + hexo 是个门槛很低的，效果很好的方式<br>hexo 基于 markdown，意味着不需要关心文章排版，也不需要学习编程<br>github 提供了免费空间、域名以及代码管理的工具，解决了服务器问题</p>
+</blockquote>
+<a id="more"></a>
+
+<blockquote>
+<p>2018-12-03 更新 章节 6.13 设置 RSS 订阅源</p>
+</blockquote>
+<h2 id="1-准备工作"><a href="#1-准备工作" class="headerlink" title="1. 准备工作"></a>1. 准备工作</h2><h3 id="1-1-安装-chrome-浏览器，百度下载即可"><a href="#1-1-安装-chrome-浏览器，百度下载即可" class="headerlink" title="1.1 安装 chrome 浏览器，百度下载即可"></a>1.1 安装 chrome 浏览器，百度下载即可</h3><p><img data-src="https://xiawei.cc/images/20171008-download-chrome.png"></p>
+<h3 id="1-2-注册一个-Github-账号"><a href="#1-2-注册一个-Github-账号" class="headerlink" title="1.2 注册一个 Github 账号"></a>1.2 注册一个 <a href="https://github.com/join?source=header-home">Github</a> 账号</h3><p>如果看不懂英语，可以点这个小按钮来全文翻译（失败的话可以多试几次，或使用其他翻译软件）</p>
+<p><img data-src="https://xiawei.cc/images/20171008-chrome-translate.png"></p>
+<h3 id="1-3-创建一个Repo"><a href="#1-3-创建一个Repo" class="headerlink" title="1.3 创建一个Repo"></a>1.3 创建一个Repo</h3><p>登录 Github（初次注册后会自动登录），点击右上角”+”，再点第一行 “新存储库”(New repository)</p>
+<p>第一次要求验证邮箱，邮箱里会收到 Github 发来的邮件，点那个最长的链接就ok</p>
+<p>存储库名称格式为 yourname.github.io。比如，我个人的 Github 账户用户名是 xiaweiss，所以，我的这个 Repo 的名称就是 xiaweiss.github.io</p>
+<h3 id="1-4-本地安装好-git-和-npm"><a href="#1-4-本地安装好-git-和-npm" class="headerlink" title="1.4 本地安装好 git 和 npm"></a>1.4 本地安装好 git 和 npm</h3><p>下载自己系统对应的安装包，安装<br>windows 下载第一行的 msi 类型即可，位数按系统的位数即可，一般选64-bit</p>
+<p><a href="https://git-scm.com/downloads">git下载地址</a> | <a href="https://nodejs.org/en/download">node下载地址</a></p>
+<p>安装过程中，不用选择，一直点 next下一步即可<br>安装好之后，运行其他系统运行 terminal 命令行工具<br>windows 系统，在桌面或任意文件夹内，右击，运行 git bush here</p>
+<p><img data-src="https://xiawei.cc/images/20171008-git-bush-here.png"></p>
+<p>(下文的命令行中的命令，每行代表一个命令，行末必须按回车键Enter)</p>
+<p>在命令行中输入</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git --version 回车键Enter</span><br><span class="line">npm --version 回车键Enter</span><br></pre></td></tr></table></figure>
+<p>如果看到版本号，则成功。否则重新安装</p>
+<h3 id="1-5-安装好-Atom"><a href="#1-5-安装好-Atom" class="headerlink" title="1.5 安装好 Atom"></a>1.5 安装好 Atom</h3><p>进入 <a href="https://atom.io/">atom编辑器 官网</a>，下载安装它</p>
+<p>启动 Atom 之后, 点击 Packages 安装插件</p>
+<p>请搜索并安装以下 markdown 插件</p>
+<p>markdown-writer<br>tool-bar<br>tool-bar-markdown-writer<br>markdown-scroll-sync<br>markdown-pdf</p>
+<p>或者也可以使用其他你喜欢的 markdown 文件编辑工具</p>
+<h2 id="2-本地搭建站点"><a href="#2-本地搭建站点" class="headerlink" title="2. 本地搭建站点"></a>2. 本地搭建站点</h2><h3 id="2-1-安装-hexo"><a href="#2-1-安装-hexo" class="headerlink" title="2.1 安装 hexo"></a>2.1 安装 hexo</h3><p>在命令行中继续输入</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">npm config set registry https:&#x2F;&#x2F;registry.npm.taobao.org</span><br><span class="line">npm install hexo -g</span><br><span class="line">npm install hexo-cli -g</span><br></pre></td></tr></table></figure>
+<h3 id="2-2-初始化你的本地站点"><a href="#2-2-初始化你的本地站点" class="headerlink" title="2.2 初始化你的本地站点"></a>2.2 初始化你的本地站点</h3><p>去 Github 把你的 Repo 的 git 地址拷贝出来。<br>我的是 <a href="https://github.com/xiaweiss/xiaweiss.github.io.git">https://github.com/xiaweiss/xiaweiss.github.io.git</a><br>你的是 <a href="https://github.com/yourname/yourname.github.io.git">https://github.com/yourname/yourname.github.io.git</a> （其中，yourname 应该换乘你的 Github 用户名）</p>
+<p>然后在 Terminal 面板里输入</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd ~&#x2F;Public  (windows中 cd &#x2F;d)</span><br><span class="line">hexo init yourname.github.io</span><br><span class="line">cd yourname.github.io</span><br><span class="line">npm install hexo-deployer-git --save</span><br><span class="line">hexo generate</span><br><span class="line">hexo server</span><br></pre></td></tr></table></figure>
+<p>这些完成之后，你就可以打开浏览器，在地址栏里输入： <code>localhost:4000</code>，在本地先看看网站是什么样子了。</p>
+<h2 id="3-本地站点发布到-Github-上"><a href="#3-本地站点发布到-Github-上" class="headerlink" title="3. 本地站点发布到 Github 上"></a>3. 本地站点发布到 Github 上</h2><h3 id="3-1-修改-hexo-配置文件"><a href="#3-1-修改-hexo-配置文件" class="headerlink" title="3.1 修改 hexo 配置文件"></a>3.1 修改 hexo 配置文件</h3><p>关闭命令行，重新打开一个命令行</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">atom . （注意符号点前面有空格）</span><br></pre></td></tr></table></figure>
+<p>在 Atom 的左侧面板中，选择 _config.yml 文件，找到 deploy 那一部分（末尾的79行）</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">deploy:</span><br><span class="line">  type:</span><br><span class="line">  (空行)</span><br></pre></td></tr></table></figure>
+<p>改成：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: https:&#x2F;&#x2F;github.com&#x2F;yourname&#x2F;yourname.github.io.git</span><br></pre></td></tr></table></figure>
+<p>Ctrl+S 保存</p>
+<h3 id="3-2-github-生成一个ssh-key配置"><a href="#3-2-github-生成一个ssh-key配置" class="headerlink" title="3.2 github 生成一个ssh-key配置"></a>3.2 github 生成一个ssh-key配置</h3><p><a href="https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/">https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/</a><br>打开命令行</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git config --global user.name &quot;yourname&quot;</span><br><span class="line">git config --global user.email &quot;your_email@example.com&quot;</span><br><span class="line">ssh-keygen -t rsa -b 4096 -C &quot;your_email@example.com&quot; (替换为你的GitHub电子邮件地址)</span><br></pre></td></tr></table></figure>
+<p>接着会出现几次提示，如下图箭头处，直接按回车Enter键即可<br><img data-src="https://xiawei.cc/images/20171008-create-ssh-key.png"></p>
+<h3 id="3-3-将ssh-key添加到-Github"><a href="#3-3-将ssh-key添加到-Github" class="headerlink" title="3.3 将ssh-key添加到 Github"></a>3.3 将ssh-key添加到 Github</h3><p>打开Github，点击右上角的头像，再点设置</p>
+<p><img data-src="https://xiawei.cc/images/20171008-github-setting.png"></p>
+<p>命令行中继续输入</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cat ~&#x2F;.ssh&#x2F;id_rsa.pub</span><br></pre></td></tr></table></figure>
+<p>然后可以看到一堆编码，见下图，把红框里的部分复制了。<br><img data-src="https://xiawei.cc/images/20171008-copy-ssh-key.png"></p>
+<p>在用户设置侧栏中，单击 SSH and GPG Keys(SSH和GPG密钥)，然后单击右上角绿色的 New SSH key(新的SSH密钥)</p>
+<p>然后可以看到这个界面，Title标题随意填。key密钥里，把刚刚复制好的编码粘贴进去，然后点下面 Add SSH key<br><img data-src="https://xiawei.cc/images/20171008-github-paste-ssh-keys.png"></p>
+<p>出现这个界面，表示成功了<br><img data-src="https://xiawei.cc/images/20171008-github-add-ssh-key-ok.png"></p>
+<p>最后一步，命令行中输入，就可以发布到 Github 了</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
+<p>打开 <a href="https://yourname.github.io/">https://yourname.github.io</a> 就可以看到博客了</p>
+<h2 id="4-日常使用"><a href="#4-日常使用" class="headerlink" title="4. 日常使用"></a>4. 日常使用</h2><p>打开命令行</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">atom .</span><br></pre></td></tr></table></figure>
+<p>即可启动编辑器，并且打开项目目录</p>
+<p><img data-src="https://xiawei.cc/images/20171008-atom-md-view.png"></p>
+<p>使用 md 后缀的 markdown 格式，来写文章。语法请参考 <a href="http://www.jianshu.com/p/q81RER">《献给写作者的 Markdown 新手指南》</a></p>
+<p>使用 atom 编辑器来 编辑md文件,打开md文件时 ctrl+shift+m 即可看到预览区域</p>
+<p>_draft 文件夹用来存没写完的草稿<br>_posts 文件夹用来存要发布出去的文章<br>_images 文件夹用来存文章中的图片</p>
+<p>以上文件夹下，直接放文章，不要放子文件夹<br>文件名命名格式推荐 20171008-file-name.md<br>文件名不要使用中文，中文不利于检索文件名</p>
+<p>文章顶部 按模板的语法</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: 标题</span><br><span class="line">date: 2017-10-08</span><br><span class="line">tags: 标签</span><br><span class="line">category: 分类</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
+<p>其中 date 是发布日期注意不要使用模板的 <code>&#123; date &#125;</code>写法，这种写法一旦标题改变或者数据文件 db.json 或 /public 丢失，发布日期会改变</p>
+<p>多个标签或分类时，这样写</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">tags:</span><br><span class="line">- 标签1</span><br><span class="line">- 标签2</span><br></pre></td></tr></table></figure>
+<p>图片 可以用 <code>![](/images/20171008-image-name.png)</code>语法来引入</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&lt;!--more--&gt; 表示预览区的分界线，主页面只会显示它之前的内容。</span><br></pre></td></tr></table></figure>
+
+<p>写完文章后，本地网站查看效果</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">hexo g</span><br><span class="line">hexo s</span><br></pre></td></tr></table></figure>
+<p>发布到 Github</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">hexo g</span><br><span class="line">hexo s</span><br></pre></td></tr></table></figure>
+<h2 id="5-备份本地代码-和-数据"><a href="#5-备份本地代码-和-数据" class="headerlink" title="5. 备份本地代码 和 数据"></a>5. 备份本地代码 和 数据</h2><h3 id="5-1-坚果云备份"><a href="#5-1-坚果云备份" class="headerlink" title="5.1 坚果云备份"></a>5.1 坚果云备份</h3><p>由于Github是开源的，备份到Github，别人容易下载拿走，考虑到私密性，推荐使用 <a href="https://www.jianguoyun.com/">坚果云</a> 来自动备份</p>
+<p>找到 yourname.github.io 文件夹右击，选择<code>坚果云</code>，选择<code>同步到个人空间</code>，即可</p>
+<p><img data-src="https://xiawei.cc/images/20171008-netstore.png"></p>
+<h3 id="5-2-Github-备份"><a href="#5-2-Github-备份" class="headerlink" title="5.2 Github 备份"></a>5.2 Github 备份</h3><p>如果为了不引入其他工具，也可以使用 Github 来备份：</p>
+<p>打开命令行</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">git init</span><br><span class="line">git checkout -b source</span><br><span class="line">git add . (注意点前面有空格)</span><br><span class="line">git commit -m &quot;init&quot;</span><br><span class="line">git remote add origin  https:&#x2F;&#x2F;github.com&#x2F;yourname&#x2F;yourname.github.io.git</span><br><span class="line">git push -u origin source</span><br></pre></td></tr></table></figure>
+<p>每次备份操作，打开命令行：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d&#x2F;yourname.github.io</span><br><span class="line">git add .</span><br><span class="line">git commit -m &quot;本次备份的提示语&quot;</span><br><span class="line">git push</span><br></pre></td></tr></table></figure>
+<p>误删本地文件夹，从备份的代码恢复整个 yourname.github.io 文件夹：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd &#x2F;d</span><br><span class="line">git clone https:&#x2F;&#x2F;github.com&#x2F;yourname&#x2F;yourname.github.io.git</span><br><span class="line">git checkout source</span><br><span class="line">npm install</span><br></pre></td></tr></table></figure>
+<p>如果是在新的电脑恢复 整个 yourname.github.io 文件夹，<br>需要先重复步骤1 ~ 步骤2，并且其中以下步骤直接跳过，然后再执行上面命令<br>1.2 注册一个 Github 账号<br>1.3 创建一个Repo<br>2.2 初始化你的本地站点</p>
+<h2 id="6-进阶优化配置"><a href="#6-进阶优化配置" class="headerlink" title="6. 进阶优化配置"></a>6. 进阶优化配置</h2><p>以下部分非新手向，只写要点，按需食用</p>
+<h3 id="6-1-版本控制"><a href="#6-1-版本控制" class="headerlink" title="6.1 版本控制"></a>6.1 版本控制</h3><p>使用 git 来控制版本<br>为方便切换分支，<br>master分支添加 .gitignore 文件<br>master分支、source分支内容统一为</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">.DS_Store</span><br><span class="line">*.log</span><br><span class="line">node_modules&#x2F;</span><br><span class="line">public&#x2F;</span><br><span class="line">.deploy*&#x2F;</span><br><span class="line">.idea&#x2F;</span><br></pre></td></tr></table></figure>
+<h3 id="6-2-主题更换"><a href="#6-2-主题更换" class="headerlink" title="6.2 主题更换"></a>6.2 主题更换</h3><p>使用 <a href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> 主题为例，<a href="http://theme-next.iissnan.com/">详细中文文档</a></p>
+<p>注意当一个repo包含其他repo时，使用命令  <code>git submodule add</code> 来安装并且分开管理，而不是 <code>git clone</code>，</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git submodule add https:&#x2F;&#x2F;github.com&#x2F;iissnan&#x2F;hexo-theme-next themes&#x2F;next</span><br></pre></td></tr></table></figure>
+<p>至于主题配置文件，可以保存一份副本到 themes 文件夹里提交到自己的仓库</p>
+<p>注意切换主题后，如果显示不正常，运行 <code>hexo clean</code> 来清理数据<br>特别注意<code>hexo clean</code>同时会清除掉历史文章的发布日期，慎用！</p>
+<p>clone 含有子repo 的项目后，子 repo 目录内没有内容，还需要执行下面两个命令来 clone 子repo</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git submodule init</span><br><span class="line">git submodule update</span><br></pre></td></tr></table></figure>
+<h3 id="6-3-文章末尾添加评论区"><a href="#6-3-文章末尾添加评论区" class="headerlink" title="6.3 文章末尾添加评论区"></a>6.3 文章末尾添加评论区</h3><p>目前由于国内审核机制，国内服务说不定哪天就关闭了。所以推荐国外的服务，比较稳定。使用国外的服务，需要代理上网访问国外，没有的用户则不显示评论区。</p>
+<p><a href="http://www.jianshu.com/p/d68de067ea74">添加Disqus评论</a></p>
+<h3 id="6-4-目录序号"><a href="#6-4-目录序号" class="headerlink" title="6.4 目录序号"></a>6.4 目录序号</h3><p>主题会自动给文章的标题和子标题生成目录，并且加上序号<br>如果要自己写序号，不需要主题自带序号，修改主题配置文件 _config.yml 里的 toc 后面的 member 配置为</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">156行 number: false</span><br></pre></td></tr></table></figure>
+<h3 id="6-5-图片引用"><a href="#6-5-图片引用" class="headerlink" title="6.5 图片引用"></a>6.5 图片引用</h3><p>推荐不使用图床，直接把统一图片存在本地文件夹</p>
+<p>目前不支持 atom markdown预览 和 本地网站里同时正常预览图片</p>
+<p>建议编辑时使用 <code>![](../images/xxx.png)</code></p>
+<p>发布时用atom ctrl+f 统一把 <code>../</code> 替换为 <code>/</code> 即可</p>
+<h3 id="6-6-统计"><a href="#6-6-统计" class="headerlink" title="6.6 统计"></a>6.6 统计</h3><p>阅读量统计可以使用 LeanCloud 计数，注意主题配置文件里有两处 LeanCloud，要配置<code>leancloud_visitors</code></p>
+<p>或者直接使用 不蒜子统计 即可，可同时实现阅读量统计、PV、UV功能。</p>
+<p>个人建议，LeanCloud统计阅读量，不蒜子统计PV、UV</p>
+<p><a href="https://notes.wanghao.work/2015-10-21-%E4%B8%BANexT%E4%B8%BB%E9%A2%98%E6%B7%BB%E5%8A%A0%E6%96%87%E7%AB%A0%E9%98%85%E8%AF%BB%E9%87%8F%E7%BB%9F%E8%AE%A1%E5%8A%9F%E8%83%BD.html">LeanCloud 配置</a><br><a href="http://theme-next.iissnan.com/third-party-services.html#analytics-busuanzi">不蒜子配置</a></p>
+<h3 id="6-7-修改样式"><a href="#6-7-修改样式" class="headerlink" title="6.7 修改样式"></a>6.7 修改样式</h3><p>next 主题使用 <a href="http://stylus-lang.com/">stylus</a> 预编译样式语言</p>
+<p>可以在 <code>themes\next\source\css\_custom\custom.styl</code> 文件里写自己的 stylus 样式</p>
+<p>例如：首行缩进，添加如下代码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">p</span><br><span class="line">  text-indent 2em</span><br></pre></td></tr></table></figure>
+<h3 id="6-8-显示更新日期"><a href="#6-8-显示更新日期" class="headerlink" title="6.8 显示更新日期"></a>6.8 显示更新日期</h3><p>修改主题配置文件 _config.yml，找到 updated_at,修改为</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">updated_at: true</span><br></pre></td></tr></table></figure>
+<p>然后就会显示更新的日期了</p>
+<p>如果需要手动设置，可以在文章的标签里加入 <code>updated</code>，如下</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: 使用 Hexo 为自己在 Github 上建一个静态 Blog博客 站点</span><br><span class="line">date: 2017-10-08</span><br><span class="line">updated: 2017-11-11</span><br><span class="line">file-title: &#123;&#123; title &#125;&#125;</span><br><span class="line">tags: Hexo</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
+<h3 id="6-9-底部添加备案信息、或者其他文字"><a href="#6-9-底部添加备案信息、或者其他文字" class="headerlink" title="6.9 底部添加备案信息、或者其他文字"></a>6.9 底部添加备案信息、或者其他文字</h3><p>在主题配置文件里找到 custom_text 这行，修改一下即可</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#custom_text: Hosted by &lt;a target&#x3D;&quot;_blank&quot; href&#x3D;&quot;https:&#x2F;&#x2F;pages.github.com&quot;&gt;GitHub Pages&lt;&#x2F;a&gt;</span><br><span class="line">custom_text: Xiaweiss.com 京ICP备17057895号</span><br></pre></td></tr></table></figure>
+<p>或者在主题配置文件里找到 copyright: 这行,修改为</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># If not defined, will be used &#96;author&#96; from Hexo main config.</span><br><span class="line">copyright: &lt;a href&#x3D;&quot;http:&#x2F;&#x2F;xiaweiss.com&quot;&gt;Xiaweiss.com&lt;&#x2F;a&gt; 京ICP备17057895号</span><br></pre></td></tr></table></figure>
+<h3 id="6-10-设置搜索服务"><a href="#6-10-设置搜索服务" class="headerlink" title="6.10 设置搜索服务"></a>6.10 设置搜索服务</h3><p>使用免费的 local search<br>npm 安装包</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">npm install hexo-generator-searchdb --save</span><br></pre></td></tr></table></figure>
+<p>next 主题配置文件里，修改配置文件<br>top_n_per_article 指正文的搜索结果，显示几条。 -1 代表全部显示</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">local_search:</span><br><span class="line">  enable: true</span><br><span class="line">  # if auto, trigger search by changing input</span><br><span class="line">  # if manual, trigger search by pressing enter key or search button</span><br><span class="line">  trigger: auto</span><br><span class="line">  # show top n results per article, show all results by setting to -1</span><br><span class="line">  top_n_per_article: 3</span><br></pre></td></tr></table></figure>
+<h3 id="6-11-添加分类、标签页"><a href="#6-11-添加分类、标签页" class="headerlink" title="6.11 添加分类、标签页"></a>6.11 添加分类、标签页</h3><p>可以按官方文档设置<br><a href="https://github.com/iissnan/hexo-theme-next/wiki/%E5%88%9B%E5%BB%BA%E5%88%86%E7%B1%BB%E9%A1%B5%E9%9D%A2">创建分类页面</a><br><a href="https://github.com/iissnan/hexo-theme-next/wiki/%E5%88%9B%E5%BB%BA%E6%A0%87%E7%AD%BE%E4%BA%91%E9%A1%B5%E9%9D%A2">创建标签云页面</a></p>
+<p>但以上设置会导致多出2个文件夹，而且以后不会在里面放其他文件，所以我个人推荐这样设置<br>在 source 目录下:<br>新建 文件 categories.md：里面写</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: 分类</span><br><span class="line">type: &quot;categories&quot;</span><br><span class="line">comments: false</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
+<p>新建 文件 tags.md：里面写</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">---</span><br><span class="line">title: 标签</span><br><span class="line">type: &quot;tags&quot;</span><br><span class="line">comments: false</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
+<p>然后修改主题配置文件，menu设置里的 categories、tags</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">menu:</span><br><span class="line">  home: &#x2F; || home</span><br><span class="line">  categories: &#x2F;categories.html || th</span><br><span class="line">  tags: &#x2F;tags.html || tags</span><br></pre></td></tr></table></figure>
+<h3 id="6-12-设置滚动"><a href="#6-12-设置滚动" class="headerlink" title="6.12 设置滚动"></a>6.12 设置滚动</h3><p>主题配置文件里</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">scroll_to_more: true</span><br></pre></td></tr></table></figure>
+<p>表示从主页进去文章后，直接自动滚动到文章中 more 标签的位置，可以看到网址里多了#more<br>如果需要去掉，设置为false即可</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">save_scroll: false</span><br></pre></td></tr></table></figure>
+<p>表示在本地存储阅读的进度（滚动到的位置），刷新或再次打开页面时，可以接着读。<br>建议打开这个功能，设置为true即可</p>
+<h3 id="6-13-设置-RSS-订阅源"><a href="#6-13-设置-RSS-订阅源" class="headerlink" title="6.13 设置 RSS 订阅源"></a>6.13 设置 RSS 订阅源</h3><p>安装依赖</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">npm install hexo-generator-feed</span><br></pre></td></tr></table></figure>
+<p>项目配置文件里添加配置</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># RSS</span><br><span class="line">feed:</span><br><span class="line">  type: atom</span><br><span class="line">  path: atom.xml</span><br><span class="line">  limit: false</span><br><span class="line">  hub:</span><br><span class="line">  order_by: -updated</span><br></pre></td></tr></table></figure>
+<p>主题配置文件里找到 rss 配置，设置为</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">rss: &#x2F;atom.xml</span><br></pre></td></tr></table></figure>
+<p>rss 阅读器推荐使用 <a href="https://www.inoreader.com/">inoreader</a></p>
+<h2 id="7-界面美化"><a href="#7-界面美化" class="headerlink" title="7. 界面美化"></a>7. 界面美化</h2><h3 id="7-1-右下角-live2d-小人"><a href="#7-1-右下角-live2d-小人" class="headerlink" title="7.1 右下角 live2d 小人"></a>7.1 右下角 live2d 小人</h3><p>中文文档 <a href="https://github.com/EYHN/hexo-helper-live2d/blob/master/README.zh-CN.md">EYHN/hexo-helper-live2d</a></p>
+<p>下面是我目前旧版2.1.5的使用方式，最新版请参考hexo-helper-live2d 中文文档</p>
+<p>旧版配置方式：</p>
+<p>安装</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd yourname.github.io</span><br><span class="line">npm install hexo-helper-live2d@2.1.5</span><br></pre></td></tr></table></figure>
+<p>在 yourname.github.io 的 hexo 配置文件 <code>_config.yml</code> 里添加配置项</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># Live2D</span><br><span class="line">## https:&#x2F;&#x2F;github.com&#x2F;EYHN&#x2F;hexo-helper-live2d</span><br><span class="line">live2d:</span><br><span class="line">  model: koharu # 模型名称 默认值: z16</span><br><span class="line">  width: 150 # 宽度 默认值: 150</span><br><span class="line">  height: 300 # 高度 默认值: 300</span><br><span class="line">  scaling: 1 # 分辨率缩放倍率 默认值: 2</span><br><span class="line">  opacityDefault: 1 # 初始的透明度 默认值: 1</span><br><span class="line">  #opacityHover: 1 # 鼠标悬浮时的透明度 默认值: 1</span><br><span class="line">  mobileShow: true # 是否在移动设备上显示 默认值: true</span><br><span class="line">  mobileScaling: 0.5 # 移动设备缩放倍率 默认值: 0.5</span><br><span class="line">  position: right # 模型左右侧放置位置 默认值: right</span><br><span class="line">  horizontalOffset: 0 # 元素的水平偏移 默认值: 0</span><br><span class="line">  verticalOffset: -20 # 元素的底部偏移 默认值: -20</span><br><span class="line">  className: live2d # 元素的类名 默认值: live2d</span><br><span class="line">  id: live2dcanvas # 元素的id 默认值: live2dcanvas</span><br></pre></td></tr></table></figure>
+<p>我自己使用的是 koharu，如果需要其他的，改为相应的名字即可<br>旧版所有小人请看作者大大博客 <a href="https://huaji8.top/post/live2d-plugin-2.0/">hexo live2d插件 2.0 !</a></p>
+<p>接下来，在 <code>next/layout/_layout.swig</code> 文件里，找到 <code>&lt;/body&gt;</code>,在它前面的行添加代码<br>像这样：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123;&#123; live2d() &#125;&#125;</span><br><span class="line">&lt;&#x2F;body&gt;</span><br></pre></td></tr></table></figure>
+<h3 id="7-2-配置网站顶部背景颜色、二级标题字色"><a href="#7-2-配置网站顶部背景颜色、二级标题字色" class="headerlink" title="7.2 配置网站顶部背景颜色、二级标题字色"></a>7.2 配置网站顶部背景颜色、二级标题字色</h3><p>参照 6.1，添加配置</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">.headband</span><br><span class="line">  background: #0095EE;</span><br><span class="line">.site-meta</span><br><span class="line">  background: #0095EE;</span><br><span class="line">.site-subtitle</span><br><span class="line">  color: white;</span><br></pre></td></tr></table></figure>
+<h3 id="7-3-其他"><a href="#7-3-其他" class="headerlink" title="7.3 其他"></a>7.3 其他</h3><p>界面的优化需要掌握一定的 css 知识，这里不再赘述<br>可以参考 <a href="https://qianling.pw/hexo-optimization/">千灵《Hexo 优化汇总》</a><br>以及我博客源码里 themes 文件夹下文件的的相关注释</p>
+<p>概括来说</p>
+<ol>
+<li>修改预设好的值，在 <code>next/source/css/_variables/custom.styl</code> 添加变量即可</li>
+</ol>
+<p>例如 <code>base.styl</code> 可以看到代码 <code>$blue = #0684bd</code><br>要把所有预设好的蓝色改为白色，<code>custom.styl</code> 里添加 <code>$red = #fff</code> 即可</p>
+<ol start="2">
+<li><p>添加或修改 样式，可以在 <code>next/source/css/_custom/custom.styl</code> 写入 css</p>
+</li>
+<li><p>修改首页，添加 js，修改文字符号等，修改 <code>next/layout/_layout.swig</code> 即可<br>文章页请修改 <code>next/layout/_macro/post.swig</code></p>
+</li>
+</ol>
+<h2 id="8-高级设定"><a href="#8-高级设定" class="headerlink" title="8.高级设定"></a>8.高级设定</h2><h3 id="8-1-next-主题版本更新或回滚"><a href="#8-1-next-主题版本更新或回滚" class="headerlink" title="8.1 next 主题版本更新或回滚"></a>8.1 next 主题版本更新或回滚</h3><p>进入 next 目录</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cd themes&#x2F;next</span><br><span class="line">git fetch</span><br><span class="line">git tag</span><br></pre></td></tr></table></figure>
+<p>即可看到当前可用版本列表，使用下面命令即可切换到指定版本，如</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git checkout v5.1.4</span><br></pre></td></tr></table></figure>
+<p>切换过程中会有文件冲突<br>可以切换前执行 git stash，切换后执行 git stash pop，然后修改文件即可</p>
+<p>或者使用软链接的方式，把修改的文件放在 next 文件夹外时，只需要修改文件，重新软链接即可</p>
+<p>感谢阅读，最后附上<a href="https://github.com/xiaweiss/xiaweiss-site">博客源码</a></p>
+<p>参考资料：<br><a href="http://lixiaolai.com/2016/06/22/makecs-build-a-blog-with-hexo-on-github/">李笑来《使用 Hexo 为自己在 Github 上建一个静态 Blog 站点》</a><br><a href="https://qianling.pw/hexo-optimization/">千灵《Hexo 优化汇总》</a><br><a href="https://hexo.io/zh-cn/docs/">Hexo 官方文档</a><br><a href="http://theme-next.iissnan.com/">NexT 主题文档</a></p>
+<blockquote>
+<p>图片来源：<a href="https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=40872946">https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=40872946</a></p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>技术</category>
+      </categories>
+      <tags>
+        <tag>hexo</tag>
       </tags>
   </entry>
 </search>
