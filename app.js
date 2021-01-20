@@ -8,12 +8,11 @@ const koaCors = require('@koa/cors');
 const koaStatic = require('koa-static')
 const sslify = require('koa-sslify').default
 
-// Force HTTPS on page
-app.use(sslify())
-
 const prod = true
 
 const app = new Koa()
+// Force HTTPS on page
+app.use(sslify())
 app.use(koaCors())
 
 // 静态资源目录对于相对入口文件index.js的路径
