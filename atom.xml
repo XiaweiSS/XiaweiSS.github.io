@@ -81,9 +81,9 @@
     <category term="技术" scheme="https://xiawei.cc/categories/%E6%8A%80%E6%9C%AF/"/>
     
     
-    <category term="环境配置" scheme="https://xiawei.cc/tags/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/"/>
-    
     <category term="mac" scheme="https://xiawei.cc/tags/mac/"/>
+    
+    <category term="环境配置" scheme="https://xiawei.cc/tags/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/"/>
     
   </entry>
   
@@ -180,9 +180,9 @@
     <category term="技术" scheme="https://xiawei.cc/categories/%E6%8A%80%E6%9C%AF/"/>
     
     
-    <category term="atom" scheme="https://xiawei.cc/tags/atom/"/>
-    
     <category term="环境配置" scheme="https://xiawei.cc/tags/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/"/>
+    
+    <category term="atom" scheme="https://xiawei.cc/tags/atom/"/>
     
   </entry>
   
@@ -446,11 +446,11 @@
     
     <category term="环境配置" scheme="https://xiawei.cc/tags/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/"/>
     
-    <category term="php" scheme="https://xiawei.cc/tags/php/"/>
-    
     <category term="apache" scheme="https://xiawei.cc/tags/apache/"/>
     
     <category term="centOS" scheme="https://xiawei.cc/tags/centOS/"/>
+    
+    <category term="php" scheme="https://xiawei.cc/tags/php/"/>
     
   </entry>
   
