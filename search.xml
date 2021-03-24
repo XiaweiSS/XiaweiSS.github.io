@@ -435,6 +435,74 @@
       </tags>
   </entry>
   <entry>
+    <title>前端基础知识</title>
+    <url>/art/2018/20180101-fontend-baseinfo/</url>
+    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20180222.jpg"></p>
+<a id="more"></a>
+
+<h2 id="html"><a href="#html" class="headerlink" title="html"></a>html</h2><h3 id="1-html-5-新特性"><a href="#1-html-5-新特性" class="headerlink" title="1. html 5 新特性"></a>1. html 5 新特性</h3><p>用于绘画的 canvas 元素</p>
+<p>用于媒介回放的 video 和 audio 元素</p>
+<p>对本地离线存储的更好的支持<br>localStorage、sessionStorage 不同浏览器容量不同，容量 4.98M。但注意 javascript 使用 utf-16 编码，所以最多有2.5M<br><a href="http://dev-test.nemikor.com/web-storage/support-test/">http://dev-test.nemikor.com/web-storage/support-test/</a></p>
+<p>Cookie不同浏览器容量不同， 最多容量4M ，50条数据。</p>
+<p>新的特殊内容元素，比如 article、footer、header、nav、section</p>
+<p>新的表单控件，比如 calendar、date、time、email、url、search</p>
+<h3 id="2-同源策略"><a href="#2-同源策略" class="headerlink" title="2. 同源策略"></a>2. 同源策略</h3><p><a href="http://www.ruanyifeng.com/blog/2016/04/same-origin-policy.html">http://www.ruanyifeng.com/blog/2016/04/same-origin-policy.html</a><br>同协议，同端口，同域名（一级二级域名是不同域名）</p>
+<p>如果非同源，共有三种行为受到限制。</p>
+<p>（1） Cookie、LocalStorage 和 IndexDB 无法读取。</p>
+<p>（2） DOM 无法获得。</p>
+<p>（3） AJAX 请求不能发送</p>
+<h3 id="3-跨域"><a href="#3-跨域" class="headerlink" title="3. 跨域"></a>3. 跨域</h3><p>JSONP 它的基本思想是，网页通过添加一个<code>&lt;script&gt;</code>元素，向服务器请求JSON数据，这种做法不受同源政策限制；服务器收到请求后，将数据放在一个指定名字的回调函数里传回来。</p>
+<p>WebSocket是一种通信协议，使用ws://（非加密）和wss://（加密）作为协议前缀。该协议不实行同源政策，只要服务器支持，就可以通过它进行跨源通信。</p>
+<p>CORS是一个W3C标准，全称是”跨域资源共享”（Cross-origin resource sharing）。</p>
+<p>它允许浏览器向跨源服务器，发出XMLHttpRequest请求，从而克服了AJAX只能同源使用的限制。</p>
+<h3 id="4-标签语义化"><a href="#4-标签语义化" class="headerlink" title="4. 标签语义化"></a>4. 标签语义化</h3><p>通过标签判断内容语义，例如根据h1标签判断出内容是标题，根据<code>&lt;p&gt;</code>判断内容是段落、<code>&lt;input&gt;</code>标签是输入框等。</p>
+<p>判断标签是否语义化：去掉样式，看网页结构是否组织良好有序，是否仍然有很好的可读性。</p>
+<p>为什么标签要语义化</p>
+<ol>
+<li>搜索引擎友好。</li>
+<li>更容易让屏幕阅读器读出网页内容。</li>
+<li>去掉或样式丢失的时候能让页面呈现清晰的结构。</li>
+<li>便于团队开发和维护。</li>
+</ol>
+<p>标题使用<code>&lt;h2&gt;</code>而不是<code>&lt;div class=&quot;h2&quot;&gt;</code>,段落使用<code>&lt;p&gt;</code>标签，锚点使用<code>&lt;a&gt;</code>。</p>
+<h2 id="http-状态码"><a href="#http-状态码" class="headerlink" title="http 状态码"></a>http 状态码</h2><p>1** 信息<br>2** 成功  200<br>3** 重定向  304 (未修改)<br>4** 客户端错误<br>5** 服务器错误</p>
+<h2 id="css3"><a href="#css3" class="headerlink" title="css3"></a>css3</h2><p>选择器 [attribute^=value]  :nth-of-type(n) :nth-child(n)<br>盒模型 -&gt; box-sizing:content-box border-box<br>背景和边框-&gt; 圆角边框/背景图<br>文本效果<br>2D/3D 转换 -&gt; 移动translate、缩放scale、转动rotate、拉长或拉伸skew  六个值的矩阵matrix<br>过渡 -&gt; transition<br>动画  CSS3 动画属性<br>多列布局<br>弹性盒子(Flex Box)</p>
+<h2 id="javascript特性"><a href="#javascript特性" class="headerlink" title="javascript特性"></a>javascript特性</h2><h3 id="1-类型"><a href="#1-类型" class="headerlink" title="1 类型"></a>1 类型</h3><p>基本类型 number、boolean、string、null、undefined<br>复杂类型 array、function、object</p>
+<h3 id="2-类型的困惑"><a href="#2-类型的困惑" class="headerlink" title="2 类型的困惑"></a>2 类型的困惑</h3><p>尽量避免用 new</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="built_in">String</span>(<span class="string">&#x27;a&#x27;</span>) <span class="keyword">instanceof</span> <span class="built_in">String</span> <span class="comment">//true</span></span><br><span class="line"><span class="string">&#x27;a&#x27;</span> <span class="keyword">instanceof</span> <span class="built_in">String</span> <span class="comment">//false</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typeof</span> <span class="literal">null</span> <span class="comment">//&#x27;object&#x27;</span></span><br><span class="line"><span class="keyword">typeof</span> []   <span class="comment">//&#x27;object&#x27;</span></span><br><span class="line">[] <span class="keyword">instanceof</span> <span class="built_in">Array</span> <span class="comment">//true</span></span><br></pre></td></tr></table></figure>
+<p>条件表达式里 null、undefined、’’ 会被判定为 false</p>
+<h3 id="3-函数"><a href="#3-函数" class="headerlink" title="3 函数"></a>3 函数</h3><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="function"><span class="keyword">function</span> <span class="title">a</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="string">&#x27;function&#x27;</span> == <span class="keyword">typeof</span> a <span class="comment">//true，这里的 a 是前面那个 var a</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="4-函数的参数变量"><a href="#4-函数的参数变量" class="headerlink" title="4 函数的参数变量"></a>4 函数的参数变量</h3><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = fuction (b,c) &#123;&#125;</span><br><span class="line">a.length <span class="comment">//3</span></span><br></pre></td></tr></table></figure>
+<h3 id="5-闭包"><a href="#5-闭包" class="headerlink" title="5 闭包"></a>5 闭包</h3><p>在某个作用域中定义的变量只能在该作用域或其内部作用域中才能访问到</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="number">5</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">woot</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  a==<span class="number">5</span>;<span class="comment">//false</span></span><br><span class="line">  <span class="built_in">console</span>.log(a==<span class="number">5</span>);</span><br><span class="line">  <span class="keyword">var</span> a=<span class="number">6</span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">test</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    a==<span class="number">6</span>;<span class="comment">//true</span></span><br><span class="line">    <span class="built_in">console</span>.log(a==<span class="number">6</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  test();</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">woot();</span><br></pre></td></tr></table></figure>
+<p>自执行函数，通过声明调用匿名函数，定义新的作用域</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="number">3</span>;</span><br><span class="line">(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> a = <span class="number">5</span>;</span><br><span class="line">&#125;)()</span><br><span class="line"></span><br><span class="line">a == <span class="number">3</span>; <span class="comment">//true</span></span><br></pre></td></tr></table></figure>
+<h3 id="6-类"><a href="#6-类" class="headerlink" title="6 类"></a>6 类</h3><p>类通过函数定义</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Animal</span> (<span class="params">name</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">this</span>.name=name;</span><br><span class="line">&#125;</span><br><span class="line">Animal.prototype.getName() &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">this</span>.name;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="7-深浅拷贝"><a href="#7-深浅拷贝" class="headerlink" title="7 深浅拷贝"></a>7 深浅拷贝</h3><p>属性的可枚举性和所有权 <a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Enumerability_and_ownership_of_properties">https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Enumerability_and_ownership_of_properties</a></p>
+<p><code>for...in</code> 可以循环出 可枚举属性，自身对象及其原型链。再使用 hasOwnProperty 判断，得到自身属性</p>
+<h2 id="es6"><a href="#es6" class="headerlink" title="es6"></a>es6</h2><h3 id="1-let-const"><a href="#1-let-const" class="headerlink" title="1. let, const"></a>1. let, const</h3><p>var命令会发生”变量提升“现象，即变量可以在声明之前使用，值为undefined。这种现象多多少少是有些奇怪的，按照一般的逻辑，变量应该在声明语句之后才可以使用。</p>
+<p>为了纠正这种现象，let命令改变了语法行为，它所声明的变量一定要在声明后使用，否则报错。</p>
+<p>不允许重复声明</p>
+<p>暂时性死区<br>只要块级作用域内存在let命令，它所声明的变量就“绑定”（binding）这个区域，不再受外部的影响。<br>总之，在代码块内，使用let命令声明变量之前，该变量都是不可用的。这在语法上，称为“暂时性死区”（temporal dead zone，简称 TDZ）。</p>
+<p>但对于复合类型的数据（主要是对象和数组），变量指向的内存地址，保存的只是一个指针，const只能保证这个指针是固定的</p>
+<h3 id="2-块级作用域"><a href="#2-块级作用域" class="headerlink" title="2. 块级作用域"></a>2. 块级作用域</h3><p>ES5 只有全局作用域和函数作用域<br>ES6 的块级作用域 {}</p>
+<h3 id="3-es7"><a href="#3-es7" class="headerlink" title="3. es7"></a>3. es7</h3><p>Array.prototype.includes  -&gt; 代替 indexOf，返回true或false，还可以参数规定从第几位开始<br>求冥运算（次方）</p>
+<h2 id="事件传播"><a href="#事件传播" class="headerlink" title="事件传播"></a>事件传播</h2><p>冒泡捕获<br>先捕获再冒泡</p>
+<p>阻止传播 e.stopPropagation();</p>
+<p>事件委托</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> parent = <span class="built_in">document</span>.getElementById(<span class="string">&quot;parent&quot;</span>);</span><br><span class="line"><span class="keyword">var</span> child = <span class="built_in">document</span>.getElementById(<span class="string">&quot;child&quot;</span>);</span><br><span class="line">parent.onclick = <span class="function"><span class="keyword">function</span>(<span class="params">e</span>)</span>&#123;</span><br><span class="line">  <span class="keyword">if</span>(e.target.id == <span class="string">&quot;child&quot;</span>)&#123;</span><br><span class="line">      <span class="built_in">console</span>.log(<span class="string">&quot;您点击了child元素&quot;</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="React-生命周期"><a href="#React-生命周期" class="headerlink" title="React 生命周期"></a>React 生命周期</h2><p><a href="http://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">http://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/</a></p>
+<p>getderivedstatefromprops</p>
+]]></content>
+      <categories>
+        <category>技术</category>
+      </categories>
+      <tags>
+        <tag>javascript</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Atom Packages（插件）推荐</title>
     <url>/art/2018/20180103-atom-useful-packages/</url>
     <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20180103.jpg"></p>
@@ -734,74 +802,6 @@
       <tags>
         <tag>环境配置</tag>
         <tag>atom</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>前端基础知识</title>
-    <url>/art/2018/20180101-fontend-baseinfo/</url>
-    <content><![CDATA[<p><img data-src="https://xiawei.cc/images/20180222.jpg"></p>
-<a id="more"></a>
-
-<h2 id="html"><a href="#html" class="headerlink" title="html"></a>html</h2><h3 id="1-html-5-新特性"><a href="#1-html-5-新特性" class="headerlink" title="1. html 5 新特性"></a>1. html 5 新特性</h3><p>用于绘画的 canvas 元素</p>
-<p>用于媒介回放的 video 和 audio 元素</p>
-<p>对本地离线存储的更好的支持<br>localStorage、sessionStorage 不同浏览器容量不同，容量 4.98M。但注意 javascript 使用 utf-16 编码，所以最多有2.5M<br><a href="http://dev-test.nemikor.com/web-storage/support-test/">http://dev-test.nemikor.com/web-storage/support-test/</a></p>
-<p>Cookie不同浏览器容量不同， 最多容量4M ，50条数据。</p>
-<p>新的特殊内容元素，比如 article、footer、header、nav、section</p>
-<p>新的表单控件，比如 calendar、date、time、email、url、search</p>
-<h3 id="2-同源策略"><a href="#2-同源策略" class="headerlink" title="2. 同源策略"></a>2. 同源策略</h3><p><a href="http://www.ruanyifeng.com/blog/2016/04/same-origin-policy.html">http://www.ruanyifeng.com/blog/2016/04/same-origin-policy.html</a><br>同协议，同端口，同域名（一级二级域名是不同域名）</p>
-<p>如果非同源，共有三种行为受到限制。</p>
-<p>（1） Cookie、LocalStorage 和 IndexDB 无法读取。</p>
-<p>（2） DOM 无法获得。</p>
-<p>（3） AJAX 请求不能发送</p>
-<h3 id="3-跨域"><a href="#3-跨域" class="headerlink" title="3. 跨域"></a>3. 跨域</h3><p>JSONP 它的基本思想是，网页通过添加一个<code>&lt;script&gt;</code>元素，向服务器请求JSON数据，这种做法不受同源政策限制；服务器收到请求后，将数据放在一个指定名字的回调函数里传回来。</p>
-<p>WebSocket是一种通信协议，使用ws://（非加密）和wss://（加密）作为协议前缀。该协议不实行同源政策，只要服务器支持，就可以通过它进行跨源通信。</p>
-<p>CORS是一个W3C标准，全称是”跨域资源共享”（Cross-origin resource sharing）。</p>
-<p>它允许浏览器向跨源服务器，发出XMLHttpRequest请求，从而克服了AJAX只能同源使用的限制。</p>
-<h3 id="4-标签语义化"><a href="#4-标签语义化" class="headerlink" title="4. 标签语义化"></a>4. 标签语义化</h3><p>通过标签判断内容语义，例如根据h1标签判断出内容是标题，根据<code>&lt;p&gt;</code>判断内容是段落、<code>&lt;input&gt;</code>标签是输入框等。</p>
-<p>判断标签是否语义化：去掉样式，看网页结构是否组织良好有序，是否仍然有很好的可读性。</p>
-<p>为什么标签要语义化</p>
-<ol>
-<li>搜索引擎友好。</li>
-<li>更容易让屏幕阅读器读出网页内容。</li>
-<li>去掉或样式丢失的时候能让页面呈现清晰的结构。</li>
-<li>便于团队开发和维护。</li>
-</ol>
-<p>标题使用<code>&lt;h2&gt;</code>而不是<code>&lt;div class=&quot;h2&quot;&gt;</code>,段落使用<code>&lt;p&gt;</code>标签，锚点使用<code>&lt;a&gt;</code>。</p>
-<h2 id="http-状态码"><a href="#http-状态码" class="headerlink" title="http 状态码"></a>http 状态码</h2><p>1** 信息<br>2** 成功  200<br>3** 重定向  304 (未修改)<br>4** 客户端错误<br>5** 服务器错误</p>
-<h2 id="css3"><a href="#css3" class="headerlink" title="css3"></a>css3</h2><p>选择器 [attribute^=value]  :nth-of-type(n) :nth-child(n)<br>盒模型 -&gt; box-sizing:content-box border-box<br>背景和边框-&gt; 圆角边框/背景图<br>文本效果<br>2D/3D 转换 -&gt; 移动translate、缩放scale、转动rotate、拉长或拉伸skew  六个值的矩阵matrix<br>过渡 -&gt; transition<br>动画  CSS3 动画属性<br>多列布局<br>弹性盒子(Flex Box)</p>
-<h2 id="javascript特性"><a href="#javascript特性" class="headerlink" title="javascript特性"></a>javascript特性</h2><h3 id="1-类型"><a href="#1-类型" class="headerlink" title="1 类型"></a>1 类型</h3><p>基本类型 number、boolean、string、null、undefined<br>复杂类型 array、function、object</p>
-<h3 id="2-类型的困惑"><a href="#2-类型的困惑" class="headerlink" title="2 类型的困惑"></a>2 类型的困惑</h3><p>尽量避免用 new</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="built_in">String</span>(<span class="string">&#x27;a&#x27;</span>) <span class="keyword">instanceof</span> <span class="built_in">String</span> <span class="comment">//true</span></span><br><span class="line"><span class="string">&#x27;a&#x27;</span> <span class="keyword">instanceof</span> <span class="built_in">String</span> <span class="comment">//false</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typeof</span> <span class="literal">null</span> <span class="comment">//&#x27;object&#x27;</span></span><br><span class="line"><span class="keyword">typeof</span> []   <span class="comment">//&#x27;object&#x27;</span></span><br><span class="line">[] <span class="keyword">instanceof</span> <span class="built_in">Array</span> <span class="comment">//true</span></span><br></pre></td></tr></table></figure>
-<p>条件表达式里 null、undefined、’’ 会被判定为 false</p>
-<h3 id="3-函数"><a href="#3-函数" class="headerlink" title="3 函数"></a>3 函数</h3><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="function"><span class="keyword">function</span> <span class="title">a</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="string">&#x27;function&#x27;</span> == <span class="keyword">typeof</span> a <span class="comment">//true，这里的 a 是前面那个 var a</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="4-函数的参数变量"><a href="#4-函数的参数变量" class="headerlink" title="4 函数的参数变量"></a>4 函数的参数变量</h3><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = fuction (b,c) &#123;&#125;</span><br><span class="line">a.length <span class="comment">//3</span></span><br></pre></td></tr></table></figure>
-<h3 id="5-闭包"><a href="#5-闭包" class="headerlink" title="5 闭包"></a>5 闭包</h3><p>在某个作用域中定义的变量只能在该作用域或其内部作用域中才能访问到</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="number">5</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">woot</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  a==<span class="number">5</span>;<span class="comment">//false</span></span><br><span class="line">  <span class="built_in">console</span>.log(a==<span class="number">5</span>);</span><br><span class="line">  <span class="keyword">var</span> a=<span class="number">6</span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">test</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    a==<span class="number">6</span>;<span class="comment">//true</span></span><br><span class="line">    <span class="built_in">console</span>.log(a==<span class="number">6</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  test();</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">woot();</span><br></pre></td></tr></table></figure>
-<p>自执行函数，通过声明调用匿名函数，定义新的作用域</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="number">3</span>;</span><br><span class="line">(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> a = <span class="number">5</span>;</span><br><span class="line">&#125;)()</span><br><span class="line"></span><br><span class="line">a == <span class="number">3</span>; <span class="comment">//true</span></span><br></pre></td></tr></table></figure>
-<h3 id="6-类"><a href="#6-类" class="headerlink" title="6 类"></a>6 类</h3><p>类通过函数定义</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Animal</span> (<span class="params">name</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">this</span>.name=name;</span><br><span class="line">&#125;</span><br><span class="line">Animal.prototype.getName() &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">this</span>.name;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="7-深浅拷贝"><a href="#7-深浅拷贝" class="headerlink" title="7 深浅拷贝"></a>7 深浅拷贝</h3><p>属性的可枚举性和所有权 <a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Enumerability_and_ownership_of_properties">https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Enumerability_and_ownership_of_properties</a></p>
-<p><code>for...in</code> 可以循环出 可枚举属性，自身对象及其原型链。再使用 hasOwnProperty 判断，得到自身属性</p>
-<h2 id="es6"><a href="#es6" class="headerlink" title="es6"></a>es6</h2><h3 id="1-let-const"><a href="#1-let-const" class="headerlink" title="1. let, const"></a>1. let, const</h3><p>var命令会发生”变量提升“现象，即变量可以在声明之前使用，值为undefined。这种现象多多少少是有些奇怪的，按照一般的逻辑，变量应该在声明语句之后才可以使用。</p>
-<p>为了纠正这种现象，let命令改变了语法行为，它所声明的变量一定要在声明后使用，否则报错。</p>
-<p>不允许重复声明</p>
-<p>暂时性死区<br>只要块级作用域内存在let命令，它所声明的变量就“绑定”（binding）这个区域，不再受外部的影响。<br>总之，在代码块内，使用let命令声明变量之前，该变量都是不可用的。这在语法上，称为“暂时性死区”（temporal dead zone，简称 TDZ）。</p>
-<p>但对于复合类型的数据（主要是对象和数组），变量指向的内存地址，保存的只是一个指针，const只能保证这个指针是固定的</p>
-<h3 id="2-块级作用域"><a href="#2-块级作用域" class="headerlink" title="2. 块级作用域"></a>2. 块级作用域</h3><p>ES5 只有全局作用域和函数作用域<br>ES6 的块级作用域 {}</p>
-<h3 id="3-es7"><a href="#3-es7" class="headerlink" title="3. es7"></a>3. es7</h3><p>Array.prototype.includes  -&gt; 代替 indexOf，返回true或false，还可以参数规定从第几位开始<br>求冥运算（次方）</p>
-<h2 id="事件传播"><a href="#事件传播" class="headerlink" title="事件传播"></a>事件传播</h2><p>冒泡捕获<br>先捕获再冒泡</p>
-<p>阻止传播 e.stopPropagation();</p>
-<p>事件委托</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> parent = <span class="built_in">document</span>.getElementById(<span class="string">&quot;parent&quot;</span>);</span><br><span class="line"><span class="keyword">var</span> child = <span class="built_in">document</span>.getElementById(<span class="string">&quot;child&quot;</span>);</span><br><span class="line">parent.onclick = <span class="function"><span class="keyword">function</span>(<span class="params">e</span>)</span>&#123;</span><br><span class="line">  <span class="keyword">if</span>(e.target.id == <span class="string">&quot;child&quot;</span>)&#123;</span><br><span class="line">      <span class="built_in">console</span>.log(<span class="string">&quot;您点击了child元素&quot;</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="React-生命周期"><a href="#React-生命周期" class="headerlink" title="React 生命周期"></a>React 生命周期</h2><p><a href="http://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/">http://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/</a></p>
-<p>getderivedstatefromprops</p>
-]]></content>
-      <categories>
-        <category>技术</category>
-      </categories>
-      <tags>
-        <tag>javascript</tag>
       </tags>
   </entry>
   <entry>
