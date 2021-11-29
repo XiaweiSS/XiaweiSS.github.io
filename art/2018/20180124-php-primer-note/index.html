@@ -2,15 +2,15 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
-<meta name="theme-color" content="">
-<meta name="generator" content="Hexo 5.3.0">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
 
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png">
-  <link rel="mask-icon" href="/favicons/safari-pinned-tab.svg" color="">
+  <link rel="mask-icon" href="/favicons/safari-pinned-tab.svg" color="#222">
   <link rel="manifest" href="/favicons/site.webmanifest">
   <meta name="google-site-verification" content="9lVTYe9nsKJtVXVkN82SOQZNTMeUEaJZfLxX-7YgSn4">
   <meta name="baidu-site-verification" content="code-FzNCoWOKzS">
@@ -19,13 +19,10 @@
 
 
 
-<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
 
-<script class="hexo-configurations">
-    var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"xiawei.cc","root":"/","images":"/images","scheme":"Pisces","version":"8.2.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
-  </script>
+<script class="next-config" data-name="main" type="application/json">{"hostname":"xiawei.cc","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.8.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
 <meta name="description" content="一直想做点自己的小东西，所以开始学习后端知识了目前是一些基础的语法速学记录，还在更新中，以后有时间会整理归纳">
 <meta property="og:type" content="article">
 <meta property="og:title" content="php 学习笔记">
@@ -46,15 +43,10 @@
 <link rel="canonical" href="https://xiawei.cc/art/2018/20180124-php-primer-note/">
 
 
-<script data-pjax class="page-configurations">
-  // https://hexo.io/docs/variables.html
-  CONFIG.page = {
-    sidebar: "",
-    isHome : false,
-    isPost : true,
-    lang   : 'zh-CN'
-  };
-</script>
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://xiawei.cc/art/2018/20180124-php-primer-note/","path":"art/2018/20180124-php-primer-note/","title":"php 学习笔记"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
 <title>php 学习笔记 | Xiawei</title>
   
 
@@ -62,40 +54,8 @@
 
 
   <noscript>
-  <style>
-  body { margin-top: 2rem; }
-
-  .use-motion .menu-item,
-  .use-motion .sidebar,
-  .use-motion .post-block,
-  .use-motion .pagination,
-  .use-motion .comments,
-  .use-motion .post-header,
-  .use-motion .post-body,
-  .use-motion .collection-header {
-    visibility: visible;
-  }
-
-  .use-motion .header,
-  .use-motion .site-brand-container .toggle,
-  .use-motion .footer { opacity: initial; }
-
-  .use-motion .site-title,
-  .use-motion .site-subtitle,
-  .use-motion .custom-logo-image {
-    opacity: initial;
-    top: initial;
-  }
-
-  .use-motion .logo-line {
-    transform: scaleX(1);
-  }
-
-  .search-pop-overlay, .sidebar-nav { display: none; }
-  .sidebar-panel { display: block; }
-  </style>
-</noscript>
-
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
 <link rel="alternate" href="/atom.xml" title="Xiawei" type="application/atom+xml">
 </head>
 
@@ -206,18 +166,18 @@
 <div class="site-state-wrap site-overview-item animated">
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
-          <a href="/archives">
+        <a href="/archives/">
           <span class="site-state-item-count">18</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
-            <a href="/categories/">
+          <a href="/categories/">
         <span class="site-state-item-count">2</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
-            <a href="/tags/">
+          <a href="/tags/">
         <span class="site-state-item-count">19</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
@@ -250,7 +210,7 @@
     </header>
 
     
-  <div class="back-to-top" role="button">
+  <div class="back-to-top" role="button" aria-label="返回顶部">
     <i class="fa fa-arrow-up"></i>
     <span>0%</span>
   </div>
@@ -308,7 +268,7 @@
     </span>
 
   
-    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
       <span class="post-meta-item-icon">
         <i class="far fa-eye"></i>
       </span>
@@ -328,7 +288,7 @@
 <blockquote>
 <p>一直想做点自己的小东西，所以开始学习后端知识了<br>目前是一些基础的语法速学记录，还在更新中，以后有时间会整理归纳</p>
 </blockquote>
-<a id="more"></a>
+<span id="more"></span>
 
 <p>php 代码块 <?php   ?><br>php 连接符 .<br>多行时，每行结尾必须加 ;<br>单行注释 //<br>多行注释 <code>/*   */</code><br>变量 $开头 变量名必须以字母或下划线开始，如<code>”$_name”,”$name” ,”$name2”</code>等，但是”$9name”是不对的。<br>下划线命名法  <code>$my_apple</code>、驼峰命名法 <code>$myApple</code><br>获取当前PHP消耗的内存 memory_get_usage()<br>在PHP中，支持8种原始类型，其中包括四种标量类型、两种复合类型和两种特殊类型<br>echo 打印<br>var_dump 输出类型和值<br>var_export 打印数组</p>
 <p>布尔类型 不区分大小写 echo true;得到值1，echo false; 不输出值<br>== 比较运算符优先于 = 赋值运算符</p>
@@ -337,9 +297,10 @@
 <p>字符串<br>字符串型可以用三种方法定义：单引号形式、双引号形式和Heredoc结构形式。<br>字符串中包含引号的时候，1 单引号中嵌入双引号 2 双引号中嵌入单引号 3 里面的引号前使用转义符 \</p>
 <p>当双引号中包含变量时，变量会与双引号中的内容连接在一起；<br>当单引号中包含变量时，变量会被当做字符串输出。</p>
 <figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$love</span> = <span class="string">&quot;I love you!&quot;</span>;</span><br><span class="line"><span class="variable">$string1</span> = <span class="string">&quot;hi,<span class="subst">$love</span>&quot;</span>;<span class="comment">// hi,I love you!</span></span><br><span class="line"><span class="variable">$string2</span> = <span class="string">&#x27;hi,$love&#x27;</span>;<span class="comment">// hi,$love</span></span><br></pre></td></tr></table></figure>
+
 <p>当我的字符串很长怎么办？</p>
 <p>我们可以使用Heredoc结构形式的方法来解决该问题，首先使用定界符表示字符串（&lt;&lt;&lt;），接着在“&lt;&lt;&lt;“之后提供一个标识符GOD，然后是字符串，最后以提供的这个标识符结束字符串</p>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$string1</span> = &lt;&lt;&lt;GOD</span><br><span class="line">A</span><br><span class="line">B</span><br><span class="line">C</span><br><span class="line">GOD;</span><br><span class="line"></span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$string1</span>;<span class="comment">//A B C</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$string1</span> = <span class="string">&lt;&lt;&lt;GOD</span></span><br><span class="line"><span class="string">A</span></span><br><span class="line"><span class="string">B</span></span><br><span class="line"><span class="string">C</span></span><br><span class="line"><span class="string">GOD</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$string1</span>;<span class="comment">//A B C</span></span><br></pre></td></tr></table></figure>
 <p>在赋值符号后，输入定界符“&lt;&lt;&lt;”,接着是标识符，你可以用你的女神作为标识符“GOD”，如第1行，也可以使用你喜欢的狗狗，“DOG”作为标识符，但是，结尾处的标识符也必须是一样的。此外，在结尾的一行，如第4行，一定要另起一行，并且此行除了“GOD”，并以“；”号结束之外，不能有任何其他字符，前后都不能有，包括空格，否则会出现错误的哦。</p>
 <p>特殊类型1—资源 1.txt<br>特殊类型2—空类型 null 大写NULL也可以</p>
 <p>echo NULL，输出无结果</p>
@@ -355,17 +316,22 @@
 <p>字符串连接运算符 <code>.</code> 、 <code>.=</code></p>
 <p>错误控制运算符 @，可以放在变量和函数执行语句之前<br>开启了 track_errors 后，可以使用变量 $php_errormsg 输出错误信息</p>
 <figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ini_set(<span class="string">&#x27;track_errors&#x27;</span>, <span class="number">1</span>);</span><br><span class="line"><span class="variable">$conn</span> = @mysql_connect(<span class="string">&#x27;localhost&#x27;</span>,<span class="string">&#x27;username&#x27;</span>,<span class="string">&#x27;password&#x27;</span>);</span><br><span class="line"><span class="keyword">echo</span> <span class="string">&quot;出错了，错误原因是：&quot;</span>.<span class="variable">$php_errormsg</span>;</span><br></pre></td></tr></table></figure>
+
 <p>算术运算符 <code>+ 、- 、* 、/ 、% 、+= 、-= 、*= 、/= 、%=</code><br>向下取整 floor(4.25); //4<br>向上取整 ceil(4.25); //5</p>
 <p>条件结构  if、switch<br>循环结构  while、do while、for、foreach</p>
 <figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">foreach</span> (数组 <span class="keyword">as</span> 值)&#123;</span><br><span class="line"><span class="comment">//执行的任务</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">foreach</span> (数组 <span class="keyword">as</span> 下标 =&gt; 值)&#123;</span><br><span class="line"> <span class="comment">//执行的任务</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <p>数组<br>//设置某个变量为一个空数组</p>
 <figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$arr</span> = <span class="keyword">array</span>();</span><br><span class="line"><span class="variable">$fruit</span> = <span class="keyword">array</span>(<span class="string">&quot;苹果&quot;</span>,<span class="string">&quot;香蕉&quot;</span>,<span class="string">&quot;菠萝&quot;</span>);</span><br><span class="line">var_export(<span class="variable">$fruit</span>);<span class="comment">//打印数组</span></span><br></pre></td></tr></table></figure>
+
 <p>索引数组赋值有三种方式:</p>
 <figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$arr</span>[<span class="number">0</span>]=<span class="string">&#x27;苹果&#x27;</span>;</span><br><span class="line"><span class="keyword">array</span>(<span class="string">&#x27;0&#x27;</span>=&gt;<span class="string">&#x27;苹果&#x27;</span>);</span><br><span class="line"><span class="keyword">array</span>(<span class="string">&#x27;苹果&#x27;</span>);<span class="comment">//自动产生索引 0</span></span><br><span class="line"></span><br><span class="line"><span class="variable">$arr</span>[] = <span class="string">&#x27;梨&#x27;</span>;<span class="comment">//末尾插入新值</span></span><br></pre></td></tr></table></figure>
+
 <p>访问某个数组中索引的值<br>$arr[0] 或 $arr[‘0’];</p>
 <p>获取数组长度 count($array);</p>
 <p>php类</p>
 <figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//定义一个类，类名必须是字母或下划线开头</span></span><br><span class="line"><span class="comment">//$this 指向实例化后的类，来访问该类里的其他变量</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> <span class="variable">$name</span> = <span class="string">&#x27;汽车&#x27;</span>;</span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">getName</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//实例化一个car对象</span></span><br><span class="line"><span class="variable">$car</span> = <span class="keyword">new</span> Car();<span class="comment">//这里括号不传参数时，可以省略</span></span><br><span class="line"><span class="variable">$car</span>-&gt;name = <span class="string">&#x27;奥迪A6&#x27;</span>; <span class="comment">//设置对象的属性值</span></span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$car</span>-&gt;getName();  <span class="comment">//调用对象的方法 输出对象的名字</span></span><br></pre></td></tr></table></figure>
+
 <p>类的的属性和 fuction 前面有关键字public（公有），protected（受保护）或 private（私有），var 视为公有<br>类的 function 可以不写关键字，视为公有。属性必须写，否则报错。<br>受保护的不可以被外部调用，私有的只能被自己内部调用</p>
 <p>使用关键字static修饰的，称之为静态方法，静态方法不需要实例化对象，可以通过类名直接调用，操作符为双冒号::</p>
 <figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">static</span> <span class="function"><span class="keyword">function</span> <span class="title">getName</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&#x27;汽车&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">​&#125;</span><br><span class="line"><span class="keyword">echo</span> Car::getName(); <span class="comment">//结果为“汽车</span></span><br></pre></td></tr></table></figure>
@@ -373,15 +339,20 @@
 <p>静态属性 可以使用 static::$属性名，或者 self::$属性名 访问<br>静态方法 使用 static::方法名() 执行<br>访问父类时，使用 parent，例如 parent::方法名();</p>
 <p>注意下面代码，写不写 static 输出结果是一样的。但属性这么玩会报错。</p>
 <figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">b</span> </span>&#123;</span><br><span class="line">  <span class="built_in">static</span> <span class="function"><span class="keyword">function</span> <span class="title">show</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">123</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="variable">$obj</span> = <span class="keyword">new</span> b();</span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$obj</span>-&gt;show();<span class="comment">//123</span></span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$obj</span>::show();<span class="comment">//123</span></span><br></pre></td></tr></table></figure>
+
 <p>类的构造函数，实例化 new 类时，这个函数会被执行</p>
 <figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"></span>)</span>;</span><br></pre></td></tr></table></figure>
+
 <p>在子类中如果定义了__construct则不会调用父类的__construct，如果需要同时调用父类的构造函数，需要使用<code>parent::__construct()</code>显式的调用。</p>
 <figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;父类的构造函数被调用\n&quot;</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Truck</span> <span class="keyword">extends</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">__construct</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;子类的构造函数被调用\n&quot;</span>;</span><br><span class="line">    <span class="built_in">parent</span>::__construct();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="variable">$car</span> = <span class="keyword">new</span> Truck();</span><br></pre></td></tr></table></figure>
+
 <p>类的析构函数，类被销毁时会调用 <code>__destruct</code></p>
 <p>类继承<br>子类可以继承<br>父类的属性和方法<br>但当子类有同名的属性和方法时，父类的会不执行，可以静态方法的方式来访问。</p>
 <figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="variable">$speed</span> = <span class="number">0</span>; <span class="comment">//汽车的起始速度是0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">speedUp</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;speed += <span class="number">10</span>;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;speed;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//定义继承于Car的Truck类</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Truck</span> <span class="keyword">extends</span> <span class="title">Car</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">speedUp</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="built_in">parent</span>::speedUp();</span><br><span class="line">        <span class="keyword">$this</span>-&gt;speed += <span class="number">50</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="variable">$car</span> = <span class="keyword">new</span> Truck();</span><br><span class="line"><span class="variable">$car</span>-&gt;speedUp();</span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$car</span>-&gt;speed;</span><br></pre></td></tr></table></figure>
+
 <p>Cookie<br>设置 cookie</p>
 <figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">setcookie(<span class="string">&#x27;test2&#x27;</span>, <span class="string">&#x27;哈&#x27;</span>, time() + <span class="number">10</span>, <span class="string">&#x27;/&#x27;</span>);<span class="comment">//存入的值为 %E5%93%88</span></span><br><span class="line">setrawcookie(<span class="string">&#x27;test3&#x27;</span>, <span class="string">&#x27;哈&#x27;</span>);<span class="comment">//存入的值为 哈</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
 
 
 <blockquote>
@@ -439,28 +410,6 @@
     <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
   </div>
   
-
-<script>
-  window.addEventListener('tabs:register', () => {
-    let { activeClass } = CONFIG.comments;
-    if (CONFIG.comments.storage) {
-      activeClass = localStorage.getItem('comments_active') || activeClass;
-    }
-    if (activeClass) {
-      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
-      if (activeTab) {
-        activeTab.click();
-      }
-    }
-  });
-  if (CONFIG.comments.storage) {
-    window.addEventListener('tabs:click', event => {
-      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
-      const commentClass = event.target.classList[1];
-      localStorage.setItem('comments_active', commentClass);
-    });
-  }
-</script>
 </div>
   </main>
 
@@ -479,7 +428,7 @@
   <span class="author" itemprop="copyrightHolder">夏味</span>
 </div>
 <div class="busuanzi-count">
-    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
       <span class="post-meta-item-icon">
         <i class="fa fa-user"></i>
       </span>
@@ -487,7 +436,7 @@
         <span id="busuanzi_value_site_uv"></span>
       </span>
     </span>
-    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
       <span class="post-meta-item-icon">
         <i class="fa fa-eye"></i>
       </span>
@@ -496,54 +445,21 @@
       </span>
     </span>
 </div>
-  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
   </div>
 
     </div>
   </footer>
 
   
-  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/@next-theme/pjax@0.4.0/pjax.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/lozad@1.16.0/dist/lozad.min.js"></script>
-<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script><script>
-var pjax = new Pjax({
-  selectors: [
-    'head title',
-    '.page-configurations',
-    '.main-inner',
-    '.post-toc-wrap',
-    '.languages',
-    '.pjax'
-  ],
-  analytics: false,
-  cacheBust: false,
-  scrollRestoration: false,
-  scrollTo: !CONFIG.bookmark.enable
-});
-
-document.addEventListener('pjax:success', () => {
-  pjax.executeScripts(document.querySelectorAll('script[data-pjax], .pjax script'));
-  NexT.boot.refresh();
-  // Define Motion Sequence & Bootstrap Motion.
-  if (CONFIG.motion.enable) {
-    NexT.motion.integrator
-      .init()
-      .add(NexT.motion.middleWares.subMenu)
-      .add(NexT.motion.middleWares.postList)
-      .bootstrap();
-  }
-  const hasTOC = document.querySelector('.post-toc');
-  document.querySelector('.sidebar-inner').classList.toggle('sidebar-nav-active', hasTOC);
-  document.querySelector(hasTOC ? '.sidebar-nav-toc' : '.sidebar-nav-overview').click();
-  NexT.utils.updateSidebarPosition();
-});
-</script>
-
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@next-theme/pjax@0.5.0/pjax.min.js" integrity="sha256-3NkoLDrmHLTYj7csHIZSr0MHAFTXth7Ua/DDt4MRUAg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lozad@1.16.0/dist/lozad.min.js" integrity="sha256-mOFREFhqmHeQbXpK2lp4nA3qooVgACfh88fpJftLBbc=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script><script src="/js/pjax.js"></script>
 
   
-<script src="/js/local-search.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
 
 
 
@@ -554,29 +470,9 @@ document.addEventListener('pjax:success', () => {
 
 
 
-    <div class="pjax">
 
-
-<script>
-  var disqus_config = function() {
-    this.page.url = "https://xiawei.cc/art/2018/20180124-php-primer-note/";
-    this.page.identifier = "art/2018/20180124-php-primer-note/";
-    this.page.title = "php 学习笔记";
-    };
-  NexT.utils.loadComments('#disqus_thread', () => {
-    if (window.DISQUS) {
-      DISQUS.reset({
-        reload: true,
-        config: disqus_config
-      });
-    } else {
-      var d = document, s = d.createElement('script');
-      s.src = 'https://xiawei.disqus.com/embed.js';
-      s.setAttribute('data-timestamp', '' + +new Date());
-      (d.head || d.body).appendChild(s);
-    }
-  });
-</script>
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"xiawei","count":false,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
 <style>
 #live2dcanvas{
   position: fixed;
@@ -600,6 +496,5 @@ document.addEventListener('pjax:success', () => {
   loadScript("/live2d/script.js", function(){loadlive2d("live2dcanvas", "/live2d/assets/koharu.model.json", 0.5);});
 })();
 </script>
-    </div>
 </body>
 </html>

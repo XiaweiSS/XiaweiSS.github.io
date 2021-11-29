@@ -2,15 +2,15 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
-<meta name="theme-color" content="">
-<meta name="generator" content="Hexo 5.3.0">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
 
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png">
-  <link rel="mask-icon" href="/favicons/safari-pinned-tab.svg" color="">
+  <link rel="mask-icon" href="/favicons/safari-pinned-tab.svg" color="#222">
   <link rel="manifest" href="/favicons/site.webmanifest">
   <meta name="google-site-verification" content="9lVTYe9nsKJtVXVkN82SOQZNTMeUEaJZfLxX-7YgSn4">
   <meta name="baidu-site-verification" content="code-FzNCoWOKzS">
@@ -19,13 +19,10 @@
 
 
 
-<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
 
-<script class="hexo-configurations">
-    var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"xiawei.cc","root":"/","images":"/images","scheme":"Pisces","version":"8.2.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
-  </script>
+<script class="next-config" data-name="main" type="application/json">{"hostname":"xiawei.cc","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.8.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
 <meta name="description" content="每个人都可能有自己的代码风格和格式，但如果一个项目中的所有人都遵循同一风格的话，这个项目就能更顺利地进行。每个人未必能同意每一处格式规则，而且其中的不少规则需要一定时间的适应，但整个项目服从统一的编程风格是很重要的，只有这样才能让所有人轻松地阅读和理解代码。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="JavaScript 代码格式化">
@@ -58,15 +55,10 @@
 <link rel="canonical" href="https://xiawei.cc/art/2018/20180726-javascript-code-format/">
 
 
-<script data-pjax class="page-configurations">
-  // https://hexo.io/docs/variables.html
-  CONFIG.page = {
-    sidebar: "",
-    isHome : false,
-    isPost : true,
-    lang   : 'zh-CN'
-  };
-</script>
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://xiawei.cc/art/2018/20180726-javascript-code-format/","path":"art/2018/20180726-javascript-code-format/","title":"JavaScript 代码格式化"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
 <title>JavaScript 代码格式化 | Xiawei</title>
   
 
@@ -74,40 +66,8 @@
 
 
   <noscript>
-  <style>
-  body { margin-top: 2rem; }
-
-  .use-motion .menu-item,
-  .use-motion .sidebar,
-  .use-motion .post-block,
-  .use-motion .pagination,
-  .use-motion .comments,
-  .use-motion .post-header,
-  .use-motion .post-body,
-  .use-motion .collection-header {
-    visibility: visible;
-  }
-
-  .use-motion .header,
-  .use-motion .site-brand-container .toggle,
-  .use-motion .footer { opacity: initial; }
-
-  .use-motion .site-title,
-  .use-motion .site-subtitle,
-  .use-motion .custom-logo-image {
-    opacity: initial;
-    top: initial;
-  }
-
-  .use-motion .logo-line {
-    transform: scaleX(1);
-  }
-
-  .search-pop-overlay, .sidebar-nav { display: none; }
-  .sidebar-panel { display: block; }
-  </style>
-</noscript>
-
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
 <link rel="alternate" href="/atom.xml" title="Xiawei" type="application/atom+xml">
 </head>
 
@@ -219,18 +179,18 @@
 <div class="site-state-wrap site-overview-item animated">
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
-          <a href="/archives">
+        <a href="/archives/">
           <span class="site-state-item-count">18</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
-            <a href="/categories/">
+          <a href="/categories/">
         <span class="site-state-item-count">2</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
-            <a href="/tags/">
+          <a href="/tags/">
         <span class="site-state-item-count">19</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
@@ -263,7 +223,7 @@
     </header>
 
     
-  <div class="back-to-top" role="button">
+  <div class="back-to-top" role="button" aria-label="返回顶部">
     <i class="fa fa-arrow-up"></i>
     <span>0%</span>
   </div>
@@ -321,7 +281,7 @@
     </span>
 
   
-    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
       <span class="post-meta-item-icon">
         <i class="far fa-eye"></i>
       </span>
@@ -341,7 +301,7 @@
 <blockquote>
 <p>每个人都可能有自己的代码风格和格式，但如果一个项目中的所有人都遵循同一风格的话，这个项目就能更顺利地进行。每个人未必能同意每一处格式规则，而且其中的不少规则需要一定时间的适应，但整个项目服从统一的编程风格是很重要的，只有这样才能让所有人轻松地阅读和理解代码。</p>
 </blockquote>
-<a id="more"></a>
+<span id="more"></span>
 
 <h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>关于代码格式化，有3个相关的概念，比较容易混淆</p>
 <ol>
@@ -350,7 +310,8 @@
 <li>代码格式化（code format）：依据一种  指定的代码格式，修正  不符合格式的代码（<a target="_blank" rel="noopener" href="https://eslint.org/">ESLint</a>、<a target="_blank" rel="noopener" href="https://prettier.io/">Prettier</a> 等）</li>
 </ol>
 <p>格式化工具支持 CLI 模式，可以在 <code>package.json</code> 中配置命令<br>（CLI 模式其他参数请参考各官方文档）</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&quot;scripts&quot;: &#123;</span><br><span class="line">  &quot;standard&quot;: &quot;standard --fix&quot;,</span><br><span class="line">  &quot;prettier&quot;: &quot;prettier --write &#x27;*.js&#x27;&quot;,</span><br><span class="line">  &quot;eslint&quot;: &quot;eslint --fix &#x27;*.js&#x27;&quot;</span><br><span class="line">&#125;,</span><br></pre></td></tr></table></figure>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;scripts&quot;</span>: &#123;</span><br><span class="line">  <span class="attr">&quot;standard&quot;</span>: <span class="string">&quot;standard --fix&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;prettier&quot;</span>: <span class="string">&quot;prettier --write &#x27;*.js&#x27;&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;eslint&quot;</span>: <span class="string">&quot;eslint --fix &#x27;*.js&#x27;&quot;</span></span><br><span class="line">&#125;,</span><br></pre></td></tr></table></figure>
+
 <p>设定 JavaScript 代码格式，从简单到严格依次有下面的方式，选一种即可</p>
 <ol>
 <li>使用 EditorConfig，添加配置文件<code>.editorconfig</code>即可， 可以设置部分的基本格式，然后使用编辑器默认的格式化</li>
@@ -360,9 +321,11 @@
 </ol>
 <p><code>.editorconfig</code> 文件示例：</p>
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">root</span> <span class="string">=</span> <span class="literal">true</span></span><br><span class="line"></span><br><span class="line">[<span class="string">*</span>]                             <span class="comment"># [] 内是正则表达式，匹配文件</span></span><br><span class="line"><span class="string">charset</span> <span class="string">=</span> <span class="string">utf-8</span>                 <span class="comment"># 文本格式</span></span><br><span class="line"><span class="string">end_of_line</span> <span class="string">=</span> <span class="string">lf</span>                <span class="comment"># 配置结尾符号</span></span><br><span class="line"><span class="string">insert_final_newline</span> <span class="string">=</span> <span class="literal">true</span>     <span class="comment"># 文件末尾空行</span></span><br><span class="line"><span class="string">indent_style</span> <span class="string">=</span> <span class="string">space</span>            <span class="comment"># 缩进使用空格</span></span><br><span class="line"><span class="string">indent_size</span> <span class="string">=</span> <span class="number">2</span>                 <span class="comment"># 缩进长度</span></span><br><span class="line"><span class="string">trim_trailing_whitespace</span> <span class="string">=</span> <span class="literal">true</span> <span class="comment"># 去掉行尾多余的空格</span></span><br></pre></td></tr></table></figure>
+
 <p>关于 CSS 的代码检查，可以使用工具 stylelint<br>安装<code>npm install stylelint --save-dev</code><br>安装代码格式 <code>npm install stylelint-config-standard --save-dev</code><br>Vue 文件还需要安装预处理器 <code>npm install @mapbox/stylelint-processor-arbitrary-tags --save-dev</code></p>
 <p>添加配置文件 <code>.stylelintrc</code></p>
 <figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;defaultSeverity&quot;</span>: <span class="string">&quot;warning&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;processors&quot;</span>: [<span class="string">&quot;@mapbox/stylelint-processor-arbitrary-tags&quot;</span>],</span><br><span class="line">  <span class="attr">&quot;extends&quot;</span>: <span class="string">&quot;stylelint-config-standard&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;rules&quot;</span>: &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <p>其中 rules 里可以写自定义的规则，自定义的规则优先级最高<br>想要自己生成自定义规则的话，可以访问网站 <a target="_blank" rel="noopener" href="https://maximgatilin.github.io/stylelint-config/">https://maximgatilin.github.io/stylelint-config/</a></p>
 <p>stylelint 的编辑器插件，可以使用 <a target="_blank" rel="noopener" href="https://github.com/morishitter/stylefmt">stylefmt</a>, 也可以使用 Prettier 格式化</p>
 <p>下面是各种编辑器插件的配置</p>
@@ -370,7 +333,8 @@
 <h3 id="编辑器默认格式化"><a href="#编辑器默认格式化" class="headerlink" title="编辑器默认格式化"></a>编辑器默认格式化</h3><p>菜单栏 Code -&gt; Reformat Code<br>快捷键 Alt + Cmd + L</p>
 <h3 id="Prettier-插件格式化"><a href="#Prettier-插件格式化" class="headerlink" title="Prettier 插件格式化"></a>Prettier 插件格式化</h3><p>1.安装插件 Prettier<br>Webstorm 内置了  Prettier 插件不需要安装，Phpstorm 等在设置中心里 Plugins插件选项里安装即可</p>
 <p>2.全局安装或项目安装 prettier 的 npm 依赖包</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install prettier --save-dev</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install prettier --save-dev</span><br></pre></td></tr></table></figure>
+
 <p>3.使用 Prettier 格式化文件<br>Alt + Shift + Cmd + P</p>
 <p>设置保存时自动格式化：<br>手工配置设置里的 Tools -&gt; File Watchers 即可<br>可以按照官方教程 <a target="_blank" rel="noopener" href="https://prettier.io/docs/en/webstorm.html">https://prettier.io/docs/en/webstorm.html</a></p>
 <p>打开设置，搜索 Prettier，然后复制 Prettier package 里的路径</p>
@@ -380,24 +344,30 @@
 <p>然后可以看到（注意点击三角箭头，展开全部的选项）</p>
 <p><img data-src="https://xiawei.cc/images/20180726-filewatcher-config.png" alt="20180726-filewatcher-config"></p>
 <p>按上图来配置，并且填入下面内容，注意取消勾选 Auto-save 选项<br>最后点右下角 ok 结束配置<br>（使用 Vue 时请再创建一个，文件类型请选择 Vue Template）</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ProjectFileDir$&#x2F;node_modules&#x2F;.bin&#x2F;prettier</span><br><span class="line">--write $FilePathRelativeToProjectRoot$</span><br><span class="line">$FilePathRelativeToProjectRoot$</span><br><span class="line">$ProjectFileDir$</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ProjectFileDir$/node_modules/.bin/prettier</span><br><span class="line">--write $FilePathRelativeToProjectRoot$</span><br><span class="line">$FilePathRelativeToProjectRoot$</span><br><span class="line">$ProjectFileDir$</span><br></pre></td></tr></table></figure>
+
 <p>Windows 系统必须包含 cmd 后缀，Programs 请填写</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ProjectFileDir$&#x2F;node_modules&#x2F;.bin&#x2F;prettier.cmd</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ProjectFileDir$/node_modules/.bin/prettier.cmd</span><br></pre></td></tr></table></figure>
+
 <p>重启编辑器，之后只要 Ctrl + S 保存时，就可以自动格式化代码</p>
 <h3 id="ESLint-格式化"><a href="#ESLint-格式化" class="headerlink" title="ESLint 格式化"></a>ESLint 格式化</h3><p>1.全局或项目内安装 eslint 的 npm 依赖包</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install eslint --save-dev</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install eslint --save-dev</span><br></pre></td></tr></table></figure>
+
 <p>2.打开编辑器配置，如下图，找到 ESLint 配置项，路径系统会自动检测到，只要勾选 Enable 即可<br>（如果没有路径，需要重启编辑器，或手动指定 eslint 的 npm 包路径）</p>
 <p><img data-src="https://xiawei.cc/images/20180726-webstrom-eslint.png" alt="20180726-webstrom-eslint"></p>
 <p>3.重启编辑器<br>4.设置快捷键</p>
 <p><img data-src="https://xiawei.cc/images/20180726-webstorm-keymap.png" alt="20180726-webstorm-keymap"><br>建议设为 Ctrl + Alt + F</p>
 <p>设置保存时自动格式化：<br>和 Prettier 配置相同，同样新建一个 File Watcher 即可<br> 参数请填写为</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ProjectFileDir$&#x2F;node_modules&#x2F;.bin&#x2F;eslint</span><br><span class="line">--fix $FilePathRelativeToProjectRoot$</span><br><span class="line">$FilePathRelativeToProjectRoot$</span><br><span class="line">$ProjectFileDir$</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ProjectFileDir$/node_modules/.bin/eslint</span><br><span class="line">--fix $FilePathRelativeToProjectRoot$</span><br><span class="line">$FilePathRelativeToProjectRoot$</span><br><span class="line">$ProjectFileDir$</span><br></pre></td></tr></table></figure>
+
 <p>Windows 系统必须包含 cmd 后缀，Programs 请填写</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ProjectFileDir$&#x2F;node_modules&#x2F;.bin&#x2F;prettier.cmd</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ProjectFileDir$/node_modules/.bin/prettier.cmd</span><br></pre></td></tr></table></figure>
+
 <p>重启编辑器，之后只要 Ctrl + S 保存时，就可以自动格式化代码</p>
 <p>（使用 Vue 时请再创建一个，文件类型请选择 Vue Template）</p>
 <h3 id="standard-标准格式化"><a href="#standard-标准格式化" class="headerlink" title="standard 标准格式化"></a>standard 标准格式化</h3><p>安装 npm 依赖，注意必须安装到开发依赖里</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install standard --save-dev</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install standard --save-dev</span><br></pre></td></tr></table></figure>
+
 <p>设置 JS 代码风格为 standard（Webstorm 默认为 Google 风格），出处点<a target="_blank" rel="noopener" href="https://blog.jetbrains.com/webstorm/2017/01/webstorm-2017-1-eap-171-2272/">这里</a><br>设置的位置见下图，为 Editor -&gt; Code Style -&gt; JavaScript -&gt; Warping and Braces -&gt; Set from…<br>-&gt; Predefined Style -&gt; JavaScript Standard Style<br><img data-src="https://xiawei.cc/images/20180726-webstorm-codestyle.jpg" alt="20180726-webstorm-codestyle"></p>
 <p>然后使用编辑器默认的格式化功能即可, Alt + Cmd + L</p>
 <p>开启代码检查(可选，不设置时不会提示格式错误)：<br>打开上图配置 ESlint 的界面, 勾选 Enable，并且将 ESLint package 选为 standard 的 npm 路径即可<br><img data-src="https://xiawei.cc/images/20180726-webstorm-standard.png" alt="20180726-webstorm-standard"></p>
@@ -412,20 +382,26 @@
 <p>或者 输入 Cmd + Shift+P(win: Ctrl+Shift+P) 调出命令面板，输入指令 fix</p>
 <p><img data-src="https://xiawei.cc/images/20180726-vscode-eslintfix.png" alt="20180726-vscode-eslintfix"></p>
 <p>也可以添加自定义配置, 设置保存时自动格式化：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&quot;eslint.autoFixOnSave&quot;: true,</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&quot;eslint.autoFixOnSave&quot;: true,</span><br></pre></td></tr></table></figure>
+
 <h3 id="standard-标准格式化-1"><a href="#standard-标准格式化-1" class="headerlink" title="standard 标准格式化"></a>standard 标准格式化</h3><p>安装 npm 依赖，建议安装到开发依赖里</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install standard --save-dev</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install standard --save-dev</span><br></pre></td></tr></table></figure>
+
 <p>安装插件<a target="_blank" rel="noopener" href="https://marketplace.visualstudio.com/items?itemName=chenxsan.vscode-standardjs">JavaScript Standard Style</a></p>
 <p>输入 Cmd + Shift+P(win: Ctrl+Shift+P) 调出命令面板，输入指令 fix<br>选择 fix all auto-fixable problems 即可<br><img data-src="https://xiawei.cc/images/20180726-vscode-standard.png" alt="20180726-vscode-standard"></p>
 <p>建议添加自定义配置：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&quot;standard.usePackageJson&quot;: true, &#x2F;&#x2F; 基于项目的 package.json 设置中来配置</span><br><span class="line">&quot;standard.autoFixOnSave&quot;: true, &#x2F;&#x2F; 保存时自动格式化</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&quot;standard.usePackageJson&quot;: true, // 基于项目的 package.json 设置中来配置</span><br><span class="line">&quot;standard.autoFixOnSave&quot;: true, // 保存时自动格式化</span><br></pre></td></tr></table></figure>
+
 <h3 id="Prettier-standard-同时使用"><a href="#Prettier-standard-同时使用" class="headerlink" title="Prettier + standard 同时使用"></a>Prettier + standard 同时使用</h3><p>同时配置 Prettier 和 standard，并且设置</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&quot;editor.formatOnSave&quot;: true,</span><br><span class="line">&quot;standard.autoFixOnSave&quot;: true,</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&quot;editor.formatOnSave&quot;: true,</span><br><span class="line">&quot;standard.autoFixOnSave&quot;: true,</span><br></pre></td></tr></table></figure>
+
 <p>保存文件时，会先执行 Prettier 格式化，再执行 standard 格式化</p>
 <h3 id="Prettier-ESLint-同时使用-1"><a href="#Prettier-ESLint-同时使用-1" class="headerlink" title="Prettier + ESLint 同时使用"></a>Prettier + ESLint 同时使用</h3><p>按前文同时配置 Prettier 和 standard，并且设置</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&quot;editor.formatOnSave&quot;: true,</span><br><span class="line">&quot;eslint.autoFixOnSave&quot;: true,</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&quot;editor.formatOnSave&quot;: true,</span><br><span class="line">&quot;eslint.autoFixOnSave&quot;: true,</span><br></pre></td></tr></table></figure>
+
 <p>或者只配置 Prettier，设置为</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&quot;editor.formatOnSave&quot;: true,</span><br><span class="line">&quot;prettier.eslintIntegration&quot;: false, &#x2F;&#x2F; 使用 Prettier-eslint 功能</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&quot;editor.formatOnSave&quot;: true,</span><br><span class="line">&quot;prettier.eslintIntegration&quot;: false, // 使用 Prettier-eslint 功能</span><br></pre></td></tr></table></figure>
+
 <p>此时不需要配置 <code>&quot;eslint.autoFixOnSave&quot;: true,</code></p>
 <p>如果不需要格式检查提示，不用安装 <a target="_blank" rel="noopener" href="https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint">ESLint</a> 插件</p>
 <h2 id="Atom-配置"><a href="#Atom-配置" class="headerlink" title="Atom 配置"></a>Atom 配置</h2><p>编辑器默认未集成格式化插件</p>
@@ -435,14 +411,16 @@
 <h3 id="ESLint-格式化-1"><a href="#ESLint-格式化-1" class="headerlink" title="ESLint 格式化"></a>ESLint 格式化</h3><p>安装插件 <a target="_blank" rel="noopener" href="https://atom.io/packages/linter-eslint">liner-eslint</a>, 重启编辑器<br> 点击有问题的部分，再点击 fix 即可格式化<br><img data-src="https://xiawei.cc/images/20180726-atom-eslint.png" alt="20180726-atom-eslint"></p>
 <p>设置保存时自动格式化：<br>在 linter-eslint 插件配置中，勾选<br><img data-src="https://xiawei.cc/images/20180726-atom-eslint-autofix.png" alt="20180726-atom-eslint-autofix"></p>
 <h3 id="standard-标准格式化-2"><a href="#standard-标准格式化-2" class="headerlink" title="standard 标准格式化"></a>standard 标准格式化</h3><p>安装 npm 依赖，建议安装到开发依赖里</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install standard --save-dev</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install standard --save-dev</span><br></pre></td></tr></table></figure>
+
 <p>格式化<br>安装插件 <a target="_blank" rel="noopener" href="https://atom.io/packages/standard-formatter">standard-formatter</a><br>使用快捷键 Ctrl + Alt + F 格式化代码</p>
 <p>开启代码检查(可选，不安装时不会提示格式错误)：<br>安装插件 <a target="_blank" rel="noopener" href="https://atom.io/packages/linter-js-standard">linter-js-standard</a></p>
 <h3 id="Prettier-ESLint-同时使用-2"><a href="#Prettier-ESLint-同时使用-2" class="headerlink" title="Prettier + ESLint 同时使用"></a>Prettier + ESLint 同时使用</h3><p>按前文同时配置 Prettier + ESLint, 并且都开启保存时自动格式化即可</p>
 <p>或者只配置 Prettier，然后在 Prettier 设置里勾选<br><img data-src="https://xiawei.cc/images/20180726-atom-pretter-eslint.png" alt="20180726-atom-pretter-eslint"></p>
 <p>这时不需要安装 ESLint 格式化插件 <a target="_blank" rel="noopener" href="https://atom.io/packages/standard-formatter">standard-formatter</a><br>如果不需要格式检查提示，也不用安装格式检查插件 <a target="_blank" rel="noopener" href="https://atom.io/packages/linter-js-standard">linter-js-standard</a></p>
 <h2 id="Stylelint-编辑器配置"><a href="#Stylelint-编辑器配置" class="headerlink" title="Stylelint 编辑器配置"></a>Stylelint 编辑器配置</h2><p>安装 npm 依赖，建议安装到开发依赖里</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install stylelint --save-dev</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install stylelint --save-dev</span><br></pre></td></tr></table></figure>
+
 <p>设置配置文件 <code>.stylelintrc</code> 见上文</p>
 <p>安装插件（与上述配置类似，参考插件的介绍文档，不一一赘述了）</p>
 <p>Atom：插件 <a target="_blank" rel="noopener" href="https://atom.io/packages/stylefmt">stylefmt</a> 或 <a target="_blank" rel="noopener" href="https://atom.io/packages/vue-stylefmt">vue-stylefmt</a> 或 <a target="_blank" rel="noopener" href="https://atom.io/packages/prettier-atom">pretter-atom</a>(设置中勾选Stylelint Integration)<br>VScode： 插件<a target="_blank" rel="noopener" href="https://marketplace.visualstudio.com/items?itemName=mrmlnc.vscode-stylefmt">stylefmt</a><br>WebStorm： 设置 -&gt; Language and FrameWorks -&gt; Stylesheets -&gt; stylelint -&gt; 勾选 enable 并设置stylelint npm 包路径</p>
@@ -491,28 +469,6 @@
     <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
   </div>
   
-
-<script>
-  window.addEventListener('tabs:register', () => {
-    let { activeClass } = CONFIG.comments;
-    if (CONFIG.comments.storage) {
-      activeClass = localStorage.getItem('comments_active') || activeClass;
-    }
-    if (activeClass) {
-      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
-      if (activeTab) {
-        activeTab.click();
-      }
-    }
-  });
-  if (CONFIG.comments.storage) {
-    window.addEventListener('tabs:click', event => {
-      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
-      const commentClass = event.target.classList[1];
-      localStorage.setItem('comments_active', commentClass);
-    });
-  }
-</script>
 </div>
   </main>
 
@@ -531,7 +487,7 @@
   <span class="author" itemprop="copyrightHolder">夏味</span>
 </div>
 <div class="busuanzi-count">
-    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
       <span class="post-meta-item-icon">
         <i class="fa fa-user"></i>
       </span>
@@ -539,7 +495,7 @@
         <span id="busuanzi_value_site_uv"></span>
       </span>
     </span>
-    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
       <span class="post-meta-item-icon">
         <i class="fa fa-eye"></i>
       </span>
@@ -548,54 +504,21 @@
       </span>
     </span>
 </div>
-  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
   </div>
 
     </div>
   </footer>
 
   
-  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/@next-theme/pjax@0.4.0/pjax.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/lozad@1.16.0/dist/lozad.min.js"></script>
-<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script><script>
-var pjax = new Pjax({
-  selectors: [
-    'head title',
-    '.page-configurations',
-    '.main-inner',
-    '.post-toc-wrap',
-    '.languages',
-    '.pjax'
-  ],
-  analytics: false,
-  cacheBust: false,
-  scrollRestoration: false,
-  scrollTo: !CONFIG.bookmark.enable
-});
-
-document.addEventListener('pjax:success', () => {
-  pjax.executeScripts(document.querySelectorAll('script[data-pjax], .pjax script'));
-  NexT.boot.refresh();
-  // Define Motion Sequence & Bootstrap Motion.
-  if (CONFIG.motion.enable) {
-    NexT.motion.integrator
-      .init()
-      .add(NexT.motion.middleWares.subMenu)
-      .add(NexT.motion.middleWares.postList)
-      .bootstrap();
-  }
-  const hasTOC = document.querySelector('.post-toc');
-  document.querySelector('.sidebar-inner').classList.toggle('sidebar-nav-active', hasTOC);
-  document.querySelector(hasTOC ? '.sidebar-nav-toc' : '.sidebar-nav-overview').click();
-  NexT.utils.updateSidebarPosition();
-});
-</script>
-
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@next-theme/pjax@0.5.0/pjax.min.js" integrity="sha256-3NkoLDrmHLTYj7csHIZSr0MHAFTXth7Ua/DDt4MRUAg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lozad@1.16.0/dist/lozad.min.js" integrity="sha256-mOFREFhqmHeQbXpK2lp4nA3qooVgACfh88fpJftLBbc=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script><script src="/js/pjax.js"></script>
 
   
-<script src="/js/local-search.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
 
 
 
@@ -606,29 +529,9 @@ document.addEventListener('pjax:success', () => {
 
 
 
-    <div class="pjax">
 
-
-<script>
-  var disqus_config = function() {
-    this.page.url = "https://xiawei.cc/art/2018/20180726-javascript-code-format/";
-    this.page.identifier = "art/2018/20180726-javascript-code-format/";
-    this.page.title = "JavaScript 代码格式化";
-    };
-  NexT.utils.loadComments('#disqus_thread', () => {
-    if (window.DISQUS) {
-      DISQUS.reset({
-        reload: true,
-        config: disqus_config
-      });
-    } else {
-      var d = document, s = d.createElement('script');
-      s.src = 'https://xiawei.disqus.com/embed.js';
-      s.setAttribute('data-timestamp', '' + +new Date());
-      (d.head || d.body).appendChild(s);
-    }
-  });
-</script>
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"xiawei","count":false,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
 <style>
 #live2dcanvas{
   position: fixed;
@@ -652,6 +555,5 @@ document.addEventListener('pjax:success', () => {
   loadScript("/live2d/script.js", function(){loadlive2d("live2dcanvas", "/live2d/assets/koharu.model.json", 0.5);});
 })();
 </script>
-    </div>
 </body>
 </html>
